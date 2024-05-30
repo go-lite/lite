@@ -1,6 +1,6 @@
 module github.com/disco07/lite-fiber
 
-go 1.22.3
+go 1.22
 
 require (
 	github.com/getkin/kin-openapi v0.124.0
