@@ -26,3 +26,7 @@ func (m AsMultiPart[T]) Encode(c *fiber.Ctx, value T) error {
 func (m AsMultiPart[T]) ContentType() string {
 	return "multipart/form-data"
 }
+
+func (m AsMultiPart[T]) StructTag() string {
+	return "form"
+}

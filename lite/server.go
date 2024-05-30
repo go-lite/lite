@@ -3,7 +3,7 @@ package lite
 import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
-	"log"
+	"github.com/invopop/yaml"
 )
 
 type OpenAPIConfig struct {
@@ -52,21 +52,12 @@ type App struct {
 	tags []string
 }
 
-func NewApp(app *fiber.App) *App {
+func NewApp() *App {
 	return &App{
-		App:           app,
+		App:           fiber.New(),
 		OpenApiSpec:   NewOpenApiSpec(),
 		OpenAPIConfig: defaultOpenAPIConfig,
 	}
-}
-
-func (s *App) GetTags() []string {
-	return s.tags
-}
-
-func (s *App) Tags(tags ...string) *App {
-	s.tags = tags
-	return s
 }
 
 // AddTags adds tags from the Server (i.e Group)
@@ -77,15 +68,29 @@ func (s *App) AddTags(tags ...string) *App {
 }
 
 // SaveOpenAPISpec saves the OpenAPI spec to a file in YAML format
-func (s *App) SaveOpenAPISpec() error {
+func (s *App) SaveOpenAPISpec() ([]byte, error) {
 	json, err := s.OpenApiSpec.MarshalJSON()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Println(string(json))
+	yamlData, err := writeOpenAPISpec(json)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return yamlData, nil
+}
+
+// writeOpenAPISpec writes the OpenAPI spec to a file in YAML format
+func writeOpenAPISpec(d []byte) ([]byte, error) {
+	// convert json to yaml
+	yamlData, err := yaml.JSONToYAML(d)
+	if err != nil {
+		return nil, err
+	}
+
+	return yamlData, nil
 }
 
 func (s *App) AddServer(url, description string) {
@@ -97,4 +102,25 @@ func (s *App) AddServer(url, description string) {
 	})
 
 	s.OpenApiSpec.Servers = servers
+}
+
+// Description sets the description of the OpenAPI spec
+func (s *App) Description(description string) *App {
+	s.OpenApiSpec.Info.Description = description
+
+	return s
+}
+
+// Title sets the title of the OpenAPI spec
+func (s *App) Title(title string) *App {
+	s.OpenApiSpec.Info.Title = title
+
+	return s
+}
+
+// Version sets the version of the OpenAPI spec
+func (s *App) Version(version string) *App {
+	s.OpenApiSpec.Info.Version = version
+
+	return s
 }

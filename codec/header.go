@@ -24,6 +24,6 @@ func (h AsHeader[T]) ParamType() string {
 	return "header"
 }
 
-func (a AsHeader[T]) TypeOf() reflect.Type {
-	return reflect.TypeOf(a.Value)
+func (h AsHeader[T]) TypeOf() reflect.Type {
+	return reflect.TypeOf(h.Value)
 }

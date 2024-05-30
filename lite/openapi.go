@@ -2,11 +2,11 @@ package lite
 
 import (
 	"fmt"
+	"github.com/disco07/lite-fiber/codec"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 	"reflect"
 	"strings"
-	"swagger/codec"
 )
 
 var generator = openapi3gen.NewGenerator(
@@ -20,15 +20,9 @@ func RegisterOpenAPIOperation[ResponseBody, RequestBody any](
 ) (*openapi3.Operation, error) {
 	operation := &openapi3.Operation{}
 	operation.OperationID = method + path
-	operation.Tags = s.GetTags()
 
-	// Add the operation to the OpenAPI spec
-	if s.OpenApiSpec.Paths == nil {
-		s.OpenApiSpec.Paths = &openapi3.Paths{}
-	}
-
-	var req RequestBody
-	valGen := reflect.ValueOf(&req).Elem()
+	var reqBody RequestBody
+	valGen := reflect.ValueOf(&reqBody).Elem()
 
 	countPathParams := 0
 
@@ -169,12 +163,11 @@ func RegisterOpenAPIOperation[ResponseBody, RequestBody any](
 						return operation, err
 					}
 
-					// recupérer les champs de tp qui ne sont pas des pointeurs
-					// et les ajouter à Required
 					for k := 0; k < fieldGenericType.NumField(); k++ {
 						field := fieldGenericType.Field(k)
 						if field.Type.Kind() != reflect.Ptr {
-							bodySchema.Value.Required = append(bodySchema.Value.Required, field.Name)
+							fieldTag := field.Tag.Get(contentType.StructTag())
+							bodySchema.Value.Required = append(bodySchema.Value.Required, fieldTag)
 						}
 					}
 
@@ -246,9 +239,6 @@ func tagFromType(v any) string {
 	return dive(reflect.TypeOf(v), 4)
 }
 
-// dive returns the name of the type of the given reflect.Type.
-// If the type is a pointer, slice, array, map, channel, function, or unsafe pointer,
-// it will dive into the type and return the name of the type it points to.
 func dive(t reflect.Type, maxDepth int) string {
 	switch t.Kind() {
 	case reflect.Ptr, reflect.Slice, reflect.Array, reflect.Map, reflect.Chan, reflect.Func, reflect.UnsafePointer:

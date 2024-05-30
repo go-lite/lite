@@ -2,12 +2,11 @@ package lite
 
 import (
 	"context"
-	"github.com/gofiber/contrib/otelfiber/v2"
+	"github.com/disco07/lite-fiber/codec"
 	"github.com/gofiber/fiber/v2"
 	"log/slog"
 	"net/http"
 	"regexp"
-	"swagger/codec"
 )
 
 func fiberHandler[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
@@ -42,6 +41,102 @@ func Get[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	)
 }
 
+func Post[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+	app *App,
+	path string,
+	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, RequestBody] {
+	var encoder E
+
+	return registerRoute[ResponseBody, RequestBody](
+		app,
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPost, contentType: encoder.ContentType()},
+		fiberHandler[ResponseBody, RequestBody, E](controller),
+		middleware...,
+	)
+}
+
+func Put[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+	app *App,
+	path string,
+	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, RequestBody] {
+	var encoder E
+
+	return registerRoute[ResponseBody, RequestBody](
+		app,
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPut, contentType: encoder.ContentType()},
+		fiberHandler[ResponseBody, RequestBody, E](controller),
+		middleware...,
+	)
+}
+
+func Delete[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+	app *App,
+	path string,
+	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, RequestBody] {
+	var encoder E
+
+	return registerRoute[ResponseBody, RequestBody](
+		app,
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodDelete, contentType: encoder.ContentType()},
+		fiberHandler[ResponseBody, RequestBody, E](controller),
+		middleware...,
+	)
+}
+
+func Patch[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+	app *App,
+	path string,
+	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, RequestBody] {
+	var encoder E
+
+	return registerRoute[ResponseBody, RequestBody](
+		app,
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPatch, contentType: encoder.ContentType()},
+		fiberHandler[ResponseBody, RequestBody, E](controller),
+		middleware...,
+	)
+}
+
+func Head[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+	app *App,
+	path string,
+	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, RequestBody] {
+	var encoder E
+
+	return registerRoute[ResponseBody, RequestBody](
+		app,
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodHead, contentType: encoder.ContentType()},
+		fiberHandler[ResponseBody, RequestBody, E](controller),
+		middleware...,
+	)
+}
+
+func Options[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+	app *App,
+	path string,
+	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, RequestBody] {
+	var encoder E
+
+	return registerRoute[ResponseBody, RequestBody](
+		app,
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodOptions, contentType: encoder.ContentType()},
+		fiberHandler[ResponseBody, RequestBody, E](controller),
+		middleware...,
+	)
+}
+
 func registerRoute[ResponseBody, RequestBody any](
 	app *App,
 	route Route[ResponseBody, RequestBody],
@@ -58,10 +153,6 @@ func registerRoute[ResponseBody, RequestBody any](
 	app.Add(
 		route.method,
 		route.path,
-		otelfiber.Middleware(
-		//otelfiber.WithPort(route.cfg.Port()),
-		//otelfiber.WithTracerProvider(route.tracerProvider),
-		),
 		controller,
 	)
 

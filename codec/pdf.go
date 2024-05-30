@@ -25,3 +25,7 @@ func (p AsPDF[T]) Encode(c *fiber.Ctx, value T) error {
 func (p AsPDF[T]) ContentType() string {
 	return "application/pdf"
 }
+
+func (p AsPDF[T]) StructTag() string {
+	return "pdf"
+}

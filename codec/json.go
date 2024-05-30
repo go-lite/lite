@@ -28,6 +28,10 @@ func (j AsJSON[T]) ContentType() string {
 	return "application/json"
 }
 
+func (j AsJSON[T]) StructTag() string {
+	return "json"
+}
+
 func (j AsJSON[T]) TypeOf() reflect.Type {
 	return reflect.TypeOf(j.Value)
 }
