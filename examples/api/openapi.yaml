@@ -32,11 +32,16 @@ components:
                     type: integer
                 last_name:
                     type: string
+            required:
+                - id
+                - fist_name
             type: object
         GetResponse:
             properties:
                 message:
                     type: string
+            required:
+                - message
             type: object
         httpGenericError:
             properties:
@@ -130,18 +135,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Internal Server Error
-                default:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Internal Server Error
             security:
                 - Authorization: []
             tags:
@@ -195,18 +188,6 @@ paths:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Not Found
                 "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Internal Server Error
-                default:
                     content:
                         application/json:
                             schema:

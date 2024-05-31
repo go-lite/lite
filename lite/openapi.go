@@ -208,6 +208,17 @@ func RegisterOpenAPIOperation[ResponseBody, RequestBody any](
 		if err != nil {
 			return operation, err
 		}
+
+		fieldGenericType := reflect.TypeOf(*new(ResponseBody))
+
+		for k := 0; k < fieldGenericType.NumField(); k++ {
+			field := fieldGenericType.Field(k)
+			if field.Type.Kind() != reflect.Ptr {
+				fieldTag := field.Tag.Get(getStructTag(resContentType))
+				responseSchema.Value.Required = append(responseSchema.Value.Required, fieldTag)
+			}
+		}
+
 		s.OpenApiSpec.Components.Schemas[tag] = responseSchema
 	}
 
@@ -261,5 +272,29 @@ func dive(t reflect.Type, maxDepth int) string {
 		return dive(t.Elem(), maxDepth-1)
 	default:
 		return t.Name()
+	}
+}
+
+// get struct tag from content type
+func getStructTag(contentType string) string {
+	switch contentType {
+	case "application/json":
+		return "json"
+	case "application/xml":
+		return "xml"
+	case "application/x-www-form-urlencoded", "multipart/form-data":
+		return "form"
+	case "text/plain":
+		return "text"
+	case "application/octet-stream":
+		return "binary"
+	case "application/pdf":
+		return "pdf"
+	case "image/png":
+		return "png"
+	case "image/jpeg":
+		return "jpeg"
+	default:
+		return "json"
 	}
 }
