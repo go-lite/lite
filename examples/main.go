@@ -39,7 +39,7 @@ func postHandler(c *lite.ContextWithBody[parameters.CreateReq]) (returns.CreateR
 	return returns.CreateResponse{
 		ID:        body.Params.Value.ID,
 		FirstName: body.Body.Value.FirstName,
-		LastName:  *body.Body.Value.LastName,
+		LastName:  body.Body.Value.LastName,
 	}, nil
 }
 
