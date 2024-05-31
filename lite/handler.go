@@ -23,6 +23,8 @@ func fiberHandler[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 			return c.JSON(defaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
 		}
 
+		c.Status(getStatusCode(c.Method()))
+
 		return encoder.Encode(c, response)
 	}
 }
