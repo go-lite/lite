@@ -1,6 +1,7 @@
 package lite
 
 import (
+	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/invopop/yaml"
@@ -123,4 +124,42 @@ func (s *App) Version(version string) *App {
 	s.OpenApiSpec.Info.Version = version
 
 	return s
+}
+
+func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) {
+	var responses = make(map[int]*openapi3.Response)
+
+	for _, errResponse := range defaultErrorResponses {
+		responseSchema, ok := s.OpenApiSpec.Components.Schemas["httpGenericError"]
+		if !ok {
+			var err error
+			responseSchema, err = generator.NewSchemaRefForValue(new(HTTPError), s.OpenApiSpec.Components.Schemas)
+			if err != nil {
+				return nil, err
+			}
+			s.OpenApiSpec.Components.Schemas["httpGenericError"] = responseSchema
+		}
+
+		response := openapi3.NewResponse().WithDescription(errResponse.Description())
+
+		var consume []string
+		for contentType, _ := range defaultErrorContentTypeResponses {
+			consume = append(consume, contentType)
+		}
+
+		if responseSchema != nil {
+			content := openapi3.NewContentWithSchemaRef(
+				openapi3.NewSchemaRef(fmt.Sprintf(
+					"#/components/schemas/%s",
+					"httpGenericError",
+				), &openapi3.Schema{}),
+				consume,
+			)
+			response.WithContent(content)
+		}
+
+		responses[errResponse.StatusCode()] = response
+	}
+
+	return responses, nil
 }

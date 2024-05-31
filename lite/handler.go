@@ -13,13 +13,15 @@ func fiberHandler[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		var encoder E
+
 		contextWithBody := &ContextWithBody[RequestBody]{Ctx: c}
 		response, err := controller(contextWithBody)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
+			c.SendStatus(http.StatusInternalServerError)
 
-		var encoder E
+			return c.JSON(defaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
+		}
 
 		return encoder.Encode(c, response)
 	}
@@ -164,7 +166,7 @@ func registerRoute[ResponseBody, RequestBody any](
 		panic(err)
 	}
 
-	route.Operation = operation
+	route.operation = operation
 
 	return route
 }

@@ -226,6 +226,19 @@ func RegisterOpenAPIOperation[ResponseBody, RequestBody any](
 
 	operation.AddResponse(statusCode, response)
 
+	// Add error responses
+	responses, err := s.createDefaultErrorResponses()
+	if err != nil {
+		return nil, err
+	}
+
+	for code, resp := range responses {
+		operation.AddResponse(code, resp)
+	}
+
+	// Remove default response
+	operation.Responses.Delete("default")
+
 	s.OpenApiSpec.AddOperation(routePath, method, operation)
 
 	return operation, nil

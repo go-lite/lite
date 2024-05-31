@@ -56,7 +56,7 @@ func main() {
 		Description("Create example").
 		AddTags("example")
 
-	liteApp.AddServer("http://localhost:3000", "example server")
+	liteApp.AddServer("http://localhost:6000", "example server")
 
 	yamlBytes, err := liteApp.SaveOpenAPISpec()
 	if err != nil {
@@ -82,5 +82,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Fatal(liteApp.Listen(":3000"))
+	log.Fatal(liteApp.Listen(":6000"))
 }

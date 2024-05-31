@@ -11,7 +11,7 @@ type OpenAPIParam struct {
 }
 
 type Route[T, B any] struct {
-	Operation   *openapi3.Operation
+	operation   *openapi3.Operation
 	path        string
 	name        string
 	tags        []string
@@ -20,28 +20,28 @@ type Route[T, B any] struct {
 }
 
 func (r Route[ResponseBody, RequestBody]) Description(description string) Route[ResponseBody, RequestBody] {
-	r.Operation.Description = description
+	r.operation.Description = description
 	return r
 }
 
 func (r Route[ResponseBody, RequestBody]) Summary(summary string) Route[ResponseBody, RequestBody] {
-	r.Operation.Summary = summary
+	r.operation.Summary = summary
 	return r
 }
 
 func (r Route[ResponseBody, RequestBody]) OperationID(operationID string) Route[ResponseBody, RequestBody] {
-	r.Operation.OperationID = operationID
+	r.operation.OperationID = operationID
 	return r
 }
 
-func (r Route[ResponseBody, RequestBody]) Deprecated(b bool) Route[ResponseBody, RequestBody] {
-	r.Operation.Deprecated = b
+func (r Route[ResponseBody, RequestBody]) Deprecated() Route[ResponseBody, RequestBody] {
+	r.operation.Deprecated = true
 
 	return r
 }
 
 func (r Route[ResponseBody, RequestBody]) AddTags(tags ...string) Route[ResponseBody, RequestBody] {
-	r.Operation.Tags = tags
+	r.operation.Tags = tags
 
 	return r
 }
