@@ -211,11 +211,13 @@ func RegisterOpenAPIOperation[ResponseBody, RequestBody any](
 
 		fieldGenericType := reflect.TypeOf(*new(ResponseBody))
 
-		for k := 0; k < fieldGenericType.NumField(); k++ {
-			field := fieldGenericType.Field(k)
-			if field.Type.Kind() != reflect.Ptr {
-				fieldTag := field.Tag.Get(getStructTag(resContentType))
-				responseSchema.Value.Required = append(responseSchema.Value.Required, fieldTag)
+		if fieldGenericType.Kind() == reflect.Struct {
+			for k := 0; k < fieldGenericType.NumField(); k++ {
+				field := fieldGenericType.Field(k)
+				if field.Type.Kind() != reflect.Ptr {
+					fieldTag := field.Tag.Get(getStructTag(resContentType))
+					responseSchema.Value.Required = append(responseSchema.Value.Required, fieldTag)
+				}
 			}
 		}
 
