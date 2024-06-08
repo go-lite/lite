@@ -1,4 +1,4 @@
-package lite
+package openapi
 
 import (
 	"github.com/disco07/lite-fiber/codec"

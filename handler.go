@@ -1,24 +1,24 @@
-package lite
+package openapi
 
 import (
-	"context"
 	"github.com/disco07/lite-fiber/codec"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
-	"log/slog"
 	"net/http"
 	"regexp"
 )
 
 func fiberHandler[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	path string,
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var encoder E
 
-		contextWithBody := &ContextWithBody[RequestBody]{Ctx: c}
+		contextWithBody := &ContextWithRequest[RequestBody]{Ctx: c, path: path}
 		response, err := controller(contextWithBody)
 		if err != nil {
-			c.SendStatus(http.StatusInternalServerError)
+			c.Status(http.StatusInternalServerError)
 
 			return c.JSON(defaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
 		}
@@ -32,7 +32,7 @@ func fiberHandler[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Get[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -40,7 +40,7 @@ func Get[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodGet, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -48,7 +48,7 @@ func Get[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Post[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -56,7 +56,7 @@ func Post[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPost, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -64,7 +64,7 @@ func Post[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Put[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -72,7 +72,7 @@ func Put[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPut, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -80,7 +80,7 @@ func Put[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Delete[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -88,7 +88,7 @@ func Delete[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodDelete, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -96,7 +96,7 @@ func Delete[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Patch[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -104,7 +104,7 @@ func Patch[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPatch, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -112,7 +112,7 @@ func Patch[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Head[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -120,7 +120,7 @@ func Head[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodHead, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -128,7 +128,7 @@ func Head[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 func Options[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	app *App,
 	path string,
-	controller func(*ContextWithBody[RequestBody]) (ResponseBody, error),
+	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
 	var encoder E
@@ -136,7 +136,7 @@ func Options[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
 	return registerRoute[ResponseBody, RequestBody](
 		app,
 		Route[ResponseBody, RequestBody]{path: path, method: http.MethodOptions, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller),
+		fiberHandler[ResponseBody, RequestBody, E](controller, path),
 		middleware...,
 	)
 }
@@ -160,16 +160,16 @@ func registerRoute[ResponseBody, RequestBody any](
 		controller,
 	)
 
-	status := getStatusCode(route.method)
-
-	operation, err := RegisterOpenAPIOperation[ResponseBody, RequestBody](app, route.method, route.path, route.contentType, status)
-	if err != nil {
-		slog.ErrorContext(context.Background(), "failed to register openapi operation", slog.Any("error", err))
-		panic(err)
-	}
-
-	route.operation = operation
-
+	//status := getStatusCode(route.method)
+	//
+	////operation, err := registerOpenAPIOperation[ResponseBody, RequestBody](app, route.method, route.path, route.contentType, status)
+	////if err != nil {
+	////	slog.ErrorContext(context.Background(), "failed to register openapi operation", slog.Any("error", err))
+	////	panic(err)
+	////}
+	//
+	//route.operation = operation
+	route.operation = &openapi3.Operation{}
 	return route
 }
 

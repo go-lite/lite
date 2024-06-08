@@ -1,4 +1,4 @@
-package lite
+package openapi
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ var generator = openapi3gen.NewGenerator(
 	openapi3gen.UseAllExportedFields(),
 )
 
-func RegisterOpenAPIOperation[ResponseBody, RequestBody any](
+func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	s *App,
 	method, path, resContentType string,
 	statusCode int,

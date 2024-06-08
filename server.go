@@ -1,4 +1,4 @@
-package lite
+package openapi
 
 import (
 	"fmt"

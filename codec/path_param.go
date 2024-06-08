@@ -24,6 +24,6 @@ func (p AsPathParam[T]) ParamType() string {
 	return "path"
 }
 
-func (a AsPathParam[T]) TypeOf() reflect.Type {
-	return reflect.TypeOf(a.Value)
+func (p AsPathParam[T]) TypeOf() reflect.Type {
+	return reflect.TypeOf(p.Value)
 }

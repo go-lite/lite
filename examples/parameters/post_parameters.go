@@ -1,22 +1,20 @@
 package parameters
 
-import "github.com/disco07/lite-fiber/codec"
-
 type CreateBody struct {
 	FirstName string  `json:"first_name"`
 	LastName  *string `json:"last_name"`
 }
 
 type Params struct {
-	ID uint64 `params:"id"`
+	ID uint64 `lite:"path=id"`
 }
 
 type ReqHeader struct {
-	Authorization *string `reqHeader:"Authorization" header:"Authorization"`
+	Authorization *string `lite:"header=Authorization,isauth"`
 }
 
 type CreateReq struct {
-	Header codec.AsHeader[ReqHeader]
-	Params codec.AsPathParam[Params]
-	Body   codec.AsJSON[CreateBody]
+	Header ReqHeader
+	Params Params
+	Body   CreateBody `lite:"req=body"`
 }

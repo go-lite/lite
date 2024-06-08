@@ -2,52 +2,59 @@ package main
 
 import (
 	"errors"
+	"github.com/disco07/lite-fiber"
 	"github.com/disco07/lite-fiber/codec"
 	"github.com/disco07/lite-fiber/examples/parameters"
 	"github.com/disco07/lite-fiber/examples/returns"
-	"github.com/disco07/lite-fiber/lite"
 	"log"
 	"os"
 )
 
 // Define example handler
-func getHandler(c *lite.ContextWithBody[parameters.GetReq]) (returns.GetResponse, error) {
-	body, err := c.Body()
-	if err != nil {
-		return returns.GetResponse{}, err
-	}
+//func getHandler(c *openapi.ContextWithRequest[parameters.GetReq]) (returns.GetResponse, error) {
+//	body, err := c.Body()
+//	if err != nil {
+//		return returns.GetResponse{}, err
+//	}
+//
+//	if body.Params.Value.Name == "test" {
+//		return returns.GetResponse{}, errors.New("test is not valid name")
+//	}
+//
+//	return returns.GetResponse{
+//		Message: "Hello World!, -" + pathParams.Name + " - " + body.Params.Value.Name,
+//	}, nil
+//}
 
-	if body.Params.Value.Name == "test" {
-		return returns.GetResponse{}, errors.New("test is not valid name")
-	}
-
-	return returns.GetResponse{
-		Message: "Hello World!, " + body.Params.Value.Name,
-	}, nil
-}
-
-func postHandler(c *lite.ContextWithBody[parameters.CreateReq]) (returns.CreateResponse, error) {
-	body, err := c.Body()
+func postHandler(c *openapi.ContextWithRequest[parameters.CreateReq]) (returns.CreateResponse, error) {
+	body, err := c.Request()
 	if err != nil {
 		return returns.CreateResponse{}, err
 	}
 
-	if body.Body.Value.FirstName == "" {
+	if body.Body.FirstName == "" {
 		return returns.CreateResponse{}, errors.New("first_name are required")
 	}
 
 	return returns.CreateResponse{
-		ID:        body.Params.Value.ID,
-		FirstName: body.Body.Value.FirstName,
-		LastName:  body.Body.Value.LastName,
+		ID:        body.Params.ID,
+		FirstName: body.Body.FirstName,
+		LastName:  body.Body.LastName,
 	}, nil
 }
 
-func main() {
-	liteApp := lite.NewApp()
+func getArrayHandler(_ *openapi.ContextWithRequest[parameters.GetArrayReq]) (returns.GetArrayReturnsResponse, error) {
+	res := make([]string, 0)
+	res = append(res, "Hello World!")
 
-	lite.Get[returns.GetResponse, parameters.GetReq, codec.AsJSON[returns.GetResponse]](liteApp, "/example/:name", getHandler)
-	lite.Post[
+	return res, nil
+}
+
+func main() {
+	liteApp := openapi.NewApp()
+
+	//openapi.Get[returns.GetResponse, parameters.GetReq, codec.AsJSON[returns.GetResponse]](liteApp, "/example/:name", getHandler)
+	openapi.Post[
 		returns.CreateResponse,
 		parameters.CreateReq,
 		codec.AsJSON[returns.CreateResponse],
@@ -55,6 +62,8 @@ func main() {
 		OperationID("createExample").
 		Description("Create example").
 		AddTags("example")
+
+	openapi.Get[returns.GetArrayReturnsResponse, parameters.GetArrayReq, codec.AsJSON[returns.GetArrayReturnsResponse]](liteApp, "/example", getArrayHandler)
 
 	liteApp.AddServer("http://localhost:6000", "example server")
 
