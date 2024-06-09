@@ -1,4 +1,4 @@
-package openapi
+package lite
 
 import "github.com/gofiber/fiber/v2"
 

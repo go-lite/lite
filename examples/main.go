@@ -2,31 +2,32 @@ package main
 
 import (
 	"errors"
-	"github.com/disco07/lite-fiber"
-	"github.com/disco07/lite-fiber/codec"
-	"github.com/disco07/lite-fiber/examples/parameters"
-	"github.com/disco07/lite-fiber/examples/returns"
 	"log"
 	"os"
+
+	"github.com/disco07/lite"
+	"github.com/disco07/lite/codec"
+	"github.com/disco07/lite/examples/parameters"
+	"github.com/disco07/lite/examples/returns"
 )
 
 // Define example handler
-//func getHandler(c *openapi.ContextWithRequest[parameters.GetReq]) (returns.GetResponse, error) {
-//	body, err := c.Body()
-//	if err != nil {
-//		return returns.GetResponse{}, err
-//	}
-//
-//	if body.Params.Value.Name == "test" {
-//		return returns.GetResponse{}, errors.New("test is not valid name")
-//	}
-//
-//	return returns.GetResponse{
-//		Message: "Hello World!, -" + pathParams.Name + " - " + body.Params.Value.Name,
-//	}, nil
-//}
+func getHandler(c *lite.ContextWithRequest[parameters.GetReq]) (returns.GetResponse, error) {
+	request, err := c.Request()
+	if err != nil {
+		return returns.GetResponse{}, err
+	}
 
-func postHandler(c *openapi.ContextWithRequest[parameters.CreateReq]) (returns.CreateResponse, error) {
+	if request.Params == "test" {
+		return returns.GetResponse{}, errors.New("test is not valid name")
+	}
+
+	return returns.GetResponse{
+		Message: "Hello World!, " + request.Params,
+	}, nil
+}
+
+func postHandler(c *lite.ContextWithRequest[parameters.CreateReq]) (returns.CreateResponse, error) {
 	body, err := c.Request()
 	if err != nil {
 		return returns.CreateResponse{}, err
@@ -43,7 +44,7 @@ func postHandler(c *openapi.ContextWithRequest[parameters.CreateReq]) (returns.C
 	}, nil
 }
 
-func getArrayHandler(_ *openapi.ContextWithRequest[parameters.GetArrayReq]) (returns.GetArrayReturnsResponse, error) {
+func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (returns.GetArrayReturnsResponse, error) {
 	res := make([]string, 0)
 	res = append(res, "Hello World!")
 
@@ -51,10 +52,11 @@ func getArrayHandler(_ *openapi.ContextWithRequest[parameters.GetArrayReq]) (ret
 }
 
 func main() {
-	liteApp := openapi.NewApp()
+	liteApp := lite.NewApp()
 
-	//openapi.Get[returns.GetResponse, parameters.GetReq, codec.AsJSON[returns.GetResponse]](liteApp, "/example/:name", getHandler)
-	openapi.Post[
+	lite.Get[returns.GetResponse, parameters.GetReq, codec.AsJSON[returns.GetResponse]](liteApp, "/example/:name", getHandler)
+
+	lite.Post[
 		returns.CreateResponse,
 		parameters.CreateReq,
 		codec.AsJSON[returns.CreateResponse],
@@ -63,7 +65,7 @@ func main() {
 		Description("Create example").
 		AddTags("example")
 
-	openapi.Get[returns.GetArrayReturnsResponse, parameters.GetArrayReq, codec.AsJSON[returns.GetArrayReturnsResponse]](liteApp, "/example", getArrayHandler)
+	lite.Get[returns.GetArrayReturnsResponse, parameters.GetArrayReq, codec.AsJSON[returns.GetArrayReturnsResponse]](liteApp, "/example", getArrayHandler)
 
 	liteApp.AddServer("http://localhost:6000", "example server")
 
@@ -72,7 +74,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Ouvrir le fichier pour écriture
 	f, err := os.Create("./examples/api/openapi.yaml")
 	if err != nil {
 		log.Fatal(err)
@@ -85,7 +86,6 @@ func main() {
 		}
 	}()
 
-	// Écrire le nouveau contenu dans le fichier
 	_, err = f.Write(yamlBytes)
 	if err != nil {
 		log.Fatal(err)

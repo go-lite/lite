@@ -1,11 +1,10 @@
-package openapi
+package lite
 
 import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 	"reflect"
-	"strings"
 )
 
 var generator = openapi3gen.NewGenerator(
@@ -133,24 +132,18 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 		tagMap := parseTag(tag)
 
-		tagParts := strings.Split(tag, "=")
-
 		var parameter *openapi3.Parameter
 		var scheme, tpe, name string
 
-		tagType, tagName := tagParts[0], tagParts[1]
-
-		ref := fmt.Sprintf("#/components/schemas/%s", tagName)
-
 		if pathKey, ok := tagMap["path"]; ok {
 			parameter = openapi3.NewPathParameter(pathKey)
-			err := setParamSchema(s, operation, pathKey, parameter, isRequired, ref)
+			err := setParamSchema(s, operation, pathKey, parameter, isRequired, fieldType)
 			if err != nil {
 				return err
 			}
 		} else if queryKey, ok := tagMap["query"]; ok {
 			parameter = openapi3.NewQueryParameter(queryKey)
-			err := setParamSchema(s, operation, queryKey, parameter, isRequired, ref)
+			err := setParamSchema(s, operation, queryKey, parameter, isRequired, fieldType)
 			if err != nil {
 				return err
 			}
@@ -169,6 +162,10 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 				scheme = valueScheme
 			}
 
+			if valueName, ok := tagMap["name"]; ok {
+				name = valueName
+			}
+
 			if isAuth {
 				setSecurityScheme(s, operation, name, tpe, scheme)
 			} else {
@@ -179,7 +176,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			}
 		} else if cookieKey, ok := tagMap["cookie"]; ok {
 			parameter = openapi3.NewCookieParameter(cookieKey)
-			err := setParamSchema(s, operation, cookieKey, parameter, isRequired, ref)
+			err := setParamSchema(s, operation, cookieKey, parameter, isRequired, fieldType)
 			if err != nil {
 				return err
 			}
@@ -224,7 +221,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 				continue
 			}
 		} else {
-			return fmt.Errorf("unknown parameter type: %s", tagType)
+			return fmt.Errorf("unknown parameter type")
 		}
 	}
 
@@ -278,14 +275,24 @@ func setSecurityScheme(s *App, operation *openapi3.Operation, name string, tpe s
 	s.OpenApiSpec.Components.SecuritySchemes[name] = securitySchemes[name]
 }
 
-func setParamSchema(s *App, operation *openapi3.Operation, tag string, parameter *openapi3.Parameter, isRequired bool, ref string) error {
+func setParamSchema(
+	s *App,
+	operation *openapi3.Operation,
+	tag string,
+	parameter *openapi3.Parameter,
+	isRequired bool,
+	fieldType reflect.Type,
+) error {
+	ref := fmt.Sprintf("#/components/schemas/%s", tag)
+
 	parameter.Schema = openapi3.NewSchemaRef(ref, &openapi3.Schema{})
 	parameter.Required = isRequired
 
 	paramSchema, ok := s.OpenApiSpec.Components.Schemas[tag]
 	if !ok {
 		var err error
-		paramSchema, err = generator.NewSchemaRefForValue(new(string), s.OpenApiSpec.Components.Schemas)
+		newInstance := reflect.New(fieldType).Elem().Interface()
+		paramSchema, err = generator.NewSchemaRefForValue(newInstance, s.OpenApiSpec.Components.Schemas)
 		if err != nil {
 			return err
 		}

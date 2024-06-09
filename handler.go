@@ -1,8 +1,8 @@
-package openapi
+package lite
 
 import (
 	"context"
-	"github.com/disco07/lite-fiber/codec"
+	"github.com/disco07/lite/codec"
 	"github.com/gofiber/fiber/v2"
 	"log/slog"
 	"net/http"

@@ -6,6 +6,12 @@ components:
             required: true
             schema:
                 $ref: '#/components/schemas/id'
+        name:
+            in: path
+            name: name
+            required: true
+            schema:
+                $ref: '#/components/schemas/name'
     schemas:
         CreateBody:
             properties:
@@ -30,6 +36,13 @@ components:
                 - id
                 - fist_name
             type: object
+        GetResponse:
+            properties:
+                message:
+                    type: string
+            required:
+                - message
+            type: object
         httpGenericError:
             properties:
                 id:
@@ -40,6 +53,10 @@ components:
                     type: integer
             type: object
         id:
+            maximum: 1.8446744073709552e+19
+            minimum: 0
+            type: integer
+        name:
             type: string
         string:
             items:
@@ -48,6 +65,9 @@ components:
     securitySchemes:
         Authorization:
             scheme: bearer
+            type: http
+        Basic:
+            scheme: basic
             type: http
 info:
     description: OpenAPI
@@ -183,6 +203,68 @@ paths:
                 - Authorization: []
             tags:
                 - example
+    /example/{name}:
+        get:
+            operationId: GET/example/:name
+            parameters:
+                - $ref: '#/components/parameters/name'
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetResponse'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Unauthorized
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Internal Server Error
+            security:
+                - Basic: []
 servers:
     - description: example server
       url: http://localhost:6000
