@@ -10,7 +10,7 @@ type Params struct {
 }
 
 type ReqHeader struct {
-	Authorization *string `lite:"header=Authorization,isauth"`
+	Authorization *string `lite:"header=Authorization,isauth,scheme=bearer"`
 }
 
 type CreateReq struct {

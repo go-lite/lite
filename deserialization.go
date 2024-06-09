@@ -76,19 +76,6 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 				return err
 			}
 		}
-
-		// Handle additional annotations (e.g., "isauth")
-		if strings.Contains(tagName, ",") {
-			tagDetails := strings.Split(tagName, ",")
-			tagName = tagDetails[0]
-			for _, detail := range tagDetails[1:] {
-				switch detail {
-				case "isauth":
-					// Additional handling for "isauth" annotation if needed
-					fmt.Println("Authentication token found:", valueStr)
-				}
-			}
-		}
 	}
 
 	return nil

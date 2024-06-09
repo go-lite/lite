@@ -1,10 +1,174 @@
-components: {}
+components:
+    parameters:
+        id:
+            in: path
+            name: id
+            required: true
+            schema:
+                $ref: '#/components/schemas/id'
+    schemas:
+        CreateResponse:
+            properties:
+                fist_name:
+                    type: string
+                id:
+                    maximum: 1.8446744073709552e+19
+                    minimum: 0
+                    type: integer
+                last_name:
+                    type: string
+            required:
+                - id
+                - fist_name
+            type: object
+        httpGenericError:
+            properties:
+                id:
+                    type: string
+                message:
+                    type: string
+                status:
+                    type: integer
+            type: object
+        id:
+            type: string
+        string:
+            items:
+                type: string
+            type: array
+    securitySchemes:
+        Authorization:
+            scheme: bearer
+            type: http
 info:
     description: OpenAPI
     title: OpenAPI
     version: 0.0.1
 openapi: 3.0.3
-paths: {}
+paths:
+    /example:
+        get:
+            operationId: GET/example
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/string'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Unauthorized
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Internal Server Error
+    /example/{id}:
+        post:
+            description: Create example
+            operationId: createExample
+            parameters:
+                - $ref: '#/components/parameters/id'
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateResponse'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Unauthorized
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Internal Server Error
+            security:
+                - Authorization: []
+            tags:
+                - example
 servers:
     - description: example server
       url: http://localhost:6000

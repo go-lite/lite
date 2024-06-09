@@ -1,9 +1,10 @@
 package openapi
 
 import (
+	"context"
 	"github.com/disco07/lite-fiber/codec"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
+	"log/slog"
 	"net/http"
 	"regexp"
 )
@@ -160,16 +161,16 @@ func registerRoute[ResponseBody, RequestBody any](
 		controller,
 	)
 
-	//status := getStatusCode(route.method)
-	//
-	////operation, err := registerOpenAPIOperation[ResponseBody, RequestBody](app, route.method, route.path, route.contentType, status)
-	////if err != nil {
-	////	slog.ErrorContext(context.Background(), "failed to register openapi operation", slog.Any("error", err))
-	////	panic(err)
-	////}
-	//
-	//route.operation = operation
-	route.operation = &openapi3.Operation{}
+	status := getStatusCode(route.method)
+
+	operation, err := registerOpenAPIOperation[ResponseBody, RequestBody](app, route.method, route.path, route.contentType, status)
+	if err != nil {
+		slog.ErrorContext(context.Background(), "failed to register openapi operation", slog.Any("error", err))
+		panic(err)
+	}
+
+	route.operation = operation
+
 	return route
 }
 
