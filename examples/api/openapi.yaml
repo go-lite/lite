@@ -7,6 +7,15 @@ components:
             schema:
                 $ref: '#/components/schemas/id'
     schemas:
+        CreateBody:
+            properties:
+                first_name:
+                    type: string
+                last_name:
+                    type: string
+            required:
+                - first_name
+            type: object
         CreateResponse:
             properties:
                 fist_name:
@@ -110,6 +119,11 @@ paths:
             operationId: createExample
             parameters:
                 - $ref: '#/components/parameters/id'
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateBody'
             responses:
                 "201":
                     content:

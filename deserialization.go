@@ -37,38 +37,30 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 			tag = field.Name
 		}
 
-		tagParts := strings.Split(tag, "=")
-		if len(tagParts) != 2 {
-			return fmt.Errorf("invalid tag format: %s", tag)
-		}
+		tagMap := parseTag(tag)
 
-		tagType, tagName := tagParts[0], tagParts[1]
-
-		if tagName == "body" {
+		if val, ok := tagMap["req"]; ok && val == "body" {
 			continue
 		}
 
 		var valueStr string
-		switch tagType {
-		case "path":
+		if pathKey, ok := tagMap["path"]; ok {
 			if params != nil {
-				paramsValue, ok := params[tagName]
+				paramsValue, ok := params[pathKey]
 				if !ok {
-					return fmt.Errorf("missing path parameter: %s", tagName)
+					return fmt.Errorf("missing path parameter: %s", pathKey)
 				}
 
 				valueStr = paramsValue
 			}
-		case "query":
-			if value := ctx.QueryArgs().Peek(tagName); len(value) > 0 {
+		} else if queryKey, ok := tagMap["query"]; ok {
+			if value := ctx.QueryArgs().Peek(queryKey); len(value) > 0 {
 				valueStr = string(value)
 			}
-		case "header":
-			if value := ctx.Request.Header.Peek(tagName); len(value) > 0 {
+		} else if headerKey, ok := tagMap["header"]; ok {
+			if value := ctx.Request.Header.Peek(headerKey); len(value) > 0 {
 				valueStr = string(value)
 			}
-		default:
-			continue
 		}
 
 		if valueStr != "" {
@@ -79,6 +71,21 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 	}
 
 	return nil
+}
+
+func parseTag(tag string) map[string]string {
+	tagParts := strings.Split(tag, ",")
+	tagMap := make(map[string]string)
+
+	for _, part := range tagParts {
+		if kv := strings.SplitN(part, "=", 2); len(kv) == 2 {
+			tagMap[kv[0]] = kv[1]
+		} else {
+			tagMap[kv[0]] = ""
+		}
+	}
+
+	return tagMap
 }
 
 func deserializeBody(ctx *fasthttp.RequestCtx, dst any) error {

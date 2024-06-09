@@ -131,6 +131,8 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			tag = field.Name
 		}
 
+		tagMap := parseTag(tag)
+
 		tagParts := strings.Split(tag, "=")
 
 		var parameter *openapi3.Parameter
@@ -140,38 +142,31 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 		ref := fmt.Sprintf("#/components/schemas/%s", tagName)
 
-		switch tagType {
-		case "path":
-			parameter = openapi3.NewPathParameter(tagName)
-			err := setParamSchema(s, operation, tagName, parameter, isRequired, ref)
+		if pathKey, ok := tagMap["path"]; ok {
+			parameter = openapi3.NewPathParameter(pathKey)
+			err := setParamSchema(s, operation, pathKey, parameter, isRequired, ref)
 			if err != nil {
 				return err
 			}
-		case "query":
-			parameter = openapi3.NewQueryParameter(tagName)
-			err := setParamSchema(s, operation, tagName, parameter, isRequired, ref)
+		} else if queryKey, ok := tagMap["query"]; ok {
+			parameter = openapi3.NewQueryParameter(queryKey)
+			err := setParamSchema(s, operation, queryKey, parameter, isRequired, ref)
 			if err != nil {
 				return err
 			}
-		case "header":
-			parameter = openapi3.NewHeaderParameter(tagName)
+		} else if headerKey, ok := tagMap["header"]; ok {
+			parameter = openapi3.NewHeaderParameter(headerKey)
 			parameter.Required = isRequired
 			var isAuth bool
-			if strings.Contains(tagName, ",") {
-				tagDetails := strings.Split(tagName, ",")
-				tagName = tagDetails[0]
 
-				for _, detail := range tagDetails[1:] {
-					switch detail {
-					case "isauth":
-						isAuth = true
-						tpe = "http"
-						name = "Authorization"
-						scheme = "bearer"
-					case "scheme":
-						scheme = detail
-					}
-				}
+			if _, isAuth = tagMap["isauth"]; isAuth {
+				tpe = "http"
+				name = "Authorization"
+				scheme = "bearer"
+			}
+
+			if valueScheme, ok := tagMap["scheme"]; ok {
+				scheme = valueScheme
 			}
 
 			if isAuth {
@@ -182,54 +177,53 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 					return err
 				}
 			}
-		case "cookie":
-			parameter = openapi3.NewCookieParameter(tagName)
-			err := setParamSchema(s, operation, tagName, parameter, isRequired, ref)
+		} else if cookieKey, ok := tagMap["cookie"]; ok {
+			parameter = openapi3.NewCookieParameter(cookieKey)
+			err := setParamSchema(s, operation, cookieKey, parameter, isRequired, ref)
 			if err != nil {
 				return err
 			}
-		case "req":
-			//if tagName == "body" {
-			//	bodySchema, ok := s.OpenApiSpec.Components.Schemas[field.Name]
-			//	if !ok {
-			//		var err error
-			//		tp := reflect.New(fieldGenericType).Elem().Interface()
-			//
-			//		bodySchema, err = generator.NewSchemaRefForValue(tp, s.OpenApiSpec.Components.Schemas)
-			//		if err != nil {
-			//			return operation, err
-			//		}
-			//
-			//		for k := 0; k < fieldGenericType.NumField(); k++ {
-			//			field := fieldGenericType.Field(k)
-			//			if field.Type.Kind() != reflect.Ptr {
-			//				fieldTag := field.Tag.Get(contentType.StructTag())
-			//				bodySchema.Value.Required = append(bodySchema.Value.Required, fieldTag)
-			//			}
-			//		}
-			//
-			//		s.OpenApiSpec.Components.Schemas[fieldGenericType.Name()] = bodySchema
-			//	}
-			//
-			//	requestBody := openapi3.NewRequestBody()
-			//	content := openapi3.NewContentWithSchemaRef(
-			//		openapi3.NewSchemaRef(fmt.Sprintf(
-			//			"#/components/schemas/%s",
-			//			fieldGenericType.Name(),
-			//		), &openapi3.Schema{}),
-			//		[]string{contentType.ContentType()},
-			//	)
-			//
-			//	requestBody.WithContent(content)
-			//
-			//	operation.RequestBody = &openapi3.RequestBodyRef{
-			//		Value: requestBody,
-			//	}
-			//
-			//	continue
-			//}
+		} else if reqKey, ok := tagMap["req"]; ok {
+			if reqKey == "body" {
+				bodySchema, ok := s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()]
+				if !ok {
+					var err error
+					tp := reflect.New(fieldType).Elem().Interface()
 
-		default:
+					bodySchema, err = generator.NewSchemaRefForValue(tp, s.OpenApiSpec.Components.Schemas)
+					if err != nil {
+						return err
+					}
+
+					for k := 0; k < fieldType.NumField(); k++ {
+						field := fieldType.Field(k)
+						if field.Type.Kind() != reflect.Ptr {
+							fieldTag := field.Tag.Get(getStructTag("application/json"))
+							bodySchema.Value.Required = append(bodySchema.Value.Required, fieldTag)
+						}
+					}
+
+					s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()] = bodySchema
+				}
+
+				requestBody := openapi3.NewRequestBody()
+				content := openapi3.NewContentWithSchemaRef(
+					openapi3.NewSchemaRef(fmt.Sprintf(
+						"#/components/schemas/%s",
+						fieldVal.Type().Name(),
+					), &openapi3.Schema{}),
+					[]string{"application/json"},
+				)
+
+				requestBody.WithContent(content)
+
+				operation.RequestBody = &openapi3.RequestBodyRef{
+					Value: requestBody,
+				}
+
+				continue
+			}
+		} else {
 			return fmt.Errorf("unknown parameter type: %s", tagType)
 		}
 	}
