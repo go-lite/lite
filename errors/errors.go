@@ -1,8 +1,7 @@
-package lite
+package errors
 
 import (
 	"github.com/disco07/lite-fiber/codec"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/google/uuid"
 	"net/http"
 )
@@ -63,37 +62,69 @@ func (e HTTPError) tag() string {
 	}
 }
 
-// Set error messages
 func (e HTTPError) SetMessage(message string) HTTPError {
 	e.Message = message
 
 	return e
 }
 
-var defaultErrorResponses = map[int]HTTPError{
+var DefaultErrorResponses = map[int]HTTPError{
 	http.StatusBadRequest:          newErrorResponse(uuid.NewString(), http.StatusBadRequest, "Bad Request"),
 	http.StatusUnauthorized:        newErrorResponse(uuid.NewString(), http.StatusUnauthorized, "Unauthorized"),
 	http.StatusNotFound:            newErrorResponse(uuid.NewString(), http.StatusNotFound, "Not Found"),
 	http.StatusInternalServerError: newErrorResponse(uuid.NewString(), http.StatusInternalServerError, "Internal Server Error"),
 }
 
-var defaultErrorContentTypeResponses = map[string]codec.Encoder[HTTPError]{
+var DefaultErrorContentTypeResponses = map[string]codec.Encoder[HTTPError]{
 	"application/json":    codec.AsJSON[HTTPError]{},
 	"application/xml":     codec.AsXML[HTTPError]{},
 	"multipart/form-data": codec.AsMultiPart[HTTPError]{},
 }
 
-func newOpenAPIErrorResponse(err HTTPError) *openapi3.Response {
-	response := openapi3.NewResponse().WithDescription(err.Description())
-
-	return response
-}
-
-func newOpenAPIErrorResponses(errs ...HTTPError) map[string]*openapi3.Response {
-	responses := make(map[string]*openapi3.Response, len(errs))
-	for _, err := range errs {
-		responses[err.ID] = newOpenAPIErrorResponse(err)
+func NewInternalServerError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusInternalServerError, message[0])
 	}
 
-	return responses
+	return DefaultErrorResponses[http.StatusInternalServerError]
+}
+
+func NewBadRequestError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusBadRequest, message[0])
+	}
+
+	return DefaultErrorResponses[http.StatusBadRequest]
+}
+
+func NewNotFoundError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusNotFound, message[0])
+	}
+
+	return DefaultErrorResponses[http.StatusNotFound]
+}
+
+func NewUnauthorizedError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusUnauthorized, message[0])
+	}
+
+	return DefaultErrorResponses[http.StatusUnauthorized]
+}
+
+func NewConflictError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusConflict, message[0])
+	}
+
+	return DefaultErrorResponses[http.StatusConflict]
+}
+
+func NewError(status int, message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), status, message[0])
+	}
+
+	return DefaultErrorResponses[status]
 }

@@ -2,142 +2,133 @@ package lite
 
 import (
 	"context"
-	"github.com/disco07/lite/codec"
+	"github.com/disco07/lite/errors"
 	"github.com/gofiber/fiber/v2"
 	"log/slog"
 	"net/http"
 	"regexp"
 )
 
-func fiberHandler[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func fiberHandler[ResponseBody, RequestBody any](
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	path string,
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var encoder E
-
-		contextWithBody := &ContextWithRequest[RequestBody]{Ctx: c, path: path}
+		contextWithBody := &ContextWithRequest[RequestBody]{ctx: c, path: path}
 		response, err := controller(contextWithBody)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 
-			return c.JSON(defaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
+			return c.JSON(errors.DefaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
 		}
 
 		c.Status(getStatusCode(c.Method()))
 
-		return encoder.Encode(c, response)
+		return serializeResponse(c.Context(), &response)
 	}
 }
 
-func Get[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Get[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodGet, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodGet, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }
 
-func Post[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Post[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPost, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPost, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }
 
-func Put[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Put[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPut, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPut, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }
 
-func Delete[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Delete[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodDelete, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodDelete, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }
 
-func Patch[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Patch[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPatch, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPatch, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }
 
-func Head[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Head[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodHead, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodHead, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }
 
-func Options[ResponseBody, RequestBody any, E codec.Encoder[ResponseBody]](
+func Options[ResponseBody, RequestBody any](
 	app *App,
 	path string,
 	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, RequestBody] {
-	var encoder E
 
 	return registerRoute[ResponseBody, RequestBody](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodOptions, contentType: encoder.ContentType()},
-		fiberHandler[ResponseBody, RequestBody, E](controller, path),
+		Route[ResponseBody, RequestBody]{path: path, method: http.MethodOptions, contentType: "application/json"},
+		fiberHandler[ResponseBody, RequestBody](controller, path),
 		middleware...,
 	)
 }

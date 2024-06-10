@@ -6,14 +6,13 @@ import (
 	"os"
 
 	"github.com/disco07/lite"
-	"github.com/disco07/lite/codec"
 	"github.com/disco07/lite/examples/parameters"
 	"github.com/disco07/lite/examples/returns"
 )
 
 // Define example handler
 func getHandler(c *lite.ContextWithRequest[parameters.GetReq]) (returns.GetResponse, error) {
-	request, err := c.Request()
+	request, err := c.Requests()
 	if err != nil {
 		return returns.GetResponse{}, err
 	}
@@ -28,7 +27,7 @@ func getHandler(c *lite.ContextWithRequest[parameters.GetReq]) (returns.GetRespo
 }
 
 func postHandler(c *lite.ContextWithRequest[parameters.CreateReq]) (returns.CreateResponse, error) {
-	body, err := c.Request()
+	body, err := c.Requests()
 	if err != nil {
 		return returns.CreateResponse{}, err
 	}
@@ -54,18 +53,14 @@ func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (return
 func main() {
 	liteApp := lite.NewApp()
 
-	lite.Get[returns.GetResponse, parameters.GetReq, codec.AsJSON[returns.GetResponse]](liteApp, "/example/:name", getHandler)
+	lite.Get(liteApp, "/example/:name", getHandler)
 
-	lite.Post[
-		returns.CreateResponse,
-		parameters.CreateReq,
-		codec.AsJSON[returns.CreateResponse],
-	](liteApp, "/example/:id", postHandler).
+	lite.Post(liteApp, "/example/:id", postHandler).
 		OperationID("createExample").
 		Description("Create example").
 		AddTags("example")
 
-	lite.Get[returns.GetArrayReturnsResponse, parameters.GetArrayReq, codec.AsJSON[returns.GetArrayReturnsResponse]](liteApp, "/example", getArrayHandler)
+	lite.Get(liteApp, "/example", getArrayHandler)
 
 	liteApp.AddServer("http://localhost:6000", "example server")
 

@@ -2,6 +2,7 @@ package lite
 
 import (
 	"fmt"
+	"github.com/disco07/lite/errors"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/invopop/yaml"
@@ -48,6 +49,7 @@ type App struct {
 
 	OpenApiSpec   openapi3.T
 	OpenAPIConfig OpenAPIConfig
+
 	// OpenAPI documentation tags used for logical groupings of operations
 	// These tags will be inherited by child Routes/Groups
 	tags []string
@@ -129,11 +131,11 @@ func (s *App) Version(version string) *App {
 func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) {
 	var responses = make(map[int]*openapi3.Response)
 
-	for _, errResponse := range defaultErrorResponses {
+	for _, errResponse := range errors.DefaultErrorResponses {
 		responseSchema, ok := s.OpenApiSpec.Components.Schemas["httpGenericError"]
 		if !ok {
 			var err error
-			responseSchema, err = generator.NewSchemaRefForValue(new(HTTPError), s.OpenApiSpec.Components.Schemas)
+			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenApiSpec.Components.Schemas)
 			if err != nil {
 				return nil, err
 			}
@@ -143,7 +145,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		response := openapi3.NewResponse().WithDescription(errResponse.Description())
 
 		var consume []string
-		for contentType, _ := range defaultErrorContentTypeResponses {
+		for contentType, _ := range errors.DefaultErrorContentTypeResponses {
 			consume = append(consume, contentType)
 		}
 
@@ -162,4 +164,24 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 	}
 
 	return responses, nil
+}
+
+func (s *App) Listen(address string) error {
+	if !s.OpenAPIConfig.DisableLocalSave {
+		//yamlData, err := s.SaveOpenAPISpec()
+		//if err != nil {
+		//	return err
+		//}
+		//
+		//err = s.SaveOpenAPISpecToFile(yamlData)
+		//if err != nil {
+		//	return err
+		//}
+	}
+
+	//if !s.OpenAPIConfig.DisableSwagger {
+	//	s.Get(s.OpenAPIConfig.SwaggerUrl, s.OpenAPIConfig.UIHandler(s.OpenAPIConfig.YamlUrl))
+	//}
+
+	return s.App.Listen(address)
 }
