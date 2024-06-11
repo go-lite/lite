@@ -214,13 +214,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 						return err
 					}
 
-					for k := 0; k < fieldType.NumField(); k++ {
-						field := fieldType.Field(k)
-						if field.Type.Kind() != reflect.Ptr {
-							fieldTag := field.Tag.Get(getStructTag("application/json"))
-							bodySchema.Value.Required = append(bodySchema.Value.Required, fieldTag)
-						}
-					}
+					getRequiredValue("application/json", fieldType, bodySchema.Value)
 
 					s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()] = bodySchema
 				}
