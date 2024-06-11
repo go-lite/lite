@@ -44,8 +44,23 @@ func postHandler(c *lite.ContextWithRequest[parameters.CreateReq]) (returns.Crea
 }
 
 func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (returns.GetArrayReturnsResponse, error) {
-	res := make([]string, 0)
-	res = append(res, "Hello World!")
+	res := make([]returns.Ret, 0)
+
+	value := "value"
+	res = append(res, returns.Ret{
+		Message: "Hello World!",
+		Embed: returns.Embed{
+			Key:        "key",
+			ValueEmbed: &value,
+		},
+	},
+		returns.Ret{
+			Message: "Hello World 2!",
+			Embed: returns.Embed{
+				Key: "key2",
+			},
+		},
+	)
 
 	return res, nil
 }

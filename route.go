@@ -42,9 +42,3 @@ func (r Route[ResponseBody, Request]) AddTags(tags ...string) Route[ResponseBody
 
 	return r
 }
-
-func (r Route[ResponseBody, Request]) SetContentType(contentType string) Route[ResponseBody, Request] {
-	r.contentType = contentType
-
-	return r
-}

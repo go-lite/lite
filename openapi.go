@@ -46,15 +46,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 
 		fieldGenericType := reflect.TypeOf(*new(ResponseBody))
 
-		if fieldGenericType.Kind() == reflect.Struct {
-			for k := 0; k < fieldGenericType.NumField(); k++ {
-				field := fieldGenericType.Field(k)
-				if field.Type.Kind() != reflect.Ptr {
-					fieldTag := field.Tag.Get(getStructTag(resContentType))
-					responseSchema.Value.Required = append(responseSchema.Value.Required, fieldTag)
-				}
-			}
-		}
+		getRequiredValue(resContentType, fieldGenericType, responseSchema.Value)
 
 		s.OpenApiSpec.Components.Schemas[tag] = responseSchema
 	}
@@ -90,6 +82,36 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	s.OpenApiSpec.AddOperation(routePath, method, operation)
 
 	return operation, nil
+}
+
+func getRequiredValue(contentType string, fieldType reflect.Type, schema *openapi3.Schema, fields ...reflect.StructField) bool {
+	switch fieldType.Kind() {
+	case reflect.Struct:
+		for k := 0; k < fieldType.NumField(); k++ {
+			field := fieldType.Field(k)
+			fieldName := field.Name
+			if field.Tag.Get(getStructTag(contentType)) != "" {
+				fieldName = field.Tag.Get(getStructTag(contentType))
+			}
+
+			ok := getRequiredValue(contentType, field.Type, schema.Properties[fieldName].Value, field)
+			if ok {
+				schema.Required = append(schema.Required, fieldName)
+			}
+		}
+
+		return true
+	case reflect.Array, reflect.Slice:
+		getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value, fields...)
+	case reflect.Ptr:
+		return false
+	case reflect.Func, reflect.Map, reflect.Chan, reflect.UnsafePointer:
+		panic("not implemented")
+	default:
+		return true
+	}
+
+	return false
 }
 
 func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error {

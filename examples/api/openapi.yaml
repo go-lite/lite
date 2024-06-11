@@ -43,6 +43,40 @@ components:
             required:
                 - message
             type: object
+        Ret:
+            items:
+                properties:
+                    embed:
+                        properties:
+                            key:
+                                type: string
+                            other_embed:
+                                properties:
+                                    key:
+                                        type: string
+                                    value:
+                                        type: string
+                                required:
+                                    - key
+                                    - value
+                                type: object
+                            others:
+                                items:
+                                    type: string
+                                type: array
+                            value:
+                                type: string
+                        required:
+                            - key
+                            - other_embed
+                        type: object
+                    message:
+                        type: string
+                required:
+                    - message
+                    - embed
+                type: object
+            type: array
         httpGenericError:
             properties:
                 id:
@@ -58,10 +92,6 @@ components:
             type: integer
         name:
             type: string
-        string:
-            items:
-                type: string
-            type: array
     securitySchemes:
         Authorization:
             scheme: bearer
@@ -83,7 +113,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/string'
+                                $ref: '#/components/schemas/Ret'
                     description: OK
                 "400":
                     content:
