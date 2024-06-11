@@ -9,13 +9,33 @@ import (
 	"regexp"
 )
 
-func fiberHandler[ResponseBody, RequestBody any](
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+func newLiteContext[Request any, Contexted Context[Request]](ctx ContextNoRequest) Contexted {
+	var c Contexted
+
+	switch any(c).(type) {
+	case ContextNoRequest:
+		return any(ctx).(Contexted)
+	case *ContextNoRequest:
+		return any(&ctx).(Contexted)
+	case *ContextWithRequest[Request]:
+		return any(&ContextWithRequest[Request]{
+			ContextNoRequest: ctx,
+		}).(Contexted)
+	default:
+		panic("unknown type")
+	}
+}
+
+func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
+	controller func(c Contexted) (ResponseBody, error),
 	path string,
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		contextWithBody := &ContextWithRequest[RequestBody]{ctx: c, path: path}
-		response, err := controller(contextWithBody)
+		c.Context().SetContentType("application/json")
+
+		ctx := newLiteContext[Request, Contexted](ContextNoRequest{ctx: c, path: path})
+
+		response, err := controller(ctx)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 
@@ -28,117 +48,117 @@ func fiberHandler[ResponseBody, RequestBody any](
 	}
 }
 
-func Get[ResponseBody, RequestBody any](
+func Get[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodGet, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodGet, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func Post[ResponseBody, RequestBody any](
+func Post[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPost, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodPost, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func Put[ResponseBody, RequestBody any](
+func Put[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPut, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodPut, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func Delete[ResponseBody, RequestBody any](
+func Delete[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodDelete, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodDelete, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func Patch[ResponseBody, RequestBody any](
+func Patch[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodPatch, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodPatch, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func Head[ResponseBody, RequestBody any](
+func Head[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodHead, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodHead, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func Options[ResponseBody, RequestBody any](
+func Options[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
-	controller func(*ContextWithRequest[RequestBody]) (ResponseBody, error),
+	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 
-	return registerRoute[ResponseBody, RequestBody](
+	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, RequestBody]{path: path, method: http.MethodOptions, contentType: "application/json"},
-		fiberHandler[ResponseBody, RequestBody](controller, path),
+		Route[ResponseBody, Request]{path: path, method: http.MethodOptions, contentType: "application/json"},
+		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
 }
 
-func registerRoute[ResponseBody, RequestBody any](
+func registerRoute[ResponseBody, Request any](
 	app *App,
-	route Route[ResponseBody, RequestBody],
+	route Route[ResponseBody, Request],
 	controller fiber.Handler,
 	middleware ...fiber.Handler,
-) Route[ResponseBody, RequestBody] {
+) Route[ResponseBody, Request] {
 	if len(middleware) > 0 {
 		app.Add(route.method,
 			route.path,
@@ -154,7 +174,7 @@ func registerRoute[ResponseBody, RequestBody any](
 
 	status := getStatusCode(route.method)
 
-	operation, err := registerOpenAPIOperation[ResponseBody, RequestBody](app, route.method, route.path, route.contentType, status)
+	operation, err := registerOpenAPIOperation[ResponseBody, Request](app, route.method, route.path, route.contentType, status)
 	if err != nil {
 		slog.ErrorContext(context.Background(), "failed to register openapi operation", slog.Any("error", err))
 		panic(err)

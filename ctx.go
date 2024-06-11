@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/disco07/lite-fiber/lite"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
 	"io"
@@ -19,12 +18,11 @@ type Context[Request any] interface {
 	AcceptsCharsets(offers ...string) string
 	AcceptsEncodings(offers ...string) string
 	AcceptsLanguages(offers ...string) string
-	App() *lite.App
+	App() *App
 	Append(field string, values ...string)
 	Attachment(filename ...string)
 	BaseURL() string
 	BodyRaw() []byte
-	tryDecodeBodyInOrder(originalBody *[]byte, encodings []string) ([]byte, uint8, error)
 	Body() []byte
 	BodyParser(out interface{}) error
 	ClearCookie(key ...string)
@@ -74,7 +72,6 @@ type Context[Request any] interface {
 	QueryFloat(key string, defaultValue ...float64) float64
 	QueryParser(out interface{}) error
 	ReqHeaderParser(out interface{}) error
-	parseToStruct(aliasTag string, out interface{}, data map[string][]string) error
 	Range(size int) (fiber.Range, error)
 	Redirect(location string, status ...int) error
 	Bind(vars fiber.Map) error
@@ -94,9 +91,9 @@ type Context[Request any] interface {
 	Set(key string, val string)
 	Subdomains(offset ...int) []string
 	Stale() bool
-	Status(status int) *lite.Context[Request]
+	Status(status int) Context[Request]
 	String() string
-	Type(extension string, charset ...string) *lite.Context[Request]
+	Type(extension string, charset ...string) Context[Request]
 	Vary(fields ...string)
 	Write(p []byte) (int, error)
 	Writef(f string, a ...interface{}) (int, error)
@@ -106,14 +103,50 @@ type Context[Request any] interface {
 	IsFromLocal() bool
 }
 
-type ContextWithRequest[Request any] struct {
+var (
+	_ Context[string] = &ContextWithRequest[string]{}
+	_ Context[any]    = &ContextNoRequest{}
+)
+
+type ContextNoRequest struct {
 	ctx  *fiber.Ctx
-	app  *lite.App
+	app  *App
 	path string
 }
 
-func (c *ContextWithRequest[Request]) Context() context.Context {
+type ContextWithRequest[Request any] struct {
+	ContextNoRequest
+}
+
+func (c *ContextNoRequest) Context() context.Context {
 	return c.ctx.UserContext()
+}
+
+func (c *ContextNoRequest) Requests() (any, error) {
+	var req any
+
+	typeOfReq := reflect.TypeOf(&req).Elem()
+
+	reqContext := c.RequestContext()
+
+	params := extractParams(c.path, string(reqContext.Path()))
+
+	switch typeOfReq.Kind() {
+	case reflect.Struct:
+		err := deserializeParams(reqContext, &req, params)
+		if err != nil {
+			return req, err
+		}
+
+		err = deserializeBody(reqContext, &req)
+		if err != nil {
+			return req, err
+		}
+	default:
+		return req, errors.New("unsupported type")
+	}
+
+	return req, nil
 }
 
 func (c *ContextWithRequest[Request]) Requests() (Request, error) {
@@ -143,450 +176,367 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 	return req, nil
 }
 
-func (c *ContextWithRequest[Request]) Accepts(offers ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Accepts(offers ...string) string {
+	return c.ctx.Accepts(offers...)
 }
 
-func (c *ContextWithRequest[Request]) AcceptsCharsets(offers ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) AcceptsCharsets(offers ...string) string {
+	return c.ctx.AcceptsCharsets(offers...)
 }
 
-func (c *ContextWithRequest[Request]) AcceptsEncodings(offers ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) AcceptsEncodings(offers ...string) string {
+	return c.ctx.AcceptsEncodings(offers...)
 }
 
-func (c *ContextWithRequest[Request]) AcceptsLanguages(offers ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) AcceptsLanguages(offers ...string) string {
+	return c.ctx.AcceptsLanguages(offers...)
 }
 
-func (c *ContextWithRequest[Request]) App() *lite.App {
+func (c *ContextNoRequest) App() *App {
 	return c.app
 }
 
-func (c *ContextWithRequest[Request]) Append(field string, values ...string) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Append(field string, values ...string) {
+	c.ctx.Append(field, values...)
 }
 
-func (c *ContextWithRequest[Request]) Attachment(filename ...string) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Attachment(filename ...string) {
+	c.ctx.Attachment(filename...)
 }
 
-func (c *ContextWithRequest[Request]) BaseURL() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) BaseURL() string {
+	return c.ctx.BaseURL()
 }
 
-func (c *ContextWithRequest[Request]) BodyRaw() []byte {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) BodyRaw() []byte {
+	return c.ctx.Request().Body()
 }
 
-func (c *ContextWithRequest[Request]) tryDecodeBodyInOrder(originalBody *[]byte, encodings []string) ([]byte, uint8, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Body() []byte {
+	return c.ctx.Body()
 }
 
-func (c *ContextWithRequest[Request]) Body() []byte {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) BodyParser(out interface{}) error {
+	return c.ctx.BodyParser(out)
 }
 
-func (c *ContextWithRequest[Request]) BodyParser(out interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) ClearCookie(key ...string) {
+	c.ctx.ClearCookie(key...)
 }
 
-func (c *ContextWithRequest[Request]) ClearCookie(key ...string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *ContextWithRequest[Request]) RequestContext() *fasthttp.RequestCtx {
+func (c *ContextNoRequest) RequestContext() *fasthttp.RequestCtx {
 	return c.ctx.Context()
 }
 
-func (c *ContextWithRequest[Request]) SetUserContext(ctx context.Context) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SetUserContext(ctx context.Context) {
+	c.ctx.SetUserContext(ctx)
 }
 
-func (c *ContextWithRequest[Request]) Cookie(cookie *fiber.Cookie) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Cookie(cookie *fiber.Cookie) {
+	c.ctx.Cookie(cookie)
 }
 
-func (c *ContextWithRequest[Request]) Cookies(key string, defaultValue ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Cookies(key string, defaultValue ...string) string {
+	return c.ctx.Cookies(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) CookieParser(out interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) CookieParser(out interface{}) error {
+	return c.ctx.CookieParser(out)
 }
 
-func (c *ContextWithRequest[Request]) Download(file string, filename ...string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Download(file string, filename ...string) error {
+	return c.ctx.Download(file, filename...)
 }
 
-func (c *ContextWithRequest[Request]) Request() *fasthttp.Request {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Request() *fasthttp.Request {
+	return c.ctx.Request()
 }
 
-func (c *ContextWithRequest[Request]) Response() *fasthttp.Response {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Response() *fasthttp.Response {
+	return c.ctx.Response()
 }
 
-func (c *ContextWithRequest[Request]) Format(body interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Format(body interface{}) error {
+	return c.ctx.Format(body)
 }
 
-func (c *ContextWithRequest[Request]) FormFile(key string) (*multipart.FileHeader, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) FormFile(key string) (*multipart.FileHeader, error) {
+	return c.ctx.FormFile(key)
 }
 
-func (c *ContextWithRequest[Request]) FormValue(key string, defaultValue ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) FormValue(key string, defaultValue ...string) string {
+	return c.ctx.FormValue(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) Fresh() bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Fresh() bool {
+	return c.ctx.Fresh()
 }
 
-func (c *ContextWithRequest[Request]) Get(key string, defaultValue ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Get(key string, defaultValue ...string) string {
+	return c.ctx.Get(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) GetRespHeader(key string, defaultValue ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) GetRespHeader(key string, defaultValue ...string) string {
+	return c.ctx.GetRespHeader(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) GetReqHeaders() map[string][]string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) GetReqHeaders() map[string][]string {
+	return c.ctx.GetReqHeaders()
 }
 
-func (c *ContextWithRequest[Request]) GetRespHeaders() map[string][]string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) GetRespHeaders() map[string][]string {
+	return c.ctx.GetRespHeaders()
 }
 
-func (c *ContextWithRequest[Request]) Hostname() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Hostname() string {
+	return c.ctx.Hostname()
 }
 
-func (c *ContextWithRequest[Request]) Port() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Port() string {
+	return c.ctx.Port()
 }
 
-func (c *ContextWithRequest[Request]) IP() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) IP() string {
+	return c.ctx.IP()
 }
 
-func (c *ContextWithRequest[Request]) IPs() []string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) IPs() []string {
+	return c.ctx.IPs()
 }
 
-func (c *ContextWithRequest[Request]) Is(extension string) bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Is(extension string) bool {
+	return c.ctx.Is(extension)
 }
 
-func (c *ContextWithRequest[Request]) JSON(data interface{}, ctype ...string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) JSON(data interface{}, ctype ...string) error {
+	return c.ctx.JSON(data, ctype...)
 }
 
-func (c *ContextWithRequest[Request]) JSONP(data interface{}, callback ...string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) JSONP(data interface{}, callback ...string) error {
+	return c.ctx.JSONP(data, callback...)
 }
 
-func (c *ContextWithRequest[Request]) XML(data interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) XML(data interface{}) error {
+	return c.ctx.XML(data)
 }
 
-func (c *ContextWithRequest[Request]) Links(link ...string) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Links(link ...string) {
+	c.ctx.Links(link...)
 }
 
-func (c *ContextWithRequest[Request]) Locals(key interface{}, value ...interface{}) interface{} {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Locals(key interface{}, value ...interface{}) interface{} {
+	return c.ctx.Locals(key, value...)
 }
 
-func (c *ContextWithRequest[Request]) Location(path string) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Location(path string) {
+	c.ctx.Location(path)
 }
 
-func (c *ContextWithRequest[Request]) Method(override ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Method(override ...string) string {
+	return c.ctx.Method(override...)
 }
 
-func (c *ContextWithRequest[Request]) MultipartForm() (*multipart.Form, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) MultipartForm() (*multipart.Form, error) {
+	return c.ctx.MultipartForm()
 }
 
-func (c *ContextWithRequest[Request]) ClientHelloInfo() *tls.ClientHelloInfo {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) ClientHelloInfo() *tls.ClientHelloInfo {
+	return c.ctx.ClientHelloInfo()
 }
 
-func (c *ContextWithRequest[Request]) Next() error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Next() error {
+	return c.ctx.Next()
 }
 
-func (c *ContextWithRequest[Request]) RestartRouting() error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) RestartRouting() error {
+	return c.ctx.RestartRouting()
 }
 
-func (c *ContextWithRequest[Request]) OriginalURL() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) OriginalURL() string {
+	return c.ctx.OriginalURL()
 }
 
-func (c *ContextWithRequest[Request]) Params(key string, defaultValue ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Params(key string, defaultValue ...string) string {
+	return c.ctx.Params(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) AllParams() map[string]string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) AllParams() map[string]string {
+	return c.ctx.AllParams()
 }
 
-func (c *ContextWithRequest[Request]) ParamsParser(out interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) ParamsParser(out interface{}) error {
+	return c.ctx.ParamsParser(out)
 }
 
-func (c *ContextWithRequest[Request]) ParamsInt(key string, defaultValue ...int) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) ParamsInt(key string, defaultValue ...int) (int, error) {
+	return c.ctx.ParamsInt(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) Path(override ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Path(override ...string) string {
+	return c.ctx.Path(override...)
 }
 
-func (c *ContextWithRequest[Request]) Protocol() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Protocol() string {
+	return c.ctx.Protocol()
 }
 
-func (c *ContextWithRequest[Request]) Query(key string, defaultValue ...string) string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Query(key string, defaultValue ...string) string {
+	return c.ctx.Query(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) Queries() map[string]string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Queries() map[string]string {
+	return c.ctx.Queries()
 }
 
-func (c *ContextWithRequest[Request]) QueryInt(key string, defaultValue ...int) int {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) QueryInt(key string, defaultValue ...int) int {
+	return c.ctx.QueryInt(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) QueryBool(key string, defaultValue ...bool) bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) QueryBool(key string, defaultValue ...bool) bool {
+	return c.ctx.QueryBool(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) QueryFloat(key string, defaultValue ...float64) float64 {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) QueryFloat(key string, defaultValue ...float64) float64 {
+	return c.ctx.QueryFloat(key, defaultValue...)
 }
 
-func (c *ContextWithRequest[Request]) QueryParser(out interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) QueryParser(out interface{}) error {
+	return c.ctx.QueryParser(out)
 }
 
-func (c *ContextWithRequest[Request]) ReqHeaderParser(out interface{}) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) ReqHeaderParser(out interface{}) error {
+	return c.ctx.ReqHeaderParser(out)
 }
 
-func (c *ContextWithRequest[Request]) parseToStruct(aliasTag string, out interface{}, data map[string][]string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Range(size int) (fiber.Range, error) {
+	return c.ctx.Range(size)
 }
 
-func (c *ContextWithRequest[Request]) Range(size int) (fiber.Range, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Redirect(location string, status ...int) error {
+	return c.ctx.Redirect(location, status...)
 }
 
-func (c *ContextWithRequest[Request]) Redirect(location string, status ...int) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Bind(vars fiber.Map) error {
+	return c.ctx.Bind(vars)
 }
 
-func (c *ContextWithRequest[Request]) Bind(vars fiber.Map) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) GetRouteURL(routeName string, params fiber.Map) (string, error) {
+	return c.ctx.GetRouteURL(routeName, params)
 }
 
-func (c *ContextWithRequest[Request]) GetRouteURL(routeName string, params fiber.Map) (string, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) RedirectToRoute(routeName string, params fiber.Map, status ...int) error {
+	return c.ctx.RedirectToRoute(routeName, params, status...)
 }
 
-func (c *ContextWithRequest[Request]) RedirectToRoute(routeName string, params fiber.Map, status ...int) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) RedirectBack(fallback string, status ...int) error {
+	return c.ctx.RedirectBack(fallback, status...)
 }
 
-func (c *ContextWithRequest[Request]) RedirectBack(fallback string, status ...int) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Render(name string, bind interface{}, layouts ...string) error {
+	return c.ctx.Render(name, bind, layouts...)
 }
 
-func (c *ContextWithRequest[Request]) Render(name string, bind interface{}, layouts ...string) error {
+func (c *ContextNoRequest) Route() *fiber.Route {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c *ContextWithRequest[Request]) renderExtensions(bind interface{}) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SaveFile(fileheader *multipart.FileHeader, path string) error {
+	return c.ctx.SaveFile(fileheader, path)
 }
 
-func (c *ContextWithRequest[Request]) Route() *fiber.Route {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error {
+	return c.ctx.SaveFileToStorage(fileheader, path, storage)
 }
 
-func (c *ContextWithRequest[Request]) SaveFile(fileheader *multipart.FileHeader, path string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Secure() bool {
+	return c.ctx.Secure()
 }
 
-func (c *ContextWithRequest[Request]) SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Send(body []byte) error {
+	return c.ctx.Send(body)
 }
 
-func (c *ContextWithRequest[Request]) Secure() bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SendFile(file string, compress ...bool) error {
+	return c.ctx.SendFile(file, compress...)
 }
 
-func (c *ContextWithRequest[Request]) Send(body []byte) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SendStatus(status int) error {
+	return c.ctx.SendStatus(status)
 }
 
-func (c *ContextWithRequest[Request]) SendFile(file string, compress ...bool) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SendString(body string) error {
+	return c.ctx.SendString(body)
 }
 
-func (c *ContextWithRequest[Request]) SendStatus(status int) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) SendStream(stream io.Reader, size ...int) error {
+	return c.ctx.SendStream(stream, size...)
 }
 
-func (c *ContextWithRequest[Request]) SendString(body string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Set(key string, val string) {
+	c.ctx.Set(key, val)
 }
 
-func (c *ContextWithRequest[Request]) SendStream(stream io.Reader, size ...int) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Subdomains(offset ...int) []string {
+	return c.ctx.Subdomains(offset...)
 }
 
-func (c *ContextWithRequest[Request]) Set(key string, val string) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Stale() bool {
+	return c.ctx.Stale()
 }
 
-func (c *ContextWithRequest[Request]) Subdomains(offset ...int) []string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Status(status int) Context[any] {
+	c.ctx = c.ctx.Status(status)
+
+	return c
 }
 
-func (c *ContextWithRequest[Request]) Stale() bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextWithRequest[Request]) Status(status int) Context[Request] {
+	c.ctx = c.ctx.Status(status)
+
+	return c
 }
 
-func (c *ContextWithRequest[Request]) Status(status int) *lite.Context[Request] {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) String() string {
+	return c.ctx.String()
 }
 
-func (c *ContextWithRequest[Request]) String() string {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Type(extension string, charset ...string) Context[any] {
+	c.ctx = c.ctx.Type(extension, charset...)
+
+	return c
 }
 
-func (c *ContextWithRequest[Request]) Type(extension string, charset ...string) *lite.Context[Request] {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextWithRequest[Request]) Type(extension string, charset ...string) Context[Request] {
+	c.ctx = c.ctx.Type(extension, charset...)
+
+	return c
 }
 
-func (c *ContextWithRequest[Request]) Vary(fields ...string) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Vary(fields ...string) {
+	c.ctx.Vary(fields...)
 }
 
-func (c *ContextWithRequest[Request]) Write(p []byte) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Write(p []byte) (int, error) {
+	return c.ctx.Write(p)
 }
 
-func (c *ContextWithRequest[Request]) Writef(f string, a ...interface{}) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) Writef(f string, a ...interface{}) (int, error) {
+	return c.ctx.Writef(f, a...)
 }
 
-func (c *ContextWithRequest[Request]) WriteString(s string) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) WriteString(s string) (int, error) {
+	return c.ctx.WriteString(s)
 }
 
-func (c *ContextWithRequest[Request]) XHR() bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) XHR() bool {
+	return c.ctx.XHR()
 }
 
-func (c *ContextWithRequest[Request]) IsProxyTrusted() bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) IsProxyTrusted() bool {
+	return c.ctx.IsProxyTrusted()
 }
 
-func (c *ContextWithRequest[Request]) IsFromLocal() bool {
-	//TODO implement me
-	panic("implement me")
+func (c *ContextNoRequest) IsFromLocal() bool {
+	return c.ctx.IsFromLocal()
 }

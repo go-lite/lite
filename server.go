@@ -6,6 +6,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/invopop/yaml"
+	"github.com/valyala/fasthttp"
 )
 
 type OpenAPIConfig struct {
@@ -49,6 +50,8 @@ type App struct {
 
 	OpenApiSpec   openapi3.T
 	OpenAPIConfig OpenAPIConfig
+
+	Serializer func(ctx *fasthttp.RequestCtx, response any) error
 
 	// OpenAPI documentation tags used for logical groupings of operations
 	// These tags will be inherited by child Routes/Groups
@@ -145,7 +148,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		response := openapi3.NewResponse().WithDescription(errResponse.Description())
 
 		var consume []string
-		for contentType, _ := range errors.DefaultErrorContentTypeResponses {
+		for contentType := range errors.DefaultErrorContentTypeResponses {
 			consume = append(consume, contentType)
 		}
 
