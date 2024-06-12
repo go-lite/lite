@@ -84,7 +84,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	return operation, nil
 }
 
-func getRequiredValue(contentType string, fieldType reflect.Type, schema *openapi3.Schema, fields ...reflect.StructField) bool {
+func getRequiredValue(contentType string, fieldType reflect.Type, schema *openapi3.Schema) bool {
 	switch fieldType.Kind() {
 	case reflect.Struct:
 		for k := 0; k < fieldType.NumField(); k++ {
@@ -94,7 +94,7 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 				fieldName = field.Tag.Get(getStructTag(contentType))
 			}
 
-			ok := getRequiredValue(contentType, field.Type, schema.Properties[fieldName].Value, field)
+			ok := getRequiredValue(contentType, field.Type, schema.Properties[fieldName].Value)
 			if ok {
 				schema.Required = append(schema.Required, fieldName)
 			}
@@ -102,10 +102,16 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 
 		return true
 	case reflect.Array, reflect.Slice:
-		getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value, fields...)
+		getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value)
+	case reflect.Map:
+		getRequiredValue(contentType, fieldType.Elem(), schema.AdditionalProperties.Schema.Value)
+		return false
+	case reflect.Interface:
+		return false
 	case reflect.Ptr:
 		return false
-	case reflect.Func, reflect.Map, reflect.Chan, reflect.UnsafePointer:
+	case reflect.Invalid, reflect.Uintptr, reflect.Complex64, reflect.Complex128,
+		reflect.Chan, reflect.Func, reflect.UnsafePointer:
 		panic("not implemented")
 	default:
 		return true

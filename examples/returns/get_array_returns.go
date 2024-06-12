@@ -3,8 +3,10 @@ package returns
 type GetArrayReturnsResponse = []Ret
 
 type Ret struct {
-	Message string `json:"message"`
-	Embed   Embed  `json:"embed"`
+	Message  string                 `json:"message"`
+	Embed    Embed                  `json:"embed"`
+	Map      map[string]string      `json:"map"`
+	OtherMap map[string]OtherEmbed2 `json:"other_map"`
 }
 
 type Embed struct {
@@ -17,6 +19,11 @@ type Embed struct {
 type ValueEmbed = *string
 
 type OtherEmbed struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type OtherEmbed2 struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }

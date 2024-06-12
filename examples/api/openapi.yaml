@@ -70,8 +70,24 @@ components:
                             - key
                             - other_embed
                         type: object
+                    map:
+                        additionalProperties:
+                            type: string
+                        type: object
                     message:
                         type: string
+                    other_map:
+                        additionalProperties:
+                            properties:
+                                key:
+                                    type: string
+                                value:
+                                    type: string
+                            required:
+                                - key
+                                - value
+                            type: object
+                        type: object
                 required:
                     - message
                     - embed
