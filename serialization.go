@@ -26,7 +26,7 @@ func serializeResponse(ctx *fasthttp.RequestCtx, src any) error {
 		ctx.Response.SetBody([]byte(srcVal.String()))
 
 		return nil
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.UnsafePointer:
+	case reflect.Invalid, reflect.Chan, reflect.Func, reflect.UnsafePointer:
 		return fmt.Errorf("unsupported type: %s", srcVal.Kind())
 	default:
 		return serialize(ctx, srcVal)

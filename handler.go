@@ -57,7 +57,12 @@ func Get[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodGet, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodGet,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodGet),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -72,7 +77,12 @@ func Post[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodPost, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodPost,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodPost),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -87,7 +97,12 @@ func Put[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodPut, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodPut,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodPut),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -102,7 +117,12 @@ func Delete[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodDelete, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodDelete,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodDelete),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -117,7 +137,12 @@ func Patch[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodPatch, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodPatch,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodPatch),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -132,7 +157,12 @@ func Head[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodHead, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodHead,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodHead),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -147,7 +177,12 @@ func Options[ResponseBody, Request any, Contexted Context[Request]](
 
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodOptions, contentType: "application/json"},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodOptions,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodOptions),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
@@ -172,9 +207,13 @@ func registerRoute[ResponseBody, Request any](
 		controller,
 	)
 
-	status := getStatusCode(route.method)
-
-	operation, err := registerOpenAPIOperation[ResponseBody, Request](app, route.method, route.path, route.contentType, status)
+	operation, err := registerOpenAPIOperation[ResponseBody, Request](
+		app,
+		route.method,
+		route.path,
+		route.contentType,
+		route.statusCode,
+	)
 	if err != nil {
 		slog.ErrorContext(context.Background(), "failed to register openapi operation", slog.Any("error", err))
 		panic(err)

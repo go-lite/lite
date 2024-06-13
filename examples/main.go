@@ -68,7 +68,7 @@ func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (return
 func main() {
 	app := lite.NewApp()
 
-	lite.Get(app, "/example/:name", getHandler)
+	lite.Get(app, "/example/:name", getHandler).SetResponseContentType("application/xml")
 
 	lite.Post(app, "/example/:id", postHandler).
 		OperationID("createExample").
@@ -77,7 +77,7 @@ func main() {
 
 	lite.Get(app, "/example", getArrayHandler)
 
-	app.AddServer("http://localhost:6000", "example server")
+	app.AddServer("http://localhost:6001", "example server")
 
 	yamlBytes, err := app.SaveOpenAPISpec()
 	if err != nil {
@@ -101,5 +101,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Fatal(app.Listen(":6000"))
+	log.Fatal(app.Listen(":6001"))
 }

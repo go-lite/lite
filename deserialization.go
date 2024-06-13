@@ -115,7 +115,7 @@ func deserializeBody(ctx *fasthttp.RequestCtx, dst any) error {
 			return parseFormURLEncoded(ctx, fieldVal.Addr().Interface())
 		case strings.HasPrefix(contentType, "text/plain"):
 			fieldVal.SetString(string(ctx.Request.Body()))
-		case strings.HasPrefix(contentType, "application/xml"):
+		case strings.HasPrefix(contentType, "application/xml"), strings.HasPrefix(contentType, "text/xml"):
 			return xml.Unmarshal(ctx.Request.Body(), fieldVal.Addr().Interface())
 		case strings.HasPrefix(contentType, "application/octet-stream"):
 			return parseOctetStream(ctx, fieldVal.Addr().Interface())

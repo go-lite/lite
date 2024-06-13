@@ -93,6 +93,7 @@ type Context[Request any] interface {
 	Stale() bool
 	Status(status int) Context[Request]
 	String() string
+	// Type sets the Content-Type response header with the given type and charset.
 	Type(extension string, charset ...string) Context[Request]
 	Vary(fields ...string)
 	Write(p []byte) (int, error)

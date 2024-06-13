@@ -260,6 +260,9 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/GetResponse'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/GetResponse'
                     description: OK
                 "400":
                     content:
@@ -313,4 +316,4 @@ paths:
                 - Basic: []
 servers:
     - description: example server
-      url: http://localhost:6000
+      url: http://localhost:6001

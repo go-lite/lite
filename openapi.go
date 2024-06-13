@@ -133,7 +133,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 		switch fieldVal.Kind() {
 		case reflect.Ptr:
 			switch fieldVal.Elem().Kind() {
-			case reflect.Struct, reflect.Slice, reflect.Map:
+			case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map:
 				panic("not implemented")
 			default:
 			}
@@ -357,12 +357,12 @@ func getStructTag(contentType string) string {
 	switch contentType {
 	case "application/json":
 		return "json"
-	case "application/xml":
+	case "application/xml", "text/xml":
 		return "xml"
 	case "application/x-www-form-urlencoded", "multipart/form-data":
 		return "form"
 	case "text/plain":
-		return "text"
+		return "txt"
 	case "application/octet-stream":
 		return "binary"
 	case "application/pdf":
