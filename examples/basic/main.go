@@ -2,12 +2,14 @@ package main
 
 import (
 	"errors"
+	"github.com/disco07/lite/examples/basic/parameters"
+	"github.com/disco07/lite/examples/basic/returns"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"log"
 	"os"
 
 	"github.com/disco07/lite"
-	"github.com/disco07/lite/examples/parameters"
-	"github.com/disco07/lite/examples/returns"
 )
 
 // Define example handler
@@ -27,19 +29,20 @@ func getHandler(c *lite.ContextWithRequest[parameters.GetReq]) (returns.GetRespo
 }
 
 func postHandler(c *lite.ContextWithRequest[parameters.CreateReq]) (returns.CreateResponse, error) {
-	body, err := c.Requests()
+	request, err := c.Requests()
 	if err != nil {
 		return returns.CreateResponse{}, err
 	}
+	log.Println("val", *request.Authorization)
 
-	if body.Body.FirstName == "" {
+	if request.Body.FirstName == "" {
 		return returns.CreateResponse{}, errors.New("first_name are required")
 	}
 
 	return returns.CreateResponse{
-		ID:        body.Params.ID,
-		FirstName: body.Body.FirstName,
-		LastName:  body.Body.LastName,
+		ID:        request.ID,
+		FirstName: request.Body.FirstName,
+		LastName:  request.Body.LastName,
 	}, nil
 }
 
@@ -68,6 +71,9 @@ func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (return
 func main() {
 	app := lite.NewApp()
 
+	app.Use(logger.New())
+	app.Use(recover.New())
+
 	lite.Get(app, "/example/:name", getHandler).SetResponseContentType("application/xml")
 
 	lite.Post(app, "/example/:id", postHandler).
@@ -84,7 +90,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	f, err := os.Create("./examples/api/openapi.yaml")
+	f, err := os.Create("./examples/basic/api/openapi.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

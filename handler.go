@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/disco07/lite/errors"
 	"github.com/gofiber/fiber/v2"
+	"log"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -36,6 +37,10 @@ func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
 		ctx := newLiteContext[Request, Contexted](ContextNoRequest{ctx: c, path: path})
 
 		response, err := controller(ctx)
+
+		contentType := string(c.Response().Header.ContentType())
+		log.Println(contentType)
+
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 

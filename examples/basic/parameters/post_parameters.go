@@ -14,7 +14,7 @@ type ReqHeader struct {
 }
 
 type CreateReq struct {
-	Header ReqHeader
-	Params Params
-	Body   CreateBody `lite:"req=body"`
+	Authorization *string    `lite:"header=Authorization,isauth,scheme=bearer"`
+	ID            uint64     `lite:"path=id"`
+	Body          CreateBody `lite:"req=body"`
 }

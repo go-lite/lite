@@ -70,8 +70,6 @@ func (e HTTPError) SetMessage(message string) HTTPError {
 
 var DefaultErrorResponses = map[int]HTTPError{
 	http.StatusBadRequest:          newErrorResponse(uuid.NewString(), http.StatusBadRequest, "Bad Request"),
-	http.StatusUnauthorized:        newErrorResponse(uuid.NewString(), http.StatusUnauthorized, "Unauthorized"),
-	http.StatusNotFound:            newErrorResponse(uuid.NewString(), http.StatusNotFound, "Not Found"),
 	http.StatusInternalServerError: newErrorResponse(uuid.NewString(), http.StatusInternalServerError, "Internal Server Error"),
 }
 

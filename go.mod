@@ -7,6 +7,7 @@ require (
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/google/uuid v1.6.0
+	github.com/h2non/filetype v1.1.3
 	github.com/invopop/yaml v0.2.0
 	github.com/valyala/fasthttp v1.53.0
 )

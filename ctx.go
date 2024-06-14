@@ -134,12 +134,7 @@ func (c *ContextNoRequest) Requests() (any, error) {
 
 	switch typeOfReq.Kind() {
 	case reflect.Struct:
-		err := deserializeParams(reqContext, &req, params)
-		if err != nil {
-			return req, err
-		}
-
-		err = deserializeBody(reqContext, &req)
+		err := deserializeRequests(reqContext, &req, params)
 		if err != nil {
 			return req, err
 		}
@@ -161,12 +156,7 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 
 	switch typeOfReq.Kind() {
 	case reflect.Struct:
-		err := deserializeParams(reqContext, &req, params)
-		if err != nil {
-			return req, err
-		}
-
-		err = deserializeBody(reqContext, &req)
+		err := deserializeRequests(reqContext, &req, params)
 		if err != nil {
 			return req, err
 		}
@@ -442,8 +432,8 @@ func (c *ContextNoRequest) Route() *fiber.Route {
 	panic("implement me")
 }
 
-func (c *ContextNoRequest) SaveFile(fileheader *multipart.FileHeader, path string) error {
-	return c.ctx.SaveFile(fileheader, path)
+func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
+	return c.ctx.SaveFile(file, path)
 }
 
 func (c *ContextNoRequest) SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error {

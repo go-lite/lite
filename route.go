@@ -46,7 +46,8 @@ func (r Route[ResponseBody, Request]) AddTags(tags ...string) Route[ResponseBody
 }
 
 func (r Route[ResponseBody, Request]) SetResponseContentType(contentType string) Route[ResponseBody, Request] {
-	r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content[contentType] = r.operation.Responses.Value("200").Value.Content[r.contentType]
+	r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content[contentType] = r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content[r.contentType]
+	delete(r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content, r.contentType)
 
 	return r
 }

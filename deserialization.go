@@ -5,14 +5,13 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/valyala/fasthttp"
-	"io"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-func deserializeParams(ctx *fasthttp.RequestCtx, dst any, params map[string]string) error {
+func deserializeRequests(ctx *fasthttp.RequestCtx, dst any, params map[string]string) error {
 	return deserialize(ctx, reflect.ValueOf(dst).Elem(), params)
 }
 
@@ -40,7 +39,10 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		tagMap := parseTag(tag)
 
 		if val, ok := tagMap["req"]; ok && val == "body" {
-			continue
+			err := deserializeBody(ctx, fieldVal)
+			if err != nil {
+				return err
+			}
 		}
 
 		var valueStr string
@@ -88,48 +90,32 @@ func parseTag(tag string) map[string]string {
 	return tagMap
 }
 
-func deserializeBody(ctx *fasthttp.RequestCtx, dst any) error {
+func deserializeBody(ctx *fasthttp.RequestCtx, fieldVal reflect.Value) error {
 	contentType := string(ctx.Request.Header.ContentType())
-	dstVal := reflect.ValueOf(dst).Elem()
-	dstType := dstVal.Type()
 
-	for i := 0; i < dstType.NumField(); i++ {
-		field := dstType.Field(i)
-		fieldVal := dstVal.Field(i)
-		tag := field.Tag.Get("lite")
-		if tag == "" {
-			continue
-		}
-
-		tagParts := strings.Split(tag, "=")
-		if len(tagParts) != 2 || tagParts[1] != "body" {
-			continue
-		}
-
-		switch {
-		case strings.HasPrefix(contentType, "application/json"):
-			return json.Unmarshal(ctx.Request.Body(), fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "multipart/form-data"):
-			return parseMultipartForm(ctx, fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "application/x-www-form-urlencoded"):
-			return parseFormURLEncoded(ctx, fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "text/plain"):
-			fieldVal.SetString(string(ctx.Request.Body()))
-		case strings.HasPrefix(contentType, "application/xml"), strings.HasPrefix(contentType, "text/xml"):
-			return xml.Unmarshal(ctx.Request.Body(), fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "application/octet-stream"):
-			return parseOctetStream(ctx, fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "text/html"):
-			fieldVal.SetString(string(ctx.Request.Body()))
-		case strings.HasPrefix(contentType, "application/pdf"):
-			return parseBinaryData(ctx, fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "application/zip"):
-			return parseBinaryData(ctx, fieldVal.Addr().Interface())
-		case strings.HasPrefix(contentType, "image/"):
-			return parseBinaryData(ctx, fieldVal.Addr().Interface())
-		default:
-			return fmt.Errorf("unsupported content type: %s", contentType)
-		}
+	switch {
+	case strings.HasPrefix(contentType, "application/json"):
+		return json.Unmarshal(ctx.Request.Body(), fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "multipart/form-data"):
+		return parseMultipartForm(ctx, fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "application/x-www-form-urlencoded"):
+		return parseFormURLEncoded(ctx, fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "text/plain"):
+		fieldVal.SetString(string(ctx.Request.Body()))
+	case strings.HasPrefix(contentType, "application/xml"), strings.HasPrefix(contentType, "text/xml"):
+		return xml.Unmarshal(ctx.Request.Body(), fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "application/octet-stream"):
+		return parseOctetStream(ctx, fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "text/html"):
+		fieldVal.SetString(string(ctx.Request.Body()))
+	case strings.HasPrefix(contentType, "application/pdf"):
+		return parseBinaryData(ctx, fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "application/zip"):
+		return parseBinaryData(ctx, fieldVal.Addr().Interface())
+	case strings.HasPrefix(contentType, "image/"):
+		return parseBinaryData(ctx, fieldVal.Addr().Interface())
+	default:
+		return fmt.Errorf("unsupported content type: %s", contentType)
 	}
 
 	return nil
@@ -158,21 +144,11 @@ func parseMultipartForm(ctx *fasthttp.RequestCtx, dst any) error {
 	for key, files := range mr.File {
 		if len(files) > 0 {
 			fileHeader := files[0]
-
-			file, err := fileHeader.Open()
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-
-			content := new(strings.Builder)
-
-			_, err = io.Copy(content, file)
-			if err != nil {
-				return err
+			if fileHeader == nil {
+				continue
 			}
 
-			data[key] = content.String()
+			data[key] = fileHeader
 		}
 	}
 
@@ -201,15 +177,14 @@ func mapToStruct(data map[string]any, dst any) error {
 	for i := 0; i < dstVal.NumField(); i++ {
 		field := dstVal.Type().Field(i)
 		fieldVal := dstVal.Field(i)
-		key := field.Tag.Get("json")
+		key := field.Tag.Get("form")
 
 		if key == "" {
 			key = field.Name
 		}
 
 		if value, exists := data[key]; exists {
-			valueStr := fmt.Sprintf("%v", value)
-			if err := setFieldValue(fieldVal, valueStr); err != nil {
+			if err := setFieldValue(fieldVal, value); err != nil {
 				return err
 			}
 		}
@@ -217,7 +192,7 @@ func mapToStruct(data map[string]any, dst any) error {
 	return nil
 }
 
-func setFieldValue(fieldVal reflect.Value, valueStr string) error {
+func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 	switch fieldVal.Kind() {
 	case reflect.Ptr:
 		if fieldVal.IsNil() {
@@ -225,31 +200,44 @@ func setFieldValue(fieldVal reflect.Value, valueStr string) error {
 		}
 
 		return setFieldValue(fieldVal.Elem(), valueStr)
+	case reflect.Struct:
+		if _, ok := valueStr.(string); ok {
+			val := []byte(valueStr.(string))
+
+			return json.Unmarshal(val, fieldVal.Addr().Interface())
+		}
+
+		val := reflect.ValueOf(valueStr)
+		if val.Kind() == reflect.Ptr {
+			val = val.Elem()
+		}
+
+		fieldVal.Set(val)
 	case reflect.String:
-		fieldVal.SetString(valueStr)
+		fieldVal.SetString(valueStr.(string))
 	case reflect.Int:
-		intValue, err := strconv.Atoi(valueStr)
+		intValue, err := strconv.Atoi(valueStr.(string))
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetInt(int64(intValue))
 	case reflect.Int8:
-		intValue, err := strconv.ParseInt(valueStr, 10, 8)
+		intValue, err := strconv.ParseInt(valueStr.(string), 10, 8)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetInt(intValue)
 	case reflect.Int16:
-		intValue, err := strconv.ParseInt(valueStr, 10, 16)
+		intValue, err := strconv.ParseInt(valueStr.(string), 10, 16)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetInt(intValue)
 	case reflect.Int32:
-		intValue, err := strconv.ParseInt(valueStr, 10, 32)
+		intValue, err := strconv.ParseInt(valueStr.(string), 10, 32)
 		if err != nil {
 			return err
 		}
@@ -257,7 +245,7 @@ func setFieldValue(fieldVal reflect.Value, valueStr string) error {
 		fieldVal.SetInt(intValue)
 
 	case reflect.Int64:
-		intValue, err := strconv.ParseInt(valueStr, 10, 64)
+		intValue, err := strconv.ParseInt(valueStr.(string), 10, 64)
 		if err != nil {
 			return err
 		}
@@ -265,56 +253,56 @@ func setFieldValue(fieldVal reflect.Value, valueStr string) error {
 		fieldVal.SetInt(intValue)
 
 	case reflect.Uint:
-		uintValue, err := strconv.ParseUint(valueStr, 10, 0)
+		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 0)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetUint(uintValue)
 	case reflect.Uint8:
-		uintValue, err := strconv.ParseUint(valueStr, 10, 8)
+		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 8)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetUint(uintValue)
 	case reflect.Uint16:
-		uintValue, err := strconv.ParseUint(valueStr, 10, 16)
+		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 16)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetUint(uintValue)
 	case reflect.Uint32:
-		uintValue, err := strconv.ParseUint(valueStr, 10, 32)
+		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 32)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetUint(uintValue)
 	case reflect.Uint64:
-		uintValue, err := strconv.ParseUint(valueStr, 10, 64)
+		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 64)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetUint(uintValue)
 	case reflect.Float32:
-		floatValue, err := strconv.ParseFloat(valueStr, 32)
+		floatValue, err := strconv.ParseFloat(valueStr.(string), 32)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetFloat(floatValue)
 	case reflect.Float64:
-		floatValue, err := strconv.ParseFloat(valueStr, 64)
+		floatValue, err := strconv.ParseFloat(valueStr.(string), 64)
 		if err != nil {
 			return err
 		}
 
 		fieldVal.SetFloat(floatValue)
 	case reflect.Bool:
-		boolValue, err := strconv.ParseBool(valueStr)
+		boolValue, err := strconv.ParseBool(valueStr.(string))
 		if err != nil {
 			return err
 		}
@@ -322,7 +310,7 @@ func setFieldValue(fieldVal reflect.Value, valueStr string) error {
 		fieldVal.SetBool(boolValue)
 	case reflect.Slice:
 		if fieldVal.Type().Elem().Kind() == reflect.Uint8 {
-			fieldVal.SetBytes([]byte(valueStr))
+			fieldVal.SetBytes([]byte(valueStr.(string)))
 		} else {
 			return fmt.Errorf("unsupported slice type %s", fieldVal.Type().Elem().Kind())
 		}

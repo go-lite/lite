@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"mime/multipart"
 	"reflect"
 )
 
@@ -90,7 +91,12 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 		for k := 0; k < fieldType.NumField(); k++ {
 			field := fieldType.Field(k)
 			fieldName := field.Name
+
 			if field.Tag.Get(getStructTag(contentType)) != "" {
+				if contentType != "application/json" {
+					updateKey(schema.Properties, fieldName, field.Tag.Get(getStructTag(contentType)))
+				}
+
 				fieldName = field.Tag.Get(getStructTag(contentType))
 			}
 
@@ -102,6 +108,10 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 
 		return true
 	case reflect.Array, reflect.Slice:
+		if fieldType.Elem().Kind() == reflect.Uint8 {
+			return true
+		}
+
 		getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value)
 	case reflect.Map:
 		getRequiredValue(contentType, fieldType.Elem(), schema.AdditionalProperties.Schema.Value)
@@ -118,6 +128,12 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 	}
 
 	return false
+}
+
+func updateKey(properties openapi3.Schemas, key string, newKey string) {
+	schema := properties[key]
+	delete(properties, key)
+	properties[newKey] = schema
 }
 
 func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error {
@@ -210,9 +226,32 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			}
 		} else if reqKey, ok := tagMap["req"]; ok {
 			if reqKey == "body" {
+				var contentType = "application/json"
+
+				if len(tagMap) > 2 {
+					panic("invalid tag")
+				}
+
+				if len(tagMap) == 2 {
+					for key := range tagMap {
+						if key != "req" {
+							contentType = key
+
+							break
+						}
+					}
+				}
+
 				bodySchema, ok := s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()]
 				if !ok {
 					var err error
+
+					if fieldType.Kind() != reflect.Struct {
+						return fmt.Errorf("request body must be a struct")
+					}
+
+					fieldType = updateFileHeaderFieldType(fieldType)
+
 					tp := reflect.New(fieldType).Elem().Interface()
 
 					bodySchema, err = generator.NewSchemaRefForValue(tp, s.OpenApiSpec.Components.Schemas)
@@ -220,7 +259,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 						return err
 					}
 
-					getRequiredValue("application/json", fieldType, bodySchema.Value)
+					getRequiredValue(contentType, fieldType, bodySchema.Value)
 
 					s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()] = bodySchema
 				}
@@ -231,7 +270,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 						"#/components/schemas/%s",
 						fieldVal.Type().Name(),
 					), &openapi3.Schema{}),
-					[]string{"application/json"},
+					[]string{contentType},
 				)
 
 				requestBody.WithContent(content)
@@ -248,6 +287,22 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 	}
 
 	return nil
+}
+
+// check if reflect.Type (struct) has field type multipart.FileHeader or *multipart.FileHeader
+// if true, update type to []byte.
+func updateFileHeaderFieldType(fieldType reflect.Type) reflect.Type {
+	var fields []reflect.StructField
+
+	for i := 0; i < fieldType.NumField(); i++ {
+		field := fieldType.Field(i)
+		if field.Type == reflect.TypeOf(multipart.FileHeader{}) || field.Type == reflect.TypeOf(&multipart.FileHeader{}) {
+			field.Type = reflect.TypeOf([]byte{})
+		}
+		fields = append(fields, field)
+	}
+
+	return reflect.StructOf(fields)
 }
 
 func setHeaderScheme(s *App, operation *openapi3.Operation, tag string, parameter *openapi3.Parameter) error {
