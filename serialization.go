@@ -38,13 +38,13 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 	switch string(contentType) {
 	case "application/json":
 		if err := json.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
 		}
 	case "application/xml":
 		if err := xml.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
 		}
@@ -52,13 +52,16 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		// Handle form data
 		if form, ok := srcVal.Interface().(map[string]string); ok {
 			formData := url.Values{}
+
 			for key, value := range form {
 				formData.Set(key, value)
 			}
+
 			ctx.SetBody([]byte(formData.Encode()))
 		} else {
 			err := fmt.Errorf("expected map[string]string for form data serialization")
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			ctx.Error(err.Error(), StatusInternalServerError)
+
 			return err
 		}
 	case "application/octet-stream":
@@ -66,7 +69,8 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.SetBody(data)
 		} else {
 			err := fmt.Errorf("expected []byte for octet-stream serialization")
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			ctx.Error(err.Error(), StatusInternalServerError)
+
 			return err
 		}
 	case "application/pdf", "application/zip", "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/tiff", "image/vnd.microsoft.icon", "image/vnd.wap.wbmp", "image/x-icon", "image/x-jng", "image/jpg":
@@ -74,12 +78,14 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.SetBody(data)
 		} else {
 			err := fmt.Errorf("expected []byte for binary file serialization")
-			ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+			ctx.Error(err.Error(), StatusInternalServerError)
+
 			return err
 		}
 	default:
 		err := fmt.Errorf("unsupported content type: %s", contentType)
-		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		ctx.Error(err.Error(), StatusInternalServerError)
+
 		return err
 	}
 
