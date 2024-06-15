@@ -37,10 +37,9 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 
 	tag := tagFromType(*new(ResponseBody))
 
-	responseSchema, ok := s.OpenApiSpec.Components.Schemas[tag]
+	responseSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
 	if !ok {
-		var err error
-		responseSchema, err = generator.NewSchemaRefForValue(new(ResponseBody), s.OpenApiSpec.Components.Schemas)
+		responseSchema, err = generator.NewSchemaRefForValue(new(ResponseBody), s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return operation, err
 		}
@@ -49,7 +48,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 
 		getRequiredValue(resContentType, fieldGenericType, responseSchema.Value)
 
-		s.OpenApiSpec.Components.Schemas[tag] = responseSchema
+		s.OpenAPISpec.Components.Schemas[tag] = responseSchema
 	}
 
 	response := openapi3.NewResponse().WithDescription("OK")
@@ -80,7 +79,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	// Remove default response
 	operation.Responses.Delete("default")
 
-	s.OpenApiSpec.AddOperation(routePath, method, operation)
+	s.OpenAPISpec.AddOperation(routePath, method, operation)
 
 	return operation, nil
 }
@@ -181,6 +180,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 		if pathKey, ok := tagMap["path"]; ok {
 			parameter = openapi3.NewPathParameter(pathKey)
+
 			err := setParamSchema(s, operation, pathKey, parameter, isRequired, fieldType)
 			if err != nil {
 				return err
@@ -226,7 +226,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			}
 		} else if reqKey, ok := tagMap["req"]; ok {
 			if reqKey == "body" {
-				var contentType = "application/json"
+				contentType := "application/json"
 
 				if len(tagMap) > 2 {
 					panic("invalid tag")
@@ -242,7 +242,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 					}
 				}
 
-				bodySchema, ok := s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()]
+				bodySchema, ok := s.OpenAPISpec.Components.Schemas[fieldVal.Type().Name()]
 				if !ok {
 					var err error
 
@@ -254,14 +254,14 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 					tp := reflect.New(fieldType).Elem().Interface()
 
-					bodySchema, err = generator.NewSchemaRefForValue(tp, s.OpenApiSpec.Components.Schemas)
+					bodySchema, err = generator.NewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
 					if err != nil {
 						return err
 					}
 
 					getRequiredValue(contentType, fieldType, bodySchema.Value)
 
-					s.OpenApiSpec.Components.Schemas[fieldVal.Type().Name()] = bodySchema
+					s.OpenAPISpec.Components.Schemas[fieldVal.Type().Name()] = bodySchema
 				}
 
 				requestBody := openapi3.NewRequestBody()
@@ -296,9 +296,11 @@ func updateFileHeaderFieldType(fieldType reflect.Type) reflect.Type {
 
 	for i := 0; i < fieldType.NumField(); i++ {
 		field := fieldType.Field(i)
+
 		if field.Type == reflect.TypeOf(multipart.FileHeader{}) || field.Type == reflect.TypeOf(&multipart.FileHeader{}) {
 			field.Type = reflect.TypeOf([]byte{})
 		}
+
 		fields = append(fields, field)
 	}
 
@@ -306,17 +308,19 @@ func updateFileHeaderFieldType(fieldType reflect.Type) reflect.Type {
 }
 
 func setHeaderScheme(s *App, operation *openapi3.Operation, tag string, parameter *openapi3.Parameter) error {
-	paramSchema, ok := s.OpenApiSpec.Components.Schemas[tag]
+	paramSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
 	if !ok {
 		var err error
-		paramSchema, err = generator.NewSchemaRefForValue(new(string), s.OpenApiSpec.Components.Schemas)
+
+		paramSchema, err = generator.NewSchemaRefForValue(new(string), s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
-		s.OpenApiSpec.Components.Schemas[tag] = paramSchema
+
+		s.OpenAPISpec.Components.Schemas[tag] = paramSchema
 	}
 
-	s.OpenApiSpec.Components.Headers[tag] = &openapi3.HeaderRef{
+	s.OpenAPISpec.Components.Headers[tag] = &openapi3.HeaderRef{
 		Value: &openapi3.Header{
 			Parameter: *parameter,
 		},
@@ -325,6 +329,7 @@ func setHeaderScheme(s *App, operation *openapi3.Operation, tag string, paramete
 	operation.Parameters = append(operation.Parameters, &openapi3.ParameterRef{
 		Ref: "#/components/parameters/" + tag,
 	})
+
 	return nil
 }
 
@@ -344,12 +349,12 @@ func setSecurityScheme(s *App, operation *openapi3.Operation, name string, tpe s
 		sec,
 	)
 
-	var securitySchemes = make(map[string]*openapi3.SecuritySchemeRef)
+	securitySchemes := make(map[string]*openapi3.SecuritySchemeRef)
 	securitySchemes[name] = &openapi3.SecuritySchemeRef{
 		Value: securityScheme,
 	}
 
-	s.OpenApiSpec.Components.SecuritySchemes[name] = securitySchemes[name]
+	s.OpenAPISpec.Components.SecuritySchemes[name] = securitySchemes[name]
 }
 
 func setParamSchema(
@@ -365,18 +370,20 @@ func setParamSchema(
 	parameter.Schema = openapi3.NewSchemaRef(ref, &openapi3.Schema{})
 	parameter.Required = isRequired
 
-	paramSchema, ok := s.OpenApiSpec.Components.Schemas[tag]
+	paramSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
 	if !ok {
 		var err error
 		newInstance := reflect.New(fieldType).Elem().Interface()
-		paramSchema, err = generator.NewSchemaRefForValue(newInstance, s.OpenApiSpec.Components.Schemas)
+
+		paramSchema, err = generator.NewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
-		s.OpenApiSpec.Components.Schemas[tag] = paramSchema
+
+		s.OpenAPISpec.Components.Schemas[tag] = paramSchema
 	}
 
-	s.OpenApiSpec.Components.Parameters[tag] = &openapi3.ParameterRef{
+	s.OpenAPISpec.Components.Parameters[tag] = &openapi3.ParameterRef{
 		Value: parameter,
 	}
 
@@ -401,6 +408,7 @@ func dive(t reflect.Type, maxDepth int) string {
 		if maxDepth == 0 {
 			return "default"
 		}
+
 		return dive(t.Elem(), maxDepth-1)
 	default:
 		return t.Name()

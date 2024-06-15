@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/valyala/fasthttp"
 	"net/url"
 	"reflect"
+
+	"github.com/valyala/fasthttp"
 )
 
 func serializeResponse(ctx *fasthttp.RequestCtx, src any) error {
@@ -73,7 +74,8 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 
 			return err
 		}
-	case "application/pdf", "application/zip", "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/tiff", "image/vnd.microsoft.icon", "image/vnd.wap.wbmp", "image/x-icon", "image/x-jng", "image/jpg":
+	case "application/pdf", "application/zip", "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml",
+		"image/tiff", "image/vnd.microsoft.icon", "image/vnd.wap.wbmp", "image/x-icon", "image/x-jng", "image/jpg":
 		if data, ok := srcVal.Interface().([]byte); ok {
 			ctx.SetBody(data)
 		} else {

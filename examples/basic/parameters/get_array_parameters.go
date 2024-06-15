@@ -1,4 +1,3 @@
 package parameters
 
-type GetArrayReq struct {
-}
+type GetArrayReq struct{}

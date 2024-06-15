@@ -2,6 +2,7 @@ package lite
 
 import (
 	"fmt"
+
 	"github.com/disco07/lite/errors"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
@@ -12,12 +13,12 @@ import (
 type OpenAPIConfig struct {
 	DisableSwagger   bool                               // If true, the server will not serve the swagger ui nor the openapi json spec
 	DisableLocalSave bool                               // If true, the server will not save the openapi json spec locally
-	SwaggerUrl       string                             // URL to serve the swagger ui
+	SwaggerURL       string                             // URL to serve the swagger ui
 	UIHandler        func(specURL string) fiber.Handler // Handler to serve the openapi ui from spec url
-	YamlUrl          string                             // Local path to save the openapi json spec
+	YamlURL          string                             // Local path to save the openapi json spec
 }
 
-func NewOpenApiSpec() openapi3.T {
+func NewOpenAPISpec() openapi3.T {
 	info := &openapi3.Info{
 		Title:       "OpenAPI",
 		Description: "OpenAPI",
@@ -36,19 +37,20 @@ func NewOpenApiSpec() openapi3.T {
 			SecuritySchemes: make(map[string]*openapi3.SecuritySchemeRef),
 		},
 	}
+
 	return spec
 }
 
 var defaultOpenAPIConfig = OpenAPIConfig{
-	SwaggerUrl: "/swagger",
-	YamlUrl:    "/swagger/openapi.yaml",
+	SwaggerURL: "/swagger",
+	YamlURL:    "/swagger/openapi.yaml",
 	UIHandler:  DefaultOpenAPIHandler,
 }
 
 type App struct {
 	*fiber.App
 
-	OpenApiSpec   openapi3.T
+	OpenAPISpec   openapi3.T
 	OpenAPIConfig OpenAPIConfig
 
 	Serializer func(ctx *fasthttp.RequestCtx, response any) error
@@ -61,7 +63,7 @@ type App struct {
 func NewApp() *App {
 	return &App{
 		App:           fiber.New(),
-		OpenApiSpec:   NewOpenApiSpec(),
+		OpenAPISpec:   NewOpenAPISpec(),
 		OpenAPIConfig: defaultOpenAPIConfig,
 	}
 }
@@ -75,7 +77,7 @@ func (s *App) AddTags(tags ...string) *App {
 
 // SaveOpenAPISpec saves the OpenAPI spec to a file in YAML format
 func (s *App) SaveOpenAPISpec() ([]byte, error) {
-	json, err := s.OpenApiSpec.MarshalJSON()
+	json, err := s.OpenAPISpec.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -107,42 +109,44 @@ func (s *App) AddServer(url, description string) {
 		Description: description,
 	})
 
-	s.OpenApiSpec.Servers = servers
+	s.OpenAPISpec.Servers = servers
 }
 
 // Description sets the description of the OpenAPI spec
 func (s *App) Description(description string) *App {
-	s.OpenApiSpec.Info.Description = description
+	s.OpenAPISpec.Info.Description = description
 
 	return s
 }
 
 // Title sets the title of the OpenAPI spec
 func (s *App) Title(title string) *App {
-	s.OpenApiSpec.Info.Title = title
+	s.OpenAPISpec.Info.Title = title
 
 	return s
 }
 
 // Version sets the version of the OpenAPI spec
 func (s *App) Version(version string) *App {
-	s.OpenApiSpec.Info.Version = version
+	s.OpenAPISpec.Info.Version = version
 
 	return s
 }
 
 func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) {
-	var responses = make(map[int]*openapi3.Response)
+	responses := make(map[int]*openapi3.Response)
 
 	for _, errResponse := range errors.DefaultErrorResponses {
-		responseSchema, ok := s.OpenApiSpec.Components.Schemas["httpGenericError"]
+		responseSchema, ok := s.OpenAPISpec.Components.Schemas["httpGenericError"]
 		if !ok {
 			var err error
-			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenApiSpec.Components.Schemas)
+			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
+
 			if err != nil {
 				return nil, err
 			}
-			s.OpenApiSpec.Components.Schemas["httpGenericError"] = responseSchema
+
+			s.OpenAPISpec.Components.Schemas["httpGenericError"] = responseSchema
 		}
 
 		response := openapi3.NewResponse().WithDescription(errResponse.Description())
@@ -171,18 +175,18 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 
 func (s *App) Listen(address string) error {
 	if !s.OpenAPIConfig.DisableLocalSave {
-		//yamlData, err := s.SaveOpenAPISpec()
-		//if err != nil {
+		// yamlData, err := s.SaveOpenAPISpec()
+		// if err != nil {
 		//	return err
 		//}
 		//
-		//err = s.SaveOpenAPISpecToFile(yamlData)
-		//if err != nil {
+		// err = s.SaveOpenAPISpecToFile(yamlData)
+		// if err != nil {
 		//	return err
 		//}
 	}
 
-	//if !s.OpenAPIConfig.DisableSwagger {
+	// if !s.OpenAPIConfig.DisableSwagger {
 	//	s.Get(s.OpenAPIConfig.SwaggerUrl, s.OpenAPIConfig.UIHandler(s.OpenAPIConfig.YamlUrl))
 	//}
 

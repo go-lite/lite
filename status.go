@@ -156,5 +156,6 @@ func StatusMessage(statusCode int) string {
 	if s := statusMessages[statusCode]; s != "" {
 		return s
 	}
+
 	return unknownStatusCode
 }

@@ -1,15 +1,16 @@
 package errors
 
 import (
+	"net/http"
+
 	"github.com/disco07/lite-fiber/codec"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 type HTTPError struct {
-	ID      string `json:"id" xml:"id" form:"id"`
-	Status  int    `json:"status" xml:"status" form:"status"`
-	Message string `json:"message" xml:"message" form:"message"`
+	ID      string `form:"id"      json:"id"      xml:"id"`
+	Status  int    `form:"status"  json:"status"  xml:"status"`
+	Message string `form:"message" json:"message" xml:"message"`
 }
 
 func newErrorResponse(id string, status int, message string) HTTPError {

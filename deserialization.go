@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/valyala/fasthttp"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/valyala/fasthttp"
 )
 
 func deserializeRequests(ctx *fasthttp.RequestCtx, dst any, params map[string]string) error {
@@ -46,6 +47,7 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		}
 
 		var valueStr string
+
 		if pathKey, ok := tagMap["path"]; ok {
 			if params != nil {
 				paramsValue, ok := params[pathKey]
@@ -124,9 +126,11 @@ func deserializeBody(ctx *fasthttp.RequestCtx, fieldVal reflect.Value) error {
 func parseFormURLEncoded(ctx *fasthttp.RequestCtx, dst any) error {
 	formData := ctx.PostArgs()
 	data := make(map[string]any)
+
 	formData.VisitAll(func(key, value []byte) {
 		data[string(key)] = string(value)
 	})
+
 	return mapToStruct(data, dst)
 }
 
@@ -135,12 +139,15 @@ func parseMultipartForm(ctx *fasthttp.RequestCtx, dst any) error {
 	if err != nil {
 		return err
 	}
+
 	data := make(map[string]any)
+
 	for key, values := range mr.Value {
 		if len(values) > 0 {
 			data[key] = values[0]
 		}
 	}
+
 	for key, files := range mr.File {
 		if len(files) > 0 {
 			fileHeader := files[0]
@@ -189,6 +196,7 @@ func mapToStruct(data map[string]any, dst any) error {
 			}
 		}
 	}
+
 	return nil
 }
 

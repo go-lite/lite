@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/gofiber/fiber/v2"
-	"github.com/valyala/fasthttp"
 	"io"
 	"mime/multipart"
 	"reflect"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp"
 )
 
 type Context[Request any] interface {
@@ -428,7 +429,6 @@ func (c *ContextNoRequest) Render(name string, bind interface{}, layouts ...stri
 }
 
 func (c *ContextNoRequest) Route() *fiber.Route {
-	//TODO implement me
 	panic("implement me")
 }
 

@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
+	"log"
+	"os"
+
 	"github.com/disco07/lite/examples/basic/parameters"
 	"github.com/disco07/lite/examples/basic/returns"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"log"
-	"os"
 
 	"github.com/disco07/lite"
 )
@@ -33,7 +34,6 @@ func postHandler(c *lite.ContextWithRequest[parameters.CreateReq]) (returns.Crea
 	if err != nil {
 		return returns.CreateResponse{}, err
 	}
-	log.Println("val", *request.Authorization)
 
 	if request.Body.FirstName == "" {
 		return returns.CreateResponse{}, errors.New("first_name are required")

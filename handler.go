@@ -2,12 +2,13 @@ package lite
 
 import (
 	"context"
-	"github.com/disco07/lite/errors"
-	"github.com/gofiber/fiber/v2"
 	"log"
 	"log/slog"
 	"net/http"
 	"regexp"
+
+	"github.com/disco07/lite/errors"
+	"github.com/gofiber/fiber/v2"
 )
 
 func newLiteContext[Request any, Contexted Context[Request]](ctx ContextNoRequest) Contexted {
@@ -59,7 +60,6 @@ func Get[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -79,7 +79,6 @@ func Post[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -99,7 +98,6 @@ func Put[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -119,7 +117,6 @@ func Delete[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -139,7 +136,6 @@ func Patch[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -159,7 +155,6 @@ func Head[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -179,7 +174,6 @@ func Options[ResponseBody, Request any, Contexted Context[Request]](
 	controller func(Contexted) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
-
 	return registerRoute[ResponseBody, Request](
 		app,
 		Route[ResponseBody, Request]{
@@ -239,6 +233,7 @@ func parseRoutePath(route string) (string, []string) {
 	matches := re.FindAllStringSubmatch(route, -1)
 
 	var params []string
+
 	for _, match := range matches {
 		if len(match) > 1 {
 			params = append(params, match[1])

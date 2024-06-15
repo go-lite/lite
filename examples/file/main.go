@@ -1,16 +1,17 @@
 package main
 
 import (
-	"github.com/disco07/lite"
-	"github.com/disco07/lite/errors"
-	"github.com/disco07/lite/mime"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"io"
 	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+
+	"github.com/disco07/lite"
+	"github.com/disco07/lite/errors"
+	"github.com/disco07/lite/mime"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 type ImageResponse = []byte
