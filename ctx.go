@@ -125,6 +125,11 @@ func (c *ContextNoRequest) Requests() (any, error) {
 		if err != nil {
 			return req, err
 		}
+	case reflect.String:
+		err := deserializeBody(reqContext, reflect.ValueOf(&req).Elem())
+		if err != nil {
+			return req, err
+		}
 	default:
 		return req, errors.New("unsupported type")
 	}

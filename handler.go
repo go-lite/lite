@@ -35,6 +35,8 @@ func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
 
 		ctx := newLiteContext[Request, Contexted](ContextNoRequest{ctx: c, path: path})
 
+		c.Status(getStatusCode(c.Method()))
+
 		response, err := controller(ctx)
 
 		contentType := string(c.Response().Header.ContentType())
@@ -45,8 +47,6 @@ func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
 
 			return c.JSON(errors.DefaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
 		}
-
-		c.Status(getStatusCode(c.Method()))
 
 		return serializeResponse(c.Context(), &response)
 	}
