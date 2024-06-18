@@ -60,7 +60,7 @@ type App struct {
 	tags []string
 }
 
-func NewApp() *App {
+func New() *App {
 	return &App{
 		App:           fiber.New(),
 		OpenAPISpec:   NewOpenAPISpec(),

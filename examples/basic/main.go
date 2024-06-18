@@ -69,7 +69,7 @@ func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (return
 }
 
 func main() {
-	app := lite.NewApp()
+	app := lite.New()
 
 	app.Use(logger.New())
 	app.Use(recover.New())

@@ -34,7 +34,7 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		}
 
 		if tag == "" {
-			tag = field.Name
+			return fmt.Errorf("missing tag for field %s", field.Name)
 		}
 
 		tagMap := parseTag(tag)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"io"
 	"mime/multipart"
 	"reflect"
 
@@ -24,14 +23,11 @@ type Context[Request any] interface {
 	Attachment(filename ...string)
 	BaseURL() string
 	BodyRaw() []byte
-	Body() []byte
-	BodyParser(out interface{}) error
 	ClearCookie(key ...string)
 	RequestContext() *fasthttp.RequestCtx
 	SetUserContext(ctx context.Context)
 	Cookie(cookie *fiber.Cookie)
 	Cookies(key string, defaultValue ...string) string
-	CookieParser(out interface{}) error
 	Download(file string, filename ...string) error
 	Request() *fasthttp.Request
 	Response() *fasthttp.Response
@@ -40,7 +36,6 @@ type Context[Request any] interface {
 	FormValue(key string, defaultValue ...string) string
 	Fresh() bool
 	Get(key string, defaultValue ...string) string
-	GetRespHeader(key string, defaultValue ...string) string
 	GetReqHeaders() map[string][]string
 	GetRespHeaders() map[string][]string
 	Hostname() string
@@ -48,9 +43,6 @@ type Context[Request any] interface {
 	IP() string
 	IPs() []string
 	Is(extension string) bool
-	JSON(data interface{}, ctype ...string) error
-	JSONP(data interface{}, callback ...string) error
-	XML(data interface{}) error
 	Links(link ...string)
 	Locals(key interface{}, value ...interface{}) interface{}
 	Location(path string)
@@ -60,19 +52,10 @@ type Context[Request any] interface {
 	Next() error
 	RestartRouting() error
 	OriginalURL() string
-	Params(key string, defaultValue ...string) string
 	AllParams() map[string]string
-	ParamsParser(out interface{}) error
-	ParamsInt(key string, defaultValue ...int) (int, error)
 	Path(override ...string) string
 	Protocol() string
-	Query(key string, defaultValue ...string) string
 	Queries() map[string]string
-	QueryInt(key string, defaultValue ...int) int
-	QueryBool(key string, defaultValue ...bool) bool
-	QueryFloat(key string, defaultValue ...float64) float64
-	QueryParser(out interface{}) error
-	ReqHeaderParser(out interface{}) error
 	Range(size int) (fiber.Range, error)
 	Redirect(location string, status ...int) error
 	Bind(vars fiber.Map) error
@@ -80,15 +63,9 @@ type Context[Request any] interface {
 	RedirectToRoute(routeName string, params fiber.Map, status ...int) error
 	RedirectBack(fallback string, status ...int) error
 	Render(name string, bind interface{}, layouts ...string) error
-	Route() *fiber.Route
 	SaveFile(fileheader *multipart.FileHeader, path string) error
 	SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error
 	Secure() bool
-	Send(body []byte) error
-	SendFile(file string, compress ...bool) error
-	SendStatus(status int) error
-	SendString(body string) error
-	SendStream(stream io.Reader, size ...int) error
 	Set(key string, val string)
 	Subdomains(offset ...int) []string
 	Stale() bool
@@ -97,9 +74,6 @@ type Context[Request any] interface {
 	// Type sets the Content-Type response header with the given type and charset.
 	Type(extension string, charset ...string) Context[Request]
 	Vary(fields ...string)
-	Write(p []byte) (int, error)
-	Writef(f string, a ...interface{}) (int, error)
-	WriteString(s string) (int, error)
 	XHR() bool
 	IsProxyTrusted() bool
 	IsFromLocal() bool
@@ -109,6 +83,18 @@ var (
 	_ Context[string] = &ContextWithRequest[string]{}
 	_ Context[any]    = &ContextNoRequest{}
 )
+
+func newContext[Request any](ctx *fiber.Ctx, app *App, path string) Context[Request] {
+	c := ContextNoRequest{
+		ctx:  ctx,
+		app:  app,
+		path: path,
+	}
+
+	return &ContextWithRequest[Request]{
+		ContextNoRequest: c,
+	}
+}
 
 type ContextNoRequest struct {
 	ctx  *fiber.Ctx
@@ -161,6 +147,11 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 		if err != nil {
 			return req, err
 		}
+	case reflect.String:
+		err := deserializeBody(reqContext, reflect.ValueOf(&req).Elem())
+		if err != nil {
+			return req, err
+		}
 	default:
 		return req, errors.New("unsupported type")
 	}
@@ -204,14 +195,6 @@ func (c *ContextNoRequest) BodyRaw() []byte {
 	return c.ctx.Request().Body()
 }
 
-func (c *ContextNoRequest) Body() []byte {
-	return c.ctx.Body()
-}
-
-func (c *ContextNoRequest) BodyParser(out interface{}) error {
-	return c.ctx.BodyParser(out)
-}
-
 func (c *ContextNoRequest) ClearCookie(key ...string) {
 	c.ctx.ClearCookie(key...)
 }
@@ -230,10 +213,6 @@ func (c *ContextNoRequest) Cookie(cookie *fiber.Cookie) {
 
 func (c *ContextNoRequest) Cookies(key string, defaultValue ...string) string {
 	return c.ctx.Cookies(key, defaultValue...)
-}
-
-func (c *ContextNoRequest) CookieParser(out interface{}) error {
-	return c.ctx.CookieParser(out)
 }
 
 func (c *ContextNoRequest) Download(file string, filename ...string) error {
@@ -268,10 +247,6 @@ func (c *ContextNoRequest) Get(key string, defaultValue ...string) string {
 	return c.ctx.Get(key, defaultValue...)
 }
 
-func (c *ContextNoRequest) GetRespHeader(key string, defaultValue ...string) string {
-	return c.ctx.GetRespHeader(key, defaultValue...)
-}
-
 func (c *ContextNoRequest) GetReqHeaders() map[string][]string {
 	return c.ctx.GetReqHeaders()
 }
@@ -298,18 +273,6 @@ func (c *ContextNoRequest) IPs() []string {
 
 func (c *ContextNoRequest) Is(extension string) bool {
 	return c.ctx.Is(extension)
-}
-
-func (c *ContextNoRequest) JSON(data interface{}, ctype ...string) error {
-	return c.ctx.JSON(data, ctype...)
-}
-
-func (c *ContextNoRequest) JSONP(data interface{}, callback ...string) error {
-	return c.ctx.JSONP(data, callback...)
-}
-
-func (c *ContextNoRequest) XML(data interface{}) error {
-	return c.ctx.XML(data)
 }
 
 func (c *ContextNoRequest) Links(link ...string) {
@@ -356,14 +319,6 @@ func (c *ContextNoRequest) AllParams() map[string]string {
 	return c.ctx.AllParams()
 }
 
-func (c *ContextNoRequest) ParamsParser(out interface{}) error {
-	return c.ctx.ParamsParser(out)
-}
-
-func (c *ContextNoRequest) ParamsInt(key string, defaultValue ...int) (int, error) {
-	return c.ctx.ParamsInt(key, defaultValue...)
-}
-
 func (c *ContextNoRequest) Path(override ...string) string {
 	return c.ctx.Path(override...)
 }
@@ -372,32 +327,12 @@ func (c *ContextNoRequest) Protocol() string {
 	return c.ctx.Protocol()
 }
 
-func (c *ContextNoRequest) Query(key string, defaultValue ...string) string {
-	return c.ctx.Query(key, defaultValue...)
-}
-
 func (c *ContextNoRequest) Queries() map[string]string {
 	return c.ctx.Queries()
 }
 
 func (c *ContextNoRequest) QueryInt(key string, defaultValue ...int) int {
 	return c.ctx.QueryInt(key, defaultValue...)
-}
-
-func (c *ContextNoRequest) QueryBool(key string, defaultValue ...bool) bool {
-	return c.ctx.QueryBool(key, defaultValue...)
-}
-
-func (c *ContextNoRequest) QueryFloat(key string, defaultValue ...float64) float64 {
-	return c.ctx.QueryFloat(key, defaultValue...)
-}
-
-func (c *ContextNoRequest) QueryParser(out interface{}) error {
-	return c.ctx.QueryParser(out)
-}
-
-func (c *ContextNoRequest) ReqHeaderParser(out interface{}) error {
-	return c.ctx.ReqHeaderParser(out)
 }
 
 func (c *ContextNoRequest) Range(size int) (fiber.Range, error) {
@@ -428,10 +363,6 @@ func (c *ContextNoRequest) Render(name string, bind interface{}, layouts ...stri
 	return c.ctx.Render(name, bind, layouts...)
 }
 
-func (c *ContextNoRequest) Route() *fiber.Route {
-	panic("implement me")
-}
-
 func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
 	return c.ctx.SaveFile(file, path)
 }
@@ -444,26 +375,7 @@ func (c *ContextNoRequest) Secure() bool {
 	return c.ctx.Secure()
 }
 
-func (c *ContextNoRequest) Send(body []byte) error {
-	return c.ctx.Send(body)
-}
-
-func (c *ContextNoRequest) SendFile(file string, compress ...bool) error {
-	return c.ctx.SendFile(file, compress...)
-}
-
-func (c *ContextNoRequest) SendStatus(status int) error {
-	return c.ctx.SendStatus(status)
-}
-
-func (c *ContextNoRequest) SendString(body string) error {
-	return c.ctx.SendString(body)
-}
-
-func (c *ContextNoRequest) SendStream(stream io.Reader, size ...int) error {
-	return c.ctx.SendStream(stream, size...)
-}
-
+// Set sets the response's HTTP header field to the specified key, value.
 func (c *ContextNoRequest) Set(key string, val string) {
 	c.ctx.Set(key, val)
 }
@@ -506,18 +418,6 @@ func (c *ContextWithRequest[Request]) Type(extension string, charset ...string) 
 
 func (c *ContextNoRequest) Vary(fields ...string) {
 	c.ctx.Vary(fields...)
-}
-
-func (c *ContextNoRequest) Write(p []byte) (int, error) {
-	return c.ctx.Write(p)
-}
-
-func (c *ContextNoRequest) Writef(f string, a ...interface{}) (int, error) {
-	return c.ctx.Writef(f, a...)
-}
-
-func (c *ContextNoRequest) WriteString(s string) (int, error) {
-	return c.ctx.WriteString(s)
 }
 
 func (c *ContextNoRequest) XHR() bool {

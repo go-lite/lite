@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"net/url"
 	"reflect"
 
@@ -39,6 +40,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 	switch string(contentType) {
 	case "application/json":
 		if err := json.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
+			log.Println(err.Error())
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err

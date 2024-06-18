@@ -30,7 +30,7 @@ type info struct {
 }
 
 func main() {
-	app := lite.NewApp()
+	app := lite.New()
 
 	app.Use(logger.New())
 	app.Use(recover.New())

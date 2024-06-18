@@ -16,21 +16,19 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	s *App,
 	method, path, resContentType string,
 	statusCode int,
-) (*openapi3.Operation, error) {
-	operation := &openapi3.Operation{}
+) (operation *openapi3.Operation, err error) {
+	operation = openapi3.NewOperation()
 	operation.OperationID = method + path
 
 	var reqBody RequestBody
 	valGen := reflect.ValueOf(&reqBody).Elem()
 	kind := valGen.Kind()
 
-	if kind != reflect.Struct {
-		return nil, fmt.Errorf("request body must be a struct")
-	}
-
-	err := register(s, operation, valGen)
-	if err != nil {
-		return nil, err
+	if kind == reflect.Struct {
+		err = register(s, operation, valGen)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	routePath, _ := parseRoutePath(path)

@@ -15,8 +15,6 @@ func newLiteContext[Request any, Contexted Context[Request]](ctx ContextNoReques
 	var c Contexted
 
 	switch any(c).(type) {
-	case ContextNoRequest:
-		return any(ctx).(Contexted)
 	case *ContextNoRequest:
 		return any(&ctx).(Contexted)
 	case *ContextWithRequest[Request]:
@@ -168,6 +166,39 @@ func Head[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
+func Connect[ResponseBody, Request any, Contexted Context[Request]](
+	app *App,
+	path string,
+	controller func(Contexted) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, Request] {
+	return registerRoute[ResponseBody, Request](
+		app,
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodConnect,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodConnect),
+		},
+		fiberHandler[ResponseBody, Request](controller, path),
+		middleware...,
+	)
+}
+
+func Trace[ResponseBody, Request any, Contexted Context[Request]](
+	app *App,
+	path string,
+	controller func(Contexted) (ResponseBody, error),
+	middleware ...fiber.Handler,
+) Route[ResponseBody, Request] {
+	return registerRoute[ResponseBody, Request](
+		app,
+		Route[ResponseBody, Request]{path: path, method: http.MethodTrace, contentType: "application/json", statusCode: getStatusCode(http.MethodTrace)},
+		fiberHandler[ResponseBody, Request](controller, path),
+		middleware...,
+	)
+}
+
 func Options[ResponseBody, Request any, Contexted Context[Request]](
 	app *App,
 	path string,
@@ -249,16 +280,12 @@ func parseRoutePath(route string) (string, []string) {
 // Get status code from the method
 func getStatusCode(method string) int {
 	switch method {
-	case http.MethodGet:
-		return http.StatusOK
 	case http.MethodPost:
 		return http.StatusCreated
-	case http.MethodPut:
-		return http.StatusOK
 	case http.MethodDelete:
 		return http.StatusNoContent
-	case http.MethodPatch:
-		return http.StatusOK
+	case http.MethodGet, http.MethodPatch, http.MethodPut:
+		fallthrough
 	default:
 		return http.StatusOK
 	}
