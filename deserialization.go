@@ -316,7 +316,7 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		}
 
 		fieldVal.SetBool(boolValue)
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		if fieldVal.Type().Elem().Kind() == reflect.Uint8 {
 			fieldVal.SetBytes([]byte(valueStr.(string)))
 		} else {

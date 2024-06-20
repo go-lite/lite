@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net/url"
 	"reflect"
 
@@ -28,7 +27,11 @@ func serializeResponse(ctx *fasthttp.RequestCtx, src any) error {
 
 		return nil
 	case reflect.Invalid, reflect.Chan, reflect.Func, reflect.UnsafePointer:
-		return fmt.Errorf("unsupported type: %s", srcVal.Kind())
+		err := fmt.Errorf("unsupported type: %s", srcVal.Kind())
+
+		ctx.Error(err.Error(), StatusInternalServerError)
+
+		return err
 	default:
 		return serialize(ctx, srcVal)
 	}
@@ -40,7 +43,6 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 	switch string(contentType) {
 	case "application/json":
 		if err := json.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
-			log.Println(err.Error())
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
@@ -52,7 +54,6 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			return err
 		}
 	case "multipart/form-data", "application/x-www-form-urlencoded":
-		// Handle form data
 		if form, ok := srcVal.Interface().(map[string]string); ok {
 			formData := url.Values{}
 
