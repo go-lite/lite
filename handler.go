@@ -193,7 +193,12 @@ func Trace[ResponseBody, Request any, Contexted Context[Request]](
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
 		app,
-		Route[ResponseBody, Request]{path: path, method: http.MethodTrace, contentType: "application/json", statusCode: getStatusCode(http.MethodTrace)},
+		Route[ResponseBody, Request]{
+			path:        path,
+			method:      http.MethodTrace,
+			contentType: "application/json",
+			statusCode:  getStatusCode(http.MethodTrace),
+		},
 		fiberHandler[ResponseBody, Request](controller, path),
 		middleware...,
 	)
