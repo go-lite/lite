@@ -154,7 +154,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		response := openapi3.NewResponse().WithDescription(errResponse.Description())
 
 		var consume []string
-		for contentType := range errors.DefaultErrorContentTypeResponses {
+		for _, contentType := range errors.DefaultErrorContentTypeResponses {
 			consume = append(consume, contentType)
 		}
 

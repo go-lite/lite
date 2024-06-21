@@ -3,7 +3,6 @@ package errors
 import (
 	"net/http"
 
-	"github.com/disco07/lite-fiber/codec"
 	"github.com/google/uuid"
 )
 
@@ -74,10 +73,10 @@ var DefaultErrorResponses = map[int]HTTPError{
 	http.StatusInternalServerError: newErrorResponse(uuid.NewString(), http.StatusInternalServerError, "Internal Server Error"),
 }
 
-var DefaultErrorContentTypeResponses = map[string]codec.Encoder[HTTPError]{
-	"application/json":    codec.AsJSON[HTTPError]{},
-	"application/xml":     codec.AsXML[HTTPError]{},
-	"multipart/form-data": codec.AsMultiPart[HTTPError]{},
+var DefaultErrorContentTypeResponses = []string{
+	"application/json",
+	"application/xml",
+	"multipart/form-data",
 }
 
 func NewInternalServerError(message ...string) HTTPError {
