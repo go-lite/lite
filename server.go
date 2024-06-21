@@ -90,10 +90,12 @@ func (s *App) SaveOpenAPISpec() ([]byte, error) {
 	return yamlData, nil
 }
 
+var yamlJSONToYAML = yaml.JSONToYAML
+
 // writeOpenAPISpec writes the OpenAPI spec to a file in YAML format
 func writeOpenAPISpec(d []byte) ([]byte, error) {
 	// convert json to yaml
-	yamlData, err := yaml.JSONToYAML(d)
+	yamlData, err := yamlJSONToYAML(d)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +103,7 @@ func writeOpenAPISpec(d []byte) ([]byte, error) {
 	return yamlData, nil
 }
 
+// AddServer adds a server to the OpenAPI spec
 func (s *App) AddServer(url, description string) {
 	var servers []*openapi3.Server
 
@@ -141,7 +144,6 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		if !ok {
 			var err error
 			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
-
 			if err != nil {
 				return nil, err
 			}
@@ -174,21 +176,9 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 }
 
 func (s *App) Listen(address string) error {
-	if !s.OpenAPIConfig.DisableLocalSave {
-		// yamlData, err := s.SaveOpenAPISpec()
-		// if err != nil {
-		//	return err
-		//}
-		//
-		// err = s.SaveOpenAPISpecToFile(yamlData)
-		// if err != nil {
-		//	return err
-		//}
-	}
-
-	// if !s.OpenAPIConfig.DisableSwagger {
-	//	s.Get(s.OpenAPIConfig.SwaggerUrl, s.OpenAPIConfig.UIHandler(s.OpenAPIConfig.YamlUrl))
-	//}
-
 	return s.App.Listen(address)
+}
+
+func (s *App) Shutdown() error {
+	return s.App.Shutdown()
 }

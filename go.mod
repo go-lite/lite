@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/disco07/lite-fiber v0.0.6
-	github.com/getkin/kin-openapi v0.124.0
+	github.com/getkin/kin-openapi v0.125.0
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/google/uuid v1.6.0
 	github.com/invopop/yaml v0.2.0
