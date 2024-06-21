@@ -5,6 +5,7 @@ import "github.com/gofiber/fiber/v2"
 func DefaultOpenAPIHandler(specURL string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "text/html; charset=utf-8")
+
 		return c.SendString(`<!doctype html>
 <html lang="en">
 <head>

@@ -1,1 +1,5 @@
 .idea
+
+examples/basic/api
+examples/file/api
+examples/file/uploads
