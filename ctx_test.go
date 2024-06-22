@@ -22,6 +22,18 @@ func TestCtxTestSuite(t *testing.T) {
 	suite.Run(t, new(CtxTestSuite))
 }
 
+func newContext[Request any](ctx *fiber.Ctx, app *App, path string) Context[Request] {
+	c := ContextNoRequest{
+		ctx:  ctx,
+		app:  app,
+		path: path,
+	}
+
+	return &ContextWithRequest[Request]{
+		ContextNoRequest: c,
+	}
+}
+
 func (suite *CtxTestSuite) TestContextWithRequest_Body_TextPlain() {
 	app := New()
 

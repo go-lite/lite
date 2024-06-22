@@ -84,15 +84,21 @@ func main() {
 
 	defer func() {
 		closeErr := f.Close()
-		if err == nil {
-			err = closeErr
+		if err != nil {
+			if closeErr != nil {
+				err = closeErr
+			}
+
+			log.Fatal(err)
 		}
 	}()
 
 	_, err = f.Write(yamlBytes)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
-	log.Fatal(app.Listen(":9999"))
+	if err = app.Listen(":9999"); err != nil {
+		return
+	}
 }

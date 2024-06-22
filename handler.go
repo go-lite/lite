@@ -2,12 +2,12 @@ package lite
 
 import (
 	"context"
-	"log"
+	"errors"
 	"log/slog"
 	"net/http"
 	"regexp"
 
-	"github.com/disco07/lite/errors"
+	liteErrors "github.com/disco07/lite/errors"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -38,14 +38,18 @@ func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
 		c.Status(getStatusCode(c.Method()))
 
 		response, err := controller(ctx)
-
-		contentType := string(c.Response().Header.ContentType())
-		log.Println(contentType)
-
 		if err != nil {
+			// check if the error is a HTTPError and if so, return the error code
+			var httpError liteErrors.HTTPError
+			if errors.As(err, &httpError) {
+				c.Status(httpError.StatusCode())
+
+				return c.JSON(httpError)
+			}
+
 			c.Status(http.StatusInternalServerError)
 
-			return c.JSON(errors.DefaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
+			return c.JSON(liteErrors.DefaultErrorResponses[http.StatusInternalServerError].SetMessage(err.Error()))
 		}
 
 		return serializeResponse(c.Context(), &response)

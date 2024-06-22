@@ -45,23 +45,6 @@ func (e HTTPError) Description() string {
 	}
 }
 
-func (e HTTPError) tag() string {
-	switch e.Status {
-	case http.StatusBadRequest:
-		return "swaggerDescriptionBadRequest"
-	case http.StatusUnauthorized:
-		return "swaggerDescriptionUnauthorized"
-	case http.StatusNotFound:
-		return "swaggerDescriptionNotFound"
-	case http.StatusConflict:
-		return "swaggerDescriptionConflict"
-	case http.StatusInternalServerError:
-		return "swaggerDescriptionInternalServerError"
-	default:
-		return "swaggerDescriptionUnknownError"
-	}
-}
-
 func (e HTTPError) SetMessage(message string) HTTPError {
 	e.Message = message
 
