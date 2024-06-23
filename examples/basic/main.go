@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/disco07/lite/examples/basic/returns"
 	"github.com/go-lite/lite/examples/basic/parameters"
+	"github.com/go-lite/lite/examples/basic/returns"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
