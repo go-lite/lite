@@ -13,6 +13,8 @@ var generator = openapi3gen.NewGenerator(
 	openapi3gen.UseAllExportedFields(),
 )
 
+var generatorNewSchemaRefForValue = generator.NewSchemaRefForValue
+
 func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	s *App,
 	method, path, resContentType string,
@@ -38,7 +40,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 
 	responseSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
 	if !ok {
-		responseSchema, err = generator.NewSchemaRefForValue(new(ResponseBody), s.OpenAPISpec.Components.Schemas)
+		responseSchema, err = generatorNewSchemaRefForValue(new(ResponseBody), s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return operation, err
 		}
@@ -92,6 +94,11 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 
 			if field.Tag.Get(getStructTag(contentType)) != "" {
 				if contentType != "application/json" {
+					jsonFieldName := field.Tag.Get(getStructTag("application/json"))
+					if jsonFieldName != "" {
+						fieldName = jsonFieldName
+					}
+
 					updateKey(schema.Properties, fieldName, field.Tag.Get(getStructTag(contentType)))
 				}
 
@@ -110,7 +117,7 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 			return true
 		}
 
-		getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value)
+		return getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value)
 	case reflect.Map:
 		getRequiredValue(contentType, fieldType.Elem(), schema.AdditionalProperties.Schema.Value)
 		return false
@@ -127,14 +134,15 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 	default:
 		return true
 	}
-
-	return false
 }
 
 func updateKey(properties openapi3.Schemas, key string, newKey string) {
 	schema := properties[key]
-	delete(properties, key)
 	properties[newKey] = schema
+
+	if key != newKey {
+		delete(properties, key)
+	}
 }
 
 func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error {
@@ -267,7 +275,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 					tp := reflect.New(fieldType).Elem().Interface()
 
-					bodySchema, err := generator.NewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
+					bodySchema, err := generatorNewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
 					if err != nil {
 						return err
 					}
@@ -325,7 +333,7 @@ func setHeaderScheme(s *App, operation *openapi3.Operation, tag string, paramete
 	if !ok {
 		var err error
 
-		headerSchema, err := generator.NewSchemaRefForValue(new(string), s.OpenAPISpec.Components.Schemas)
+		headerSchema, err := generatorNewSchemaRefForValue(new(string), s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
@@ -388,7 +396,7 @@ func setParamSchema(
 		var err error
 		newInstance := reflect.New(fieldType).Elem().Interface()
 
-		paramSchema, err := generator.NewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}

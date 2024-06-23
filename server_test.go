@@ -92,6 +92,22 @@ func TestApp_createDefaultErrorResponses(t *testing.T) {
 	assert.Contains(t, responses, 400) // Assuming 400 is in DefaultErrorResponses
 }
 
+func TestApp_createDefaultErrorResponses_error(t *testing.T) {
+	app := New()
+
+	realGenerator := generatorNewSchemaRefForValue
+	defer func() {
+		generatorNewSchemaRefForValue = realGenerator
+	}()
+
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, errors.New("error")
+	}
+
+	_, err := app.createDefaultErrorResponses()
+	assert.NotNil(t, err)
+}
+
 func TestWriteOpenAPISpec(t *testing.T) {
 	jsonData := []byte(`{"openapi": "3.0.3"}`)
 	yamlData, err := writeOpenAPISpec(jsonData)

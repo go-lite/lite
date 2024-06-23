@@ -144,7 +144,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		if !ok {
 			var err error
 
-			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
+			responseSchema, err = generatorNewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
 			if err != nil {
 				return nil, err
 			}

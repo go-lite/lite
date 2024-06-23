@@ -54,6 +54,9 @@ func (e HTTPError) SetMessage(message string) HTTPError {
 var DefaultErrorResponses = map[int]HTTPError{
 	http.StatusBadRequest:          newErrorResponse(uuid.NewString(), http.StatusBadRequest, "Bad Request"),
 	http.StatusInternalServerError: newErrorResponse(uuid.NewString(), http.StatusInternalServerError, "Internal Server Error"),
+	http.StatusUnauthorized:        newErrorResponse(uuid.NewString(), http.StatusUnauthorized, "Unauthorized"),
+	http.StatusNotFound:            newErrorResponse(uuid.NewString(), http.StatusNotFound, "Not Found"),
+	http.StatusConflict:            newErrorResponse(uuid.NewString(), http.StatusConflict, "Conflict"),
 }
 
 var DefaultErrorContentTypeResponses = []string{
@@ -107,5 +110,5 @@ func NewError(status int, message ...string) HTTPError {
 		return newErrorResponse(uuid.NewString(), status, message[0])
 	}
 
-	return DefaultErrorResponses[status]
+	return newErrorResponse(uuid.NewString(), status, "")
 }
