@@ -8,8 +8,7 @@ test:
 	go test ./...
 
 cover:
-	@GOEXPERIMENT=nocoverageredesign go test -coverprofile=cover.out ./...
-	go tool cover -func=cover.out
+	@GOEXPERIMENT=nocoverageredesign go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
 lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 run --config scripts/.golangci.yaml
