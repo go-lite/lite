@@ -143,6 +143,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		responseSchema, ok := s.OpenAPISpec.Components.Schemas["httpGenericError"]
 		if !ok {
 			var err error
+
 			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
 			if err != nil {
 				return nil, err
@@ -154,9 +155,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		response := openapi3.NewResponse().WithDescription(errResponse.Description())
 
 		var consume []string
-		for _, contentType := range errors.DefaultErrorContentTypeResponses {
-			consume = append(consume, contentType)
-		}
+		consume = append(consume, errors.DefaultErrorContentTypeResponses...)
 
 		if responseSchema != nil {
 			content := openapi3.NewContentWithSchemaRef(

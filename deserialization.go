@@ -25,7 +25,6 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		tag := field.Tag.Get("lite")
 
 		if fieldVal.Kind() == reflect.Struct && tag == "" {
-			// Recursively handle nested structs
 			if err := deserialize(ctx, fieldVal, params); err != nil {
 				return err
 			}
@@ -40,16 +39,18 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		tagMap := parseTag(tag)
 
 		if val, ok := tagMap["req"]; ok && val == "body" {
-			err := deserializeBody(ctx, fieldVal)
-			if err != nil {
+			if err := deserializeBody(ctx, fieldVal); err != nil {
 				return err
 			}
 		}
 
 		var valueStr string
 
-		if pathKey, ok := tagMap["path"]; ok {
+		switch {
+		case tagMap["path"] != "":
 			if params != nil {
+				pathKey := tagMap["path"]
+
 				paramsValue, ok := params[pathKey]
 				if !ok {
 					return fmt.Errorf("missing path parameter: %s", pathKey)
@@ -57,11 +58,13 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 
 				valueStr = paramsValue
 			}
-		} else if queryKey, ok := tagMap["query"]; ok {
+		case tagMap["query"] != "":
+			queryKey := tagMap["query"]
 			if value := ctx.QueryArgs().Peek(queryKey); len(value) > 0 {
 				valueStr = string(value)
 			}
-		} else if headerKey, ok := tagMap["header"]; ok {
+		case tagMap["header"] != "":
+			headerKey := tagMap["header"]
 			if value := ctx.Request.Header.Peek(headerKey); len(value) > 0 {
 				valueStr = string(value)
 			}
@@ -208,11 +211,10 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		}
 
 		return setFieldValue(fieldVal.Elem(), valueStr)
-	case reflect.Struct:
-		if _, ok := valueStr.(string); ok {
-			val := []byte(valueStr.(string))
 
-			return json.Unmarshal(val, fieldVal.Addr().Interface())
+	case reflect.Struct:
+		if str, ok := valueStr.(string); ok {
+			return json.Unmarshal([]byte(str), fieldVal.Addr().Interface())
 		}
 
 		val := reflect.ValueOf(valueStr)
@@ -221,94 +223,19 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		}
 
 		fieldVal.Set(val)
+
 	case reflect.String:
 		fieldVal.SetString(valueStr.(string))
-	case reflect.Int:
-		intValue, err := strconv.Atoi(valueStr.(string))
-		if err != nil {
-			return err
-		}
 
-		fieldVal.SetInt(int64(intValue))
-	case reflect.Int8:
-		intValue, err := strconv.ParseInt(valueStr.(string), 10, 8)
-		if err != nil {
-			return err
-		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return setIntValue(fieldVal, valueStr.(string))
 
-		fieldVal.SetInt(intValue)
-	case reflect.Int16:
-		intValue, err := strconv.ParseInt(valueStr.(string), 10, 16)
-		if err != nil {
-			return err
-		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return setUintValue(fieldVal, valueStr.(string))
 
-		fieldVal.SetInt(intValue)
-	case reflect.Int32:
-		intValue, err := strconv.ParseInt(valueStr.(string), 10, 32)
-		if err != nil {
-			return err
-		}
+	case reflect.Float32, reflect.Float64:
+		return setFloatValue(fieldVal, valueStr.(string))
 
-		fieldVal.SetInt(intValue)
-
-	case reflect.Int64:
-		intValue, err := strconv.ParseInt(valueStr.(string), 10, 64)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetInt(intValue)
-
-	case reflect.Uint:
-		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 0)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetUint(uintValue)
-	case reflect.Uint8:
-		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 8)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetUint(uintValue)
-	case reflect.Uint16:
-		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 16)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetUint(uintValue)
-	case reflect.Uint32:
-		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 32)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetUint(uintValue)
-	case reflect.Uint64:
-		uintValue, err := strconv.ParseUint(valueStr.(string), 10, 64)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetUint(uintValue)
-	case reflect.Float32:
-		floatValue, err := strconv.ParseFloat(valueStr.(string), 32)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetFloat(floatValue)
-	case reflect.Float64:
-		floatValue, err := strconv.ParseFloat(valueStr.(string), 64)
-		if err != nil {
-			return err
-		}
-
-		fieldVal.SetFloat(floatValue)
 	case reflect.Bool:
 		boolValue, err := strconv.ParseBool(valueStr.(string))
 		if err != nil {
@@ -316,15 +243,53 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		}
 
 		fieldVal.SetBool(boolValue)
+
 	case reflect.Slice, reflect.Array:
 		if fieldVal.Type().Elem().Kind() == reflect.Uint8 {
 			fieldVal.SetBytes([]byte(valueStr.(string)))
 		} else {
 			return fmt.Errorf("unsupported slice type %s", fieldVal.Type().Elem().Kind())
 		}
+
+	case reflect.Invalid, reflect.Uintptr, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func,
+		reflect.Interface, reflect.Map, reflect.UnsafePointer:
+		fallthrough
 	default:
 		return fmt.Errorf("unsupported kind %s", fieldVal.Kind())
 	}
+
+	return nil
+}
+
+func setIntValue(fieldVal reflect.Value, valueStr string) error {
+	intValue, err := strconv.ParseInt(valueStr, 10, fieldVal.Type().Bits())
+	if err != nil {
+		return err
+	}
+
+	fieldVal.SetInt(intValue)
+
+	return nil
+}
+
+func setUintValue(fieldVal reflect.Value, valueStr string) error {
+	uintValue, err := strconv.ParseUint(valueStr, 10, fieldVal.Type().Bits())
+	if err != nil {
+		return err
+	}
+
+	fieldVal.SetUint(uintValue)
+
+	return nil
+}
+
+func setFloatValue(fieldVal reflect.Value, valueStr string) error {
+	floatValue, err := strconv.ParseFloat(valueStr, fieldVal.Type().Bits())
+	if err != nil {
+		return err
+	}
+
+	fieldVal.SetFloat(floatValue)
 
 	return nil
 }

@@ -1,3 +1,7 @@
+[![Go](https://github.com/disco07/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/disco07/lite/actions/workflows/go.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/disco07/lite.svg)](https://pkg.go.dev/github.com/disco07/lite)
+[![Go Report Card](https://goreportcard.com/badge/github.com/disco07/lite)](https://goreportcard.com/report/github.com/disco07/lite)
+
 # Lite: A Typed Wrapper for GoFiber
 Lite is a typed wrapper for GoFiber, a web framework for Go. It is designed to be lightweight and easy to use, while still providing a powerful API for building web applications. Lite is built on top of GoFiber, so it inherits all of its features and performance benefits.
 

@@ -121,6 +121,9 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 	case reflect.Invalid, reflect.Uintptr, reflect.Complex64, reflect.Complex128,
 		reflect.Chan, reflect.Func, reflect.UnsafePointer:
 		panic("not implemented")
+	case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
+		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64, reflect.String:
+		fallthrough
 	default:
 		return true
 	}
@@ -147,13 +150,24 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 		switch fieldVal.Kind() {
 		case reflect.Ptr:
 			switch fieldVal.Elem().Kind() {
-			case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map:
-				panic("not implemented")
+			case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map, reflect.Complex64, reflect.Complex128,
+				reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer, reflect.Ptr:
+				return fmt.Errorf("not implemented")
+			case reflect.Invalid:
+				fallthrough
+			case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
+				reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64,
+				reflect.Interface, reflect.String:
+				fallthrough
 			default:
 			}
-
-		case reflect.Invalid, reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer:
-			panic("not implemented")
+		case reflect.Invalid, reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer, reflect.Complex64,
+			reflect.Complex128:
+			return fmt.Errorf("not implemented")
+		case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
+			reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64,
+			reflect.Array, reflect.Interface, reflect.Map, reflect.Slice, reflect.String, reflect.Struct:
+			fallthrough
 		default:
 		}
 
@@ -241,7 +255,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 					}
 				}
 
-				bodySchema, ok := s.OpenAPISpec.Components.Schemas[fieldVal.Type().Name()]
+				_, ok := s.OpenAPISpec.Components.Schemas[fieldVal.Type().Name()]
 				if !ok {
 					var err error
 
@@ -253,7 +267,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 					tp := reflect.New(fieldType).Elem().Interface()
 
-					bodySchema, err = generator.NewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
+					bodySchema, err := generator.NewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
 					if err != nil {
 						return err
 					}
@@ -307,16 +321,16 @@ func updateFileHeaderFieldType(fieldType reflect.Type) reflect.Type {
 }
 
 func setHeaderScheme(s *App, operation *openapi3.Operation, tag string, parameter *openapi3.Parameter) error {
-	paramSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
+	_, ok := s.OpenAPISpec.Components.Schemas[tag]
 	if !ok {
 		var err error
 
-		paramSchema, err = generator.NewSchemaRefForValue(new(string), s.OpenAPISpec.Components.Schemas)
+		headerSchema, err := generator.NewSchemaRefForValue(new(string), s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
 
-		s.OpenAPISpec.Components.Schemas[tag] = paramSchema
+		s.OpenAPISpec.Components.Schemas[tag] = headerSchema
 	}
 
 	s.OpenAPISpec.Components.Headers[tag] = &openapi3.HeaderRef{
@@ -369,12 +383,12 @@ func setParamSchema(
 	parameter.Schema = openapi3.NewSchemaRef(ref, &openapi3.Schema{})
 	parameter.Required = isRequired
 
-	paramSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
+	_, ok := s.OpenAPISpec.Components.Schemas[tag]
 	if !ok {
 		var err error
 		newInstance := reflect.New(fieldType).Elem().Interface()
 
-		paramSchema, err = generator.NewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		paramSchema, err := generator.NewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
@@ -409,6 +423,10 @@ func dive(t reflect.Type, maxDepth int) string {
 		}
 
 		return dive(t.Elem(), maxDepth-1)
+	case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
+		reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Interface, reflect.String, reflect.Struct:
+		fallthrough
 	default:
 		return t.Name()
 	}
