@@ -1,6 +1,7 @@
-[![Go](https://github.com/disco07/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/disco07/lite/actions/workflows/go.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/disco07/lite.svg)](https://pkg.go.dev/github.com/disco07/lite)
-[![Go Report Card](https://goreportcard.com/badge/github.com/disco07/lite)](https://goreportcard.com/report/github.com/disco07/lite)
+[![Go](https://github.com/go-lite/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/go-lite/lite/actions/workflows/go.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/go-lite/lite.svg)](https://pkg.go.dev/github.com/go-lite/lite)
+[![Go Report Card](https://goreportcard.com/badge/github.com/go-lite/lite)](https://goreportcard.com/report/github.com/go-lite/lite)
+[![codecov](https://codecov.io/github/disco07/lite/graph/badge.svg?token=QV9UE6F52R)](https://codecov.io/github/disco07/lite)
 
 # Lite: A Typed Wrapper for GoFiber
 Lite is a typed wrapper for GoFiber, a web framework for Go. It is designed to be lightweight and easy to use, while still providing a powerful API for building web applications. Lite is built on top of GoFiber, so it inherits all of its features and performance benefits.
@@ -16,7 +17,7 @@ Lite is a typed wrapper for GoFiber, a web framework for Go. It is designed to b
 To install Lite, use `go get`:
 
 ```bash
-go get github.com/disco07/lite
+go get github.com/go-lite/lite
 ```
 
 ## Usage
@@ -26,7 +27,7 @@ Here is a simple example of how to use Lite:
 package main
 
 import (
-	"github.com/disco07/lite"
+	"github.com/go-lite/lite"
 	"log"
 )
 

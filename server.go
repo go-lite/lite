@@ -3,8 +3,8 @@ package lite
 import (
 	"fmt"
 
-	"github.com/disco07/lite/errors"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/invopop/yaml"
 	"github.com/valyala/fasthttp"

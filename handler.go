@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
-	liteErrors "github.com/disco07/lite/errors"
+	liteErrors "github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
 )
 

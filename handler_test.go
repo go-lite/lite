@@ -1,8 +1,8 @@
 package lite
 
 import (
-	"github.com/disco07/lite/errors"
-	"github.com/disco07/lite/mime"
+	"github.com/go-lite/lite/errors"
+	"github.com/go-lite/lite/mime"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/stretchr/testify/assert"

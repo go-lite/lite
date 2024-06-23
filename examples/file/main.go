@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/disco07/lite"
-	"github.com/disco07/lite/errors"
-	"github.com/disco07/lite/mime"
+	"github.com/go-lite/lite"
+	"github.com/go-lite/lite/errors"
+	"github.com/go-lite/lite/mime"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
