@@ -1,4 +1,4 @@
-[![Go](https://github.com/disco07/lite/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/disco07/lite/actions/workflows/test.yml)
+[![Go](https://github.com/disco07/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/disco07/lite/actions/workflows/go.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/disco07/lite.svg)](https://pkg.go.dev/github.com/disco07/lite)
 [![Go Report Card](https://goreportcard.com/badge/github.com/disco07/lite)](https://goreportcard.com/report/github.com/disco07/lite)
 
