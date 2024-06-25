@@ -32,12 +32,7 @@ type Context[Request any] interface {
 	Request() *fasthttp.Request
 	Response() *fasthttp.Response
 	Format(body interface{}) error
-	FormFile(key string) (*multipart.FileHeader, error)
-	FormValue(key string, defaultValue ...string) string
 	Fresh() bool
-	Get(key string, defaultValue ...string) string
-	GetReqHeaders() map[string][]string
-	GetRespHeaders() map[string][]string
 	Hostname() string
 	Port() string
 	IP() string
@@ -52,8 +47,6 @@ type Context[Request any] interface {
 	Next() error
 	RestartRouting() error
 	OriginalURL() string
-	AllParams() map[string]string
-	Path(override ...string) string
 	Protocol() string
 	Queries() map[string]string
 	Range(size int) (fiber.Range, error)
@@ -62,15 +55,12 @@ type Context[Request any] interface {
 	GetRouteURL(routeName string, params fiber.Map) (string, error)
 	RedirectToRoute(routeName string, params fiber.Map, status ...int) error
 	RedirectBack(fallback string, status ...int) error
-	Render(name string, bind interface{}, layouts ...string) error
 	SaveFile(fileheader *multipart.FileHeader, path string) error
 	SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error
 	Secure() bool
 	Set(key string, val string)
 	Subdomains(offset ...int) []string
-	Stale() bool
 	Status(status int) Context[Request]
-	String() string
 	// Type sets the Content-Type response header with the given type and charset.
 	Type(extension string, charset ...string) Context[Request]
 	Vary(fields ...string)
@@ -252,28 +242,8 @@ func (c *ContextNoRequest) Format(body interface{}) error {
 	return c.ctx.Format(body)
 }
 
-func (c *ContextNoRequest) FormFile(key string) (*multipart.FileHeader, error) {
-	return c.ctx.FormFile(key)
-}
-
-func (c *ContextNoRequest) FormValue(key string, defaultValue ...string) string {
-	return c.ctx.FormValue(key, defaultValue...)
-}
-
 func (c *ContextNoRequest) Fresh() bool {
 	return c.ctx.Fresh()
-}
-
-func (c *ContextNoRequest) Get(key string, defaultValue ...string) string {
-	return c.ctx.Get(key, defaultValue...)
-}
-
-func (c *ContextNoRequest) GetReqHeaders() map[string][]string {
-	return c.ctx.GetReqHeaders()
-}
-
-func (c *ContextNoRequest) GetRespHeaders() map[string][]string {
-	return c.ctx.GetRespHeaders()
 }
 
 func (c *ContextNoRequest) Hostname() string {
@@ -332,28 +302,12 @@ func (c *ContextNoRequest) OriginalURL() string {
 	return c.ctx.OriginalURL()
 }
 
-func (c *ContextNoRequest) Params(key string, defaultValue ...string) string {
-	return c.ctx.Params(key, defaultValue...)
-}
-
-func (c *ContextNoRequest) AllParams() map[string]string {
-	return c.ctx.AllParams()
-}
-
-func (c *ContextNoRequest) Path(override ...string) string {
-	return c.ctx.Path(override...)
-}
-
 func (c *ContextNoRequest) Protocol() string {
 	return c.ctx.Protocol()
 }
 
 func (c *ContextNoRequest) Queries() map[string]string {
 	return c.ctx.Queries()
-}
-
-func (c *ContextNoRequest) QueryInt(key string, defaultValue ...int) int {
-	return c.ctx.QueryInt(key, defaultValue...)
 }
 
 func (c *ContextNoRequest) Range(size int) (fiber.Range, error) {
@@ -380,10 +334,6 @@ func (c *ContextNoRequest) RedirectBack(fallback string, status ...int) error {
 	return c.ctx.RedirectBack(fallback, status...)
 }
 
-func (c *ContextNoRequest) Render(name string, bind interface{}, layouts ...string) error {
-	return c.ctx.Render(name, bind, layouts...)
-}
-
 func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
 	return c.ctx.SaveFile(file, path)
 }
@@ -405,10 +355,6 @@ func (c *ContextNoRequest) Subdomains(offset ...int) []string {
 	return c.ctx.Subdomains(offset...)
 }
 
-func (c *ContextNoRequest) Stale() bool {
-	return c.ctx.Stale()
-}
-
 func (c *ContextNoRequest) Status(status int) Context[any] {
 	c.ctx = c.ctx.Status(status)
 
@@ -419,10 +365,6 @@ func (c *ContextWithRequest[Request]) Status(status int) Context[Request] {
 	c.ctx = c.ctx.Status(status)
 
 	return c
-}
-
-func (c *ContextNoRequest) String() string {
-	return c.ctx.String()
 }
 
 func (c *ContextNoRequest) Type(extension string, charset ...string) Context[any] {

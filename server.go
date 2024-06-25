@@ -44,7 +44,6 @@ func NewOpenAPISpec() openapi3.T {
 var defaultOpenAPIConfig = OpenAPIConfig{
 	SwaggerURL: "/swagger",
 	YamlURL:    "/swagger/openapi.yaml",
-	UIHandler:  DefaultOpenAPIHandler,
 }
 
 type App struct {
