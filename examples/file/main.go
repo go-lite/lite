@@ -59,7 +59,7 @@ func main() {
 			log.Fatalf("failed reading file: %s", err)
 		}
 
-		c.Type(mime.ImagePng)
+		c.SetContentType(mime.ImagePng)
 
 		return response, nil
 	}).SetResponseContentType("image/png")

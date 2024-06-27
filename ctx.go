@@ -39,34 +39,17 @@ type Context[Request any] interface {
 	IPs() []string
 	Is(extension string) bool
 	Links(link ...string)
-	Locals(key interface{}, value ...interface{}) interface{}
-	Location(path string)
 	Method(override ...string) string
 	MultipartForm() (*multipart.Form, error)
 	ClientHelloInfo() *tls.ClientHelloInfo
 	Next() error
-	RestartRouting() error
 	OriginalURL() string
 	Protocol() string
-	Queries() map[string]string
-	Range(size int) (fiber.Range, error)
-	Redirect(location string, status ...int) error
-	Bind(vars fiber.Map) error
-	GetRouteURL(routeName string, params fiber.Map) (string, error)
-	RedirectToRoute(routeName string, params fiber.Map, status ...int) error
-	RedirectBack(fallback string, status ...int) error
 	SaveFile(fileheader *multipart.FileHeader, path string) error
-	SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error
-	Secure() bool
 	Set(key string, val string)
-	Subdomains(offset ...int) []string
 	Status(status int) Context[Request]
-	// Type sets the Content-Type response header with the given type and charset.
-	Type(extension string, charset ...string) Context[Request]
-	Vary(fields ...string)
-	XHR() bool
-	IsProxyTrusted() bool
-	IsFromLocal() bool
+	// SetContentType sets the Content-Type response header with the given type and charset.
+	SetContentType(extension string, charset ...string) Context[Request]
 }
 
 var (
@@ -270,14 +253,6 @@ func (c *ContextNoRequest) Links(link ...string) {
 	c.ctx.Links(link...)
 }
 
-func (c *ContextNoRequest) Locals(key interface{}, value ...interface{}) interface{} {
-	return c.ctx.Locals(key, value...)
-}
-
-func (c *ContextNoRequest) Location(path string) {
-	c.ctx.Location(path)
-}
-
 func (c *ContextNoRequest) Method(override ...string) string {
 	return c.ctx.Method(override...)
 }
@@ -294,10 +269,6 @@ func (c *ContextNoRequest) Next() error {
 	return c.ctx.Next()
 }
 
-func (c *ContextNoRequest) RestartRouting() error {
-	return c.ctx.RestartRouting()
-}
-
 func (c *ContextNoRequest) OriginalURL() string {
 	return c.ctx.OriginalURL()
 }
@@ -306,53 +277,13 @@ func (c *ContextNoRequest) Protocol() string {
 	return c.ctx.Protocol()
 }
 
-func (c *ContextNoRequest) Queries() map[string]string {
-	return c.ctx.Queries()
-}
-
-func (c *ContextNoRequest) Range(size int) (fiber.Range, error) {
-	return c.ctx.Range(size)
-}
-
-func (c *ContextNoRequest) Redirect(location string, status ...int) error {
-	return c.ctx.Redirect(location, status...)
-}
-
-func (c *ContextNoRequest) Bind(vars fiber.Map) error {
-	return c.ctx.Bind(vars)
-}
-
-func (c *ContextNoRequest) GetRouteURL(routeName string, params fiber.Map) (string, error) {
-	return c.ctx.GetRouteURL(routeName, params)
-}
-
-func (c *ContextNoRequest) RedirectToRoute(routeName string, params fiber.Map, status ...int) error {
-	return c.ctx.RedirectToRoute(routeName, params, status...)
-}
-
-func (c *ContextNoRequest) RedirectBack(fallback string, status ...int) error {
-	return c.ctx.RedirectBack(fallback, status...)
-}
-
 func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
 	return c.ctx.SaveFile(file, path)
-}
-
-func (c *ContextNoRequest) SaveFileToStorage(fileheader *multipart.FileHeader, path string, storage fiber.Storage) error {
-	return c.ctx.SaveFileToStorage(fileheader, path, storage)
-}
-
-func (c *ContextNoRequest) Secure() bool {
-	return c.ctx.Secure()
 }
 
 // Set sets the response's HTTP header field to the specified key, value.
 func (c *ContextNoRequest) Set(key string, val string) {
 	c.ctx.Set(key, val)
-}
-
-func (c *ContextNoRequest) Subdomains(offset ...int) []string {
-	return c.ctx.Subdomains(offset...)
 }
 
 func (c *ContextNoRequest) Status(status int) Context[any] {
@@ -367,30 +298,14 @@ func (c *ContextWithRequest[Request]) Status(status int) Context[Request] {
 	return c
 }
 
-func (c *ContextNoRequest) Type(extension string, charset ...string) Context[any] {
+func (c *ContextNoRequest) SetContentType(extension string, charset ...string) Context[any] {
 	c.ctx = c.ctx.Type(extension, charset...)
 
 	return c
 }
 
-func (c *ContextWithRequest[Request]) Type(extension string, charset ...string) Context[Request] {
+func (c *ContextWithRequest[Request]) SetContentType(extension string, charset ...string) Context[Request] {
 	c.ctx = c.ctx.Type(extension, charset...)
 
 	return c
-}
-
-func (c *ContextNoRequest) Vary(fields ...string) {
-	c.ctx.Vary(fields...)
-}
-
-func (c *ContextNoRequest) XHR() bool {
-	return c.ctx.XHR()
-}
-
-func (c *ContextNoRequest) IsProxyTrusted() bool {
-	return c.ctx.IsProxyTrusted()
-}
-
-func (c *ContextNoRequest) IsFromLocal() bool {
-	return c.ctx.IsFromLocal()
 }

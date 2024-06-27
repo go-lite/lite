@@ -73,7 +73,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationXML_Requests() 
 			return response{}, err
 		}
 
-		c.Type(mime.ApplicationXML)
+		c.SetContentType(mime.ApplicationXML)
 
 		return response{
 			ID:      req.ID,
@@ -560,7 +560,7 @@ func (c fakeContext[r]) Status(status int) Context[r] {
 	return nil
 }
 
-func (c fakeContext[r]) Type(extension string, charset ...string) Context[r] {
+func (c fakeContext[r]) SetContentType(extension string, charset ...string) Context[r] {
 	return nil
 }
 
