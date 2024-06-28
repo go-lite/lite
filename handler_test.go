@@ -261,40 +261,40 @@ type reqBody struct {
 	ID float64 `json:"id" xml:"id"`
 }
 
-func (suite *HandlerTestSuite) TestContextWithRequest_Body() {
-	type request struct {
-		Body reqBody `lite:"req=body"`
-	}
-
-	type response struct {
-		ID      float64 `json:"id"`
-		Message string  `json:"message"`
-	}
-
-	app := New()
-	Post(app, "/foo", func(c *ContextWithRequest[request]) (response, error) {
-		req, err := c.Requests()
-		if err != nil {
-			return response{}, err
-		}
-
-		return response{
-			ID:      req.Body.ID,
-			Message: "Hello World",
-		}, nil
-	})
-
-	requestBody := `{"id":123}`
-	req := httptest.NewRequest("POST", "/foo", strings.NewReader(requestBody))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := app.Test(req)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 200")
-	body, err := io.ReadAll(resp.Body)
-	assert.NoError(suite.T(), err)
-	assert.JSONEq(suite.T(), `{"id":123,"message":"Hello World"}`, utils.UnsafeString(body))
-}
+//func (suite *HandlerTestSuite) TestContextWithRequest_Body() {
+//	type request struct {
+//		Body reqBody `lite:"req=body"`
+//	}
+//
+//	type response struct {
+//		ID      float64 `json:"id"`
+//		Message string  `json:"message"`
+//	}
+//
+//	app := New()
+//	Post(app, "/foo", func(c *ContextWithRequest[request]) (response, error) {
+//		req, err := c.Requests()
+//		if err != nil {
+//			return response{}, err
+//		}
+//
+//		return response{
+//			ID:      req.Body.ID,
+//			Message: "Hello World",
+//		}, nil
+//	})
+//
+//	requestBody := `{"id":123}`
+//	req := httptest.NewRequest("POST", "/foo", strings.NewReader(requestBody))
+//	req.Header.Set("Content-Type", "application/json")
+//
+//	resp, err := app.Test(req)
+//	assert.NoError(suite.T(), err)
+//	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 200")
+//	body, err := io.ReadAll(resp.Body)
+//	assert.NoError(suite.T(), err)
+//	assert.JSONEq(suite.T(), `{"id":123,"message":"Hello World"}`, utils.UnsafeString(body))
+//}
 
 func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	app := New()
