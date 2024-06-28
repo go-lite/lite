@@ -1,3 +1,7 @@
+<p style="text-align: center;">
+  <img src="./logo/lite.png" height="200" alt="Fuego Logo" />
+</p>
+
 [![Go](https://github.com/go-lite/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/go-lite/lite/actions/workflows/go.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-lite/lite.svg)](https://pkg.go.dev/github.com/go-lite/lite)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-lite/lite)](https://goreportcard.com/report/github.com/go-lite/lite)

@@ -49,6 +49,61 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_TextPlain() {
 	assert.Equal(suite.T(), "Hello World", req)
 }
 
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/pdf")
+	ctx.Request().SetBody([]byte{0x01, 0x02, 0x03})
+
+	c := newContext[[]byte](ctx, app, "/foo")
+	req, err := c.Requests()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), []byte{0x01, 0x02, 0x03}, req)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte_Error() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/pdf")
+	ctx.Request().SetBodyString("Hello World")
+
+	c := newContext[string](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice_Error() {
+	app := New()
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/json")
+	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+
+	c := newContext[[]byte](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice() {
+	app := New()
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/json")
+	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+
+	c := newContext[[]interface{}](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
+}
+
 type request struct {
 	ID     uint64   `lite:"path=id"`
 	Header bool     `lite:"header=X-Real-Ip"`

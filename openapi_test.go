@@ -689,14 +689,14 @@ type params struct {
 }
 
 type metadata struct {
-	FirstName string `form:"first_name"`
-	LastName  string `form:"last_name"`
+	FirstName string `form:"first_name" json:"first_name"`
+	LastName  string `form:"last_name" json:"last_name"`
 }
 
 type bodyRequest struct {
 	Name     string                `form:"name"`
 	File     *multipart.FileHeader `form:"file"`
-	Metadata metadata              `form:"metadata"`
+	Metadata *metadata             `form:"metadata"`
 }
 
 type testRequest struct {
@@ -716,7 +716,7 @@ type testResponse struct {
 func TestOpenAPI(t *testing.T) {
 	app := New()
 
-	_, err := registerOpenAPIOperation[testResponse, testRequest](app, "GET", "/test", "application/json", 200)
+	_, err := registerOpenAPIOperation[testResponse, testRequest](app, "POST", "/test/:id/:is_admin", "application/json", 200)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -762,16 +762,12 @@ func TestOpenAPI(t *testing.T) {
                             type: string
                         last_name:
                             type: string
-                    required:
-                        - first_name
-                        - last_name
                     type: object
                 name:
                     type: string
             required:
                 - name
                 - file
-                - metadata
             type: object
         cookie:
             properties:
@@ -844,9 +840,9 @@ info:
     version: 0.0.1
 openapi: 3.0.3
 paths:
-    /test:
-        get:
-            operationId: GET/test
+    /test/{id}/{is_admin}:
+        post:
+            operationId: POST/test/:id/:is_admin
             parameters:
                 - $ref: '#/components/parameters/id'
                 - $ref: '#/components/parameters/is_admin'

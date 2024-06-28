@@ -1,6 +1,7 @@
 package lite
 
 import (
+	"bytes"
 	"github.com/go-lite/lite/errors"
 	"github.com/go-lite/lite/mime"
 	"github.com/gofiber/fiber/v2"
@@ -8,7 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"io"
+	"mime/multipart"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -293,6 +296,80 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body() {
 	assert.JSONEq(suite.T(), `{"id":123,"message":"Hello World"}`, utils.UnsafeString(body))
 }
 
+func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
+	app := New()
+
+	Post(app, "/test/:id/:is_admin", func(c *ContextWithRequest[testRequest]) (testResponse, error) {
+		req, err := c.Requests()
+		if err != nil {
+			return testResponse{}, err
+		}
+
+		err = c.SaveFile(req.Body.File, "./logo/lite.png")
+		if err != nil {
+			return testResponse{}, err
+		}
+
+		return testResponse{
+			ID:        req.Params.ID,
+			FirstName: req.Body.Metadata.FirstName,
+			LastName:  req.Body.Metadata.LastName,
+		}, nil
+	})
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	// Ajouter le fichier
+	fileWriter, err := w.CreateFormFile("file", "lite.png")
+	if err != nil {
+		suite.T().Fatalf("Failed to create form file: %s", err)
+	}
+
+	file, err := os.Open("./logo/lite.png")
+	if err != nil {
+		suite.T().Fatalf("Failed to open file: %s", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(fileWriter, file)
+	if err != nil {
+		suite.T().Fatalf("Failed to copy file: %s", err)
+	}
+
+	// Ajouter le JSON
+	metadataWriter, err := w.CreateFormField("metadata")
+	if err != nil {
+		suite.T().Fatalf("Failed to create form field: %s", err)
+	}
+	data := `{"first_name":"John","last_name":"Doe"}`
+	_, err = metadataWriter.Write([]byte(data))
+	if err != nil {
+		suite.T().Fatalf("Failed to write metadata: %s", err)
+	}
+
+	nameWriter, err := w.CreateFormField("name")
+	if err != nil {
+		suite.T().Fatalf("Failed to create form field: %s", err)
+	}
+	_, err = nameWriter.Write([]byte("test"))
+	if err != nil {
+		suite.T().Fatalf("Failed to write name: %s", err)
+	}
+
+	w.Close()
+
+	req := httptest.NewRequest("POST", "/test/123/true", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(suite.T(), err)
+	assert.JSONEq(suite.T(), `{"id":123,"first_name":"John","last_name":"Doe", "name":""}`, utils.UnsafeString(body))
+}
+
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_Error() {
 	type request struct {
 		Body reqBody `lite:"req=body"`
@@ -491,9 +568,39 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
 }
 
+func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
+	type request struct {
+		ID uint64 `lite:"path=id"`
+	}
+
+	app := New()
+	Patch(app, "/foo/:id", func(c *ContextWithRequest[request]) (ret struct{}, err error) {
+		req, err := c.Requests()
+		if err != nil {
+			return
+		}
+
+		if req.ID == 0 {
+			err = errors.NewBadRequestError("ID is required")
+
+			return
+		}
+
+		return
+	})
+
+	req := httptest.NewRequest("PATCH", "/foo/0", nil)
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), 400, resp.StatusCode, "Expected status code 200")
+}
+
 func (suite *HandlerTestSuite) TestContextWithRequest_Head() {
 	app := New()
 	Head(app, "/foo", func(c *ContextNoRequest) (ret struct{}, err error) {
+		c.SetContentType(mime.ApplicationJSON)
+		c.Status(200)
 
 		return
 	})

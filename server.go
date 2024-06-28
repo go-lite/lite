@@ -42,8 +42,8 @@ func NewOpenAPISpec() openapi3.T {
 }
 
 var defaultOpenAPIConfig = OpenAPIConfig{
-	SwaggerURL: "/swagger",
-	YamlURL:    "/swagger/openapi.yaml",
+	SwaggerURL: "/openapi",
+	YamlURL:    "/api/openapi.yaml",
 }
 
 type App struct {

@@ -2,7 +2,6 @@ package lite
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"mime/multipart"
 	"reflect"
@@ -32,7 +31,6 @@ type Context[Request any] interface {
 	Request() *fasthttp.Request
 	Response() *fasthttp.Response
 	Format(body interface{}) error
-	Fresh() bool
 	Hostname() string
 	Port() string
 	IP() string
@@ -40,11 +38,8 @@ type Context[Request any] interface {
 	Is(extension string) bool
 	Links(link ...string)
 	Method(override ...string) string
-	MultipartForm() (*multipart.Form, error)
-	ClientHelloInfo() *tls.ClientHelloInfo
 	Next() error
 	OriginalURL() string
-	Protocol() string
 	SaveFile(fileheader *multipart.FileHeader, path string) error
 	Set(key string, val string)
 	Status(status int) Context[Request]
@@ -72,44 +67,7 @@ func (c *ContextNoRequest) Context() context.Context {
 }
 
 func (c *ContextNoRequest) Requests() (any, error) {
-	var req any
-
-	typeOfReq := reflect.TypeOf(&req).Elem()
-
-	reqContext := c.RequestContext()
-
-	params := extractParams(c.path, string(reqContext.Path()))
-
-	switch typeOfReq.Kind() {
-	case reflect.Struct:
-		err := deserializeRequests(reqContext, &req, params)
-		if err != nil {
-			return req, err
-		}
-	case reflect.String:
-		err := deserializeBody(reqContext, reflect.ValueOf(&req).Elem())
-		if err != nil {
-			return req, err
-		}
-	case reflect.Array, reflect.Slice:
-		if typeOfReq.Elem().Kind() == reflect.Uint8 {
-			err := deserialize(reqContext, reflect.ValueOf(&req).Elem(), params)
-			if err != nil {
-				return req, err
-			}
-		} else {
-			return req, errors.New("unsupported slice type")
-		}
-	case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
-		reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func, reflect.Interface,
-		reflect.Map, reflect.Ptr, reflect.UnsafePointer:
-		fallthrough
-	default:
-		return req, errors.New("unsupported type")
-	}
-
-	return req, nil
+	return nil, nil
 }
 
 func (c *ContextWithRequest[Request]) Requests() (Request, error) {
@@ -134,7 +92,7 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 		}
 	case reflect.Array, reflect.Slice:
 		if typeOfReq.Elem().Kind() == reflect.Uint8 {
-			err := deserialize(reqContext, reflect.ValueOf(&req).Elem(), params)
+			err := deserializeBody(reqContext, reflect.ValueOf(&req).Elem())
 			if err != nil {
 				return req, err
 			}
@@ -225,10 +183,6 @@ func (c *ContextNoRequest) Format(body interface{}) error {
 	return c.ctx.Format(body)
 }
 
-func (c *ContextNoRequest) Fresh() bool {
-	return c.ctx.Fresh()
-}
-
 func (c *ContextNoRequest) Hostname() string {
 	return c.ctx.Hostname()
 }
@@ -257,24 +211,12 @@ func (c *ContextNoRequest) Method(override ...string) string {
 	return c.ctx.Method(override...)
 }
 
-func (c *ContextNoRequest) MultipartForm() (*multipart.Form, error) {
-	return c.ctx.MultipartForm()
-}
-
-func (c *ContextNoRequest) ClientHelloInfo() *tls.ClientHelloInfo {
-	return c.ctx.ClientHelloInfo()
-}
-
 func (c *ContextNoRequest) Next() error {
 	return c.ctx.Next()
 }
 
 func (c *ContextNoRequest) OriginalURL() string {
 	return c.ctx.OriginalURL()
-}
-
-func (c *ContextNoRequest) Protocol() string {
-	return c.ctx.Protocol()
 }
 
 func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
