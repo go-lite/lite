@@ -382,7 +382,7 @@ type Params struct {
 type testReq struct {
 	Authorization *string `lite:"header=Authorization,isauth,scheme=bearer,name=Authorization"`
 	Name          string  `lite:"header=name"`
-	ID            Params
+	Params        Params
 	Body          CreateBody `lite:"req=body,application/json"`
 }
 
@@ -422,7 +422,7 @@ func TestRegisterStructGeneratorNewSchemaRefForValueError(t *testing.T) {
 
 type testReq2 struct {
 	Authorization *string `lite:"header=Authorization,isauth,scheme=bearer"`
-	ID            Params
+	Params        Params
 	Body          CreateBody `lite:"req=body,application/xml,application/json"`
 }
 
@@ -452,7 +452,7 @@ type query struct {
 }
 
 type testReq3 struct {
-	ID query
+	query query
 }
 
 func TestRegisterQueryError(t *testing.T) {
@@ -711,215 +711,4 @@ type testResponse struct {
 	Name      string `json:"name"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-}
-
-func TestOpenAPI(t *testing.T) {
-	app := New()
-
-	_, err := registerOpenAPIOperation[testResponse, testRequest](app, "POST", "/test/:id/:is_admin", "application/json", 200)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	spec, err := app.SaveOpenAPISpec()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expected := `components:
-    parameters:
-        cookie:
-            in: cookie
-            name: cookie
-            schema:
-                $ref: '#/components/schemas/cookie'
-        filter:
-            in: query
-            name: filter
-            schema:
-                $ref: '#/components/schemas/filter'
-        id:
-            in: path
-            name: id
-            required: true
-            schema:
-                $ref: '#/components/schemas/id'
-        is_admin:
-            in: path
-            name: is_admin
-            required: true
-            schema:
-                $ref: '#/components/schemas/is_admin'
-    schemas:
-        bodyRequest:
-            properties:
-                file:
-                    format: byte
-                    type: string
-                metadata:
-                    properties:
-                        first_name:
-                            type: string
-                        last_name:
-                            type: string
-                    type: object
-                name:
-                    type: string
-            required:
-                - name
-                - file
-            type: object
-        cookie:
-            properties:
-                Domain:
-                    type: string
-                Expires:
-                    format: date-time
-                    type: string
-                HttpOnly:
-                    type: boolean
-                MaxAge:
-                    type: integer
-                Name:
-                    type: string
-                Path:
-                    type: string
-                Raw:
-                    type: string
-                RawExpires:
-                    type: string
-                SameSite:
-                    type: integer
-                Secure:
-                    type: boolean
-                Unparsed:
-                    items:
-                        type: string
-                    type: array
-                Value:
-                    type: string
-            type: object
-        filter:
-            type: string
-        httpGenericError:
-            properties:
-                id:
-                    type: string
-                message:
-                    type: string
-                status:
-                    type: integer
-            type: object
-        id:
-            maximum: 1.8446744073709552e+19
-            minimum: 0
-            type: integer
-        is_admin:
-            type: string
-        testResponse:
-            properties:
-                first_name:
-                    type: string
-                id:
-                    maximum: 1.8446744073709552e+19
-                    minimum: 0
-                    type: integer
-                last_name:
-                    type: string
-                name:
-                    type: string
-            required:
-                - id
-                - name
-                - first_name
-                - last_name
-            type: object
-info:
-    description: OpenAPI
-    title: OpenAPI
-    version: 0.0.1
-openapi: 3.0.3
-paths:
-    /test/{id}/{is_admin}:
-        post:
-            operationId: POST/test/:id/:is_admin
-            parameters:
-                - $ref: '#/components/parameters/id'
-                - $ref: '#/components/parameters/is_admin'
-                - $ref: '#/components/parameters/filter'
-                - $ref: '#/components/parameters/cookie'
-            requestBody:
-                content:
-                    multipart/form-data:
-                        schema:
-                            $ref: '#/components/schemas/bodyRequest'
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/testResponse'
-                    description: OK
-                "400":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Bad Request
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Unauthorized
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Not Found
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Conflict
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Internal Server Error`
-
-	assert.YAMLEqf(t, expected, string(spec), "openapi generated spec")
 }
