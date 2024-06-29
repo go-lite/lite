@@ -119,7 +119,7 @@ var (
 		StatusPreconditionFailed:           "Precondition Failed",
 		StatusRequestEntityTooLarge:        "Request Entity Too Large",
 		StatusRequestURITooLong:            "Request URI Too Long",
-		StatusUnsupportedMediaType:         "Unsupported Media Type",
+		StatusUnsupportedMediaType:         "Unsupported Media SetContentType",
 		StatusRequestedRangeNotSatisfiable: "Requested Range Not Satisfiable",
 		StatusExpectationFailed:            "Expectation Failed",
 		StatusTeapot:                       "I'm a teapot",

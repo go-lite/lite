@@ -49,6 +49,61 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_TextPlain() {
 	assert.Equal(suite.T(), "Hello World", req)
 }
 
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/pdf")
+	ctx.Request().SetBody([]byte{0x01, 0x02, 0x03})
+
+	c := newContext[[]byte](ctx, app, "/foo")
+	req, err := c.Requests()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), []byte{0x01, 0x02, 0x03}, req)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte_Error() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/pdf")
+	ctx.Request().SetBodyString("Hello World")
+
+	c := newContext[string](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice_Error() {
+	app := New()
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/json")
+	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+
+	c := newContext[[]byte](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice() {
+	app := New()
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/json")
+	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+
+	c := newContext[[]interface{}](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
+}
+
 type request struct {
 	ID     uint64   `lite:"path=id"`
 	Header bool     `lite:"header=X-Real-Ip"`
@@ -505,6 +560,7 @@ func (suite *CtxTestSuite) TestContextWithRequest_Response() {
 	defer app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
+	c.Status(200)
 
 	assert.Equal(suite.T(), ctx.Response(), c.Response())
 }
@@ -520,4 +576,66 @@ func (suite *CtxTestSuite) TestContextWithRequest_Format() {
 	err := c.Format("json")
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "text/html", string(ctx.Response().Header.Peek("Content-Type")))
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Hostname() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().SetRequestURI("http://www.test.com/")
+
+	c := newContext[request](ctx, app, "/foo")
+	assert.Equal(suite.T(), "www.test.com", c.Hostname())
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Port() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	ctx.Request().SetRequestURI("http://www.test.com/")
+
+	c := newContext[request](ctx, app, "/foo")
+	assert.Equal(suite.T(), "0", c.Port())
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_IP() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	c := newContext[request](ctx, app, "/foo")
+	assert.Equal(suite.T(), "0.0.0.0", c.IP())
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_IPs() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	c := newContext[request](ctx, app, "/foo")
+	assert.Equal(suite.T(), []string{}, c.IPs())
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_Links() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	c := newContext[request](ctx, app, "/")
+
+	c.Links()
+	assert.Equal(suite.T(), "", string(c.Response().Header.Peek(HeaderLink)))
+
+	c.Links(
+		"http://api.example.com/users?page=2", "next",
+		"http://api.example.com/users?page=5", "last",
+	)
+	assert.Equal(suite.T(), `<http://api.example.com/users?page=2>; rel="next",<http://api.example.com/users?page=5>; rel="last"`, string(c.Response().Header.Peek(HeaderLink)))
 }

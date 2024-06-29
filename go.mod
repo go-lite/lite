@@ -1,4 +1,4 @@
-module github.com/disco07/lite
+module github.com/go-lite/lite
 
 go 1.22
 

@@ -3,8 +3,8 @@ package lite
 import (
 	"fmt"
 
-	"github.com/disco07/lite/errors"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/invopop/yaml"
 	"github.com/valyala/fasthttp"
@@ -42,9 +42,8 @@ func NewOpenAPISpec() openapi3.T {
 }
 
 var defaultOpenAPIConfig = OpenAPIConfig{
-	SwaggerURL: "/swagger",
-	YamlURL:    "/swagger/openapi.yaml",
-	UIHandler:  DefaultOpenAPIHandler,
+	SwaggerURL: "/openapi",
+	YamlURL:    "/api/openapi.yaml",
 }
 
 type App struct {
@@ -144,7 +143,7 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 		if !ok {
 			var err error
 
-			responseSchema, err = generator.NewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
+			responseSchema, err = generatorNewSchemaRefForValue(new(errors.HTTPError), s.OpenAPISpec.Components.Schemas)
 			if err != nil {
 				return nil, err
 			}
