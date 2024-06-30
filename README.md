@@ -1,5 +1,5 @@
 <p style="text-align: center;">
-  <img src="./logo/lite.png" height="200" alt="Fuego Logo" />
+  <img src="./logo/lite.png" height="200" alt="Lite Logo" />
 </p>
 
 [![Go](https://github.com/go-lite/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/go-lite/lite/actions/workflows/go.yml)
