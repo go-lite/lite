@@ -5,8 +5,7 @@
 [![Go](https://github.com/go-lite/lite/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/go-lite/lite/actions/workflows/go.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-lite/lite.svg)](https://pkg.go.dev/github.com/go-lite/lite)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-lite/lite)](https://goreportcard.com/report/github.com/go-lite/lite)
-[![codecov](https://codecov.io/github/disco07/lite/graph/badge.svg?token=QV9UE6F52R)](https://codecov.io/github/disco07/lite)
-
+[![codecov](https://codecov.io/gh/go-lite/lite/graph/badge.svg?token=5OFXTQKHEE)](https://codecov.io/gh/go-lite/lite)
 # Lite: A Typed Wrapper for GoFiber
 Lite is a typed wrapper for GoFiber, a web framework for Go. It is designed to be lightweight and easy to use, while still providing a powerful API for building web applications. Lite is built on top of GoFiber, so it inherits all of its features and performance benefits.
 
