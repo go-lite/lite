@@ -63,6 +63,16 @@ func main() {
 
 		return response, nil
 	}).SetResponseContentType("image/png")
+	lite.Post(app, "/v1/pdf", func(c *lite.ContextWithRequest[[]byte]) (any, error) {
+		req, err := c.Requests()
+		if err != nil {
+			return nil, errors.NewBadRequestError(err.Error())
+		}
+
+		log.Println(string(req))
+
+		return nil, nil
+	})
 
 	app.AddServer("http://localhost:9999", "example server")
 

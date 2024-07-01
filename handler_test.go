@@ -900,3 +900,251 @@ paths:
 
 	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
 }
+
+type requestBodyApplicationPDF struct {
+	Body []byte `lite:"req=body,application/pdf"`
+}
+
+type responseBodyApplicationPDF = []byte
+
+func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationPDF() {
+	app := New()
+	Post(app, "/foo", func(c *ContextWithRequest[requestBodyApplicationPDF]) (responseBodyApplicationPDF, error) {
+		req, err := c.Requests()
+		if err != nil {
+			return responseBodyApplicationPDF{}, err
+		}
+
+		c.SetContentType(mime.ApplicationPdf)
+
+		return req.Body, nil
+	})
+
+	bodyPDF := `%PDF-1.4
+%âãÏÓ
+1 0 obj
+  << /Type /Catalog
+     /Pages 2 0 R
+  >>
+endobj
+
+2 0 obj
+  << /Type /Pages
+     /Kids [3 0 R]
+     /Count 1
+     /MediaBox [0 0 300 144]
+  >>
+endobj
+
+3 0 obj
+  <<  /Type /Page
+      /Parent 2 0 R
+      /Resources
+       << /Font
+           << /F1
+               << /Type /Font
+                  /Subtype /Type1
+                  /BaseFont /Times-Roman
+               >>
+           >>
+       >>
+      /Contents 4 0 R
+   >>
+endobj
+
+4 0 obj
+  << /Length 55 >>
+stream
+  BT
+    /F1 18 Tf
+    0 0 Td
+    (Hello World) Tj
+  ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000018 00000 n 
+0000000077 00000 n 
+0000000178 00000 n 
+0000000457 00000 n 
+trailer
+  <<  /Root 1 0 R
+      /Size 5
+  >>
+startxref
+565
+%%EOF`
+
+	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyPDF))
+	req.Header.Set("Content-Type", "application/pdf")
+
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err, "Expected no error")
+	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(suite.T(), err, "Expected no error")
+	assert.Equal(suite.T(), `%PDF-1.4
+%âãÏÓ
+1 0 obj
+  << /Type /Catalog
+     /Pages 2 0 R
+  >>
+endobj
+
+2 0 obj
+  << /Type /Pages
+     /Kids [3 0 R]
+     /Count 1
+     /MediaBox [0 0 300 144]
+  >>
+endobj
+
+3 0 obj
+  <<  /Type /Page
+      /Parent 2 0 R
+      /Resources
+       << /Font
+           << /F1
+               << /Type /Font
+                  /Subtype /Type1
+                  /BaseFont /Times-Roman
+               >>
+           >>
+       >>
+      /Contents 4 0 R
+   >>
+endobj
+
+4 0 obj
+  << /Length 55 >>
+stream
+  BT
+    /F1 18 Tf
+    0 0 Td
+    (Hello World) Tj
+  ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000018 00000 n 
+0000000077 00000 n 
+0000000178 00000 n 
+0000000457 00000 n 
+trailer
+  <<  /Root 1 0 R
+      /Size 5
+  >>
+startxref
+565
+%%EOF`, utils.UnsafeString(body))
+
+	spec, err := app.SaveOpenAPISpec()
+	assert.NoError(suite.T(), err)
+
+	expected := `components:
+    schemas:
+        Body:
+            format: byte
+            type: string
+        httpGenericError:
+            properties:
+                id:
+                    type: string
+                message:
+                    type: string
+                status:
+                    type: integer
+            type: object
+        uint8:
+            format: byte
+            type: string
+info:
+    description: OpenAPI
+    title: OpenAPI
+    version: 0.0.1
+openapi: 3.0.3
+paths:
+    /foo:
+        post:
+            operationId: POST/foo
+            requestBody:
+                content:
+                    application/pdf:
+                        schema:
+                            $ref: '#/components/schemas/Body'
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/uint8'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Unauthorized
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Conflict
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        application/xml:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/httpGenericError'
+                    description: Internal Server Error`
+
+	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
+}
