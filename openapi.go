@@ -27,21 +27,30 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	valGen := reflect.ValueOf(&reqBody).Elem()
 	kind := valGen.Kind()
 
-	if kind == reflect.Struct {
+	switch kind {
+	case reflect.Struct:
 		err = register(s, operation, valGen)
 		if err != nil {
 			return nil, err
 		}
-	} else if kind == reflect.Slice && valGen.Type().Elem().Kind() == reflect.Uint8 {
-		err = setBodySchema(s, operation, kind, valGen.Type(), valGen.Type().Elem().Name(), "application/octet-stream")
-		if err != nil {
-			return nil, err
+	case reflect.Slice:
+		if valGen.Type().Elem().Kind() == reflect.Uint8 {
+			err = setBodySchema(s, operation, kind, valGen.Type(), valGen.Type().Elem().Name(), "application/octet-stream")
+			if err != nil {
+				return nil, err
+			}
 		}
-	} else if kind == reflect.String {
+	case reflect.String:
 		err = setBodySchema(s, operation, kind, valGen.Type(), valGen.Type().Name(), "text/plain")
 		if err != nil {
 			return nil, err
 		}
+	case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
+		reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array, reflect.Chan, reflect.Func, reflect.Interface,
+		reflect.Map, reflect.Ptr, reflect.UnsafePointer:
+		fallthrough
+	default:
 	}
 
 	routePath, _ := parseRoutePath(path)
@@ -57,7 +66,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 
 		fieldGenericType := reflect.TypeOf(*new(ResponseBody))
 
-		if fieldGenericType.Kind() == reflect.Struct {
+		if tag != "unknown-interface" {
 			getRequiredValue(resContentType, fieldGenericType, responseSchema.Value)
 		}
 
