@@ -43,10 +43,25 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_TextPlain() {
 	ctx.Request().Header.Set("Content-Type", "text/plain")
 	ctx.Request().SetBodyString("Hello World")
 
-	c := newContext[string](ctx, app, "/foo")
+	c := ContextNoRequest{
+		ctx:  ctx,
+		app:  app,
+		path: "/foo",
+	}
 	req, err := c.Requests()
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), "Hello World", req)
+	assert.Equal(suite.T(), nil, req)
+}
+
+func (suite *CtxTestSuite) TestContextNoRequest_Requests() {
+	app := New()
+
+	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(ctx)
+
+	c := newContext[string](ctx, app, "/foo")
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte() {

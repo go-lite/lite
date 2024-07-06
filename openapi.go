@@ -27,11 +27,30 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	valGen := reflect.ValueOf(&reqBody).Elem()
 	kind := valGen.Kind()
 
-	if kind == reflect.Struct {
+	switch kind {
+	case reflect.Struct:
 		err = register(s, operation, valGen)
 		if err != nil {
 			return nil, err
 		}
+	case reflect.Slice:
+		if valGen.Type().Elem().Kind() == reflect.Uint8 {
+			err = setBodySchema(s, operation, kind, valGen.Type(), valGen.Type().Elem().Name(), "application/octet-stream")
+			if err != nil {
+				return nil, err
+			}
+		}
+	case reflect.String:
+		err = setBodySchema(s, operation, kind, valGen.Type(), valGen.Type().Name(), "text/plain")
+		if err != nil {
+			return nil, err
+		}
+	case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
+		reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array, reflect.Chan, reflect.Func, reflect.Interface,
+		reflect.Map, reflect.Ptr, reflect.UnsafePointer:
+		fallthrough
+	default:
 	}
 
 	routePath, _ := parseRoutePath(path)
@@ -47,7 +66,9 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 
 		fieldGenericType := reflect.TypeOf(*new(ResponseBody))
 
-		getRequiredValue(resContentType, fieldGenericType, responseSchema.Value)
+		if tag != "unknown-interface" {
+			getRequiredValue(resContentType, fieldGenericType, responseSchema.Value)
+		}
 
 		s.OpenAPISpec.Components.Schemas[tag] = responseSchema
 	}
@@ -68,10 +89,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	operation.AddResponse(statusCode, response)
 
 	// Add error responses
-	responses, err := s.createDefaultErrorResponses()
-	if err != nil {
-		return nil, err
-	}
+	responses, _ := s.createDefaultErrorResponses()
 
 	for code, resp := range responses {
 		operation.AddResponse(code, resp)
@@ -153,9 +171,10 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 		fieldVal := dstVal.Field(i)
 		fieldType := field.Type
 		tag := field.Tag.Get("lite")
+		kind := fieldVal.Kind()
 
 		// check if kind is a pointer and elem is a not string, float, int, bool continue to next field
-		switch fieldVal.Kind() {
+		switch kind {
 		case reflect.Ptr:
 			switch fieldVal.Elem().Kind() {
 			case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map, reflect.Complex64, reflect.Complex128,
@@ -179,7 +198,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 		default:
 		}
 
-		if fieldVal.Kind() == reflect.Struct && tag == "" {
+		if kind == reflect.Struct && tag == "" {
 			// Recursively handle nested structs
 			if err := register(s, operation, fieldVal); err != nil {
 				return err
@@ -188,7 +207,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			continue
 		}
 
-		isRequired := fieldType.Kind() != reflect.Ptr
+		isRequired := kind != reflect.Ptr
 
 		if tag == "" {
 			tag = field.Name
@@ -245,66 +264,89 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			if err != nil {
 				return err
 			}
-		} else if reqKey, ok := tagMap["req"]; ok {
-			if reqKey == "body" {
-				contentType := "application/json"
+		} else if reqKey, ok := tagMap["req"]; ok && reqKey == "body" {
+			contentType := "application/json"
 
-				if len(tagMap) > 2 {
-					panic("invalid tag")
-				}
-
-				if len(tagMap) == 2 {
-					for key := range tagMap {
-						if key != "req" {
-							contentType = key
-
-							break
-						}
-					}
-				}
-
-				_, ok := s.OpenAPISpec.Components.Schemas[fieldVal.Type().Name()]
-				if !ok {
-					var err error
-
-					if fieldType.Kind() != reflect.Struct {
-						return fmt.Errorf("request body must be a struct")
-					}
-
-					fieldType = updateFileHeaderFieldType(fieldType)
-
-					tp := reflect.New(fieldType).Elem().Interface()
-
-					bodySchema, err := generatorNewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
-					if err != nil {
-						return err
-					}
-
-					getRequiredValue(contentType, fieldType, bodySchema.Value)
-
-					s.OpenAPISpec.Components.Schemas[fieldVal.Type().Name()] = bodySchema
-				}
-
-				requestBody := openapi3.NewRequestBody()
-				content := openapi3.NewContentWithSchemaRef(
-					openapi3.NewSchemaRef(fmt.Sprintf(
-						"#/components/schemas/%s",
-						fieldVal.Type().Name(),
-					), &openapi3.Schema{}),
-					[]string{contentType},
-				)
-
-				requestBody.WithContent(content)
-
-				operation.RequestBody = &openapi3.RequestBodyRef{
-					Value: requestBody,
-				}
-
-				continue
+			if len(tagMap) > 2 {
+				panic("invalid tag")
 			}
+
+			if len(tagMap) == 2 {
+				for key := range tagMap {
+					if key != "req" {
+						contentType = key
+
+						break
+					}
+				}
+			}
+
+			fieldName := field.Name
+
+			if kind == reflect.Struct {
+				fieldName = fieldType.Name()
+			}
+
+			err := setBodySchema(s, operation, kind, fieldType, fieldName, contentType)
+			if err != nil {
+				return err
+			}
+
+			continue
 		} else {
 			return fmt.Errorf("unknown parameter type")
 		}
+	}
+
+	return nil
+}
+
+func setBodySchema(
+	s *App,
+	operation *openapi3.Operation,
+	kind reflect.Kind,
+	fieldType reflect.Type,
+	fieldName string,
+	contentType string,
+) error {
+	if kind != reflect.Struct && kind != reflect.String &&
+		!(kind == reflect.Slice && fieldType.Elem().Kind() == reflect.Uint8) {
+		return fmt.Errorf("invalid request body type %s", kind)
+	}
+
+	_, ok := s.OpenAPISpec.Components.Schemas[fieldName]
+	if !ok {
+		var err error
+
+		if kind == reflect.Struct {
+			fieldType = updateFileHeaderFieldType(fieldType)
+		}
+
+		tp := reflect.New(fieldType).Elem().Interface()
+
+		bodySchema, err := generatorNewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
+		if err != nil {
+			return err
+		}
+
+		getRequiredValue(contentType, fieldType, bodySchema.Value)
+
+		s.OpenAPISpec.Components.Schemas[fieldName] = bodySchema
+	}
+
+	requestBody := openapi3.NewRequestBody()
+	content := openapi3.NewContentWithSchemaRef(
+		openapi3.NewSchemaRef(fmt.Sprintf(
+			"#/components/schemas/%s",
+			fieldName,
+		), &openapi3.Schema{}),
+		[]string{contentType},
+	)
+
+	requestBody.WithContent(content)
+
+	operation.RequestBody = &openapi3.RequestBodyRef{
+		Value: requestBody,
 	}
 
 	return nil

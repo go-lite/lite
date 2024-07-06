@@ -38,7 +38,6 @@ type Context[Request any] interface {
 	Is(extension string) bool
 	Links(link ...string)
 	Method(override ...string) string
-	Next() error
 	OriginalURL() string
 	SaveFile(fileheader *multipart.FileHeader, path string) error
 	Set(key string, val string)
@@ -62,6 +61,7 @@ type ContextWithRequest[Request any] struct {
 	ContextNoRequest
 }
 
+// Context returns the context.
 func (c *ContextNoRequest) Context() context.Context {
 	return c.ctx.UserContext()
 }
@@ -135,90 +135,107 @@ func (c *ContextNoRequest) Append(field string, values ...string) {
 	c.ctx.Append(field, values...)
 }
 
+// Attachment adds an attachment to the response.
 func (c *ContextNoRequest) Attachment(filename ...string) {
 	c.ctx.Attachment(filename...)
 }
 
+// BaseURL returns the base URL.
 func (c *ContextNoRequest) BaseURL() string {
 	return c.ctx.BaseURL()
 }
 
+// BodyRaw returns the raw body.
 func (c *ContextNoRequest) BodyRaw() []byte {
 	return c.ctx.Request().Body()
 }
 
+// ClearCookie clears the cookie.
 func (c *ContextNoRequest) ClearCookie(key ...string) {
 	c.ctx.ClearCookie(key...)
 }
 
+// RequestContext returns the request context.
 func (c *ContextNoRequest) RequestContext() *fasthttp.RequestCtx {
 	return c.ctx.Context()
 }
 
+// SetUserContext sets the user context.
 func (c *ContextNoRequest) SetUserContext(ctx context.Context) {
 	c.ctx.SetUserContext(ctx)
 }
 
+// Cookie sets the cookie.
 func (c *ContextNoRequest) Cookie(cookie *fiber.Cookie) {
 	c.ctx.Cookie(cookie)
 }
 
+// Cookies returns the cookie value.
 func (c *ContextNoRequest) Cookies(key string, defaultValue ...string) string {
 	return c.ctx.Cookies(key, defaultValue...)
 }
 
+// Download downloads the file.
 func (c *ContextNoRequest) Download(file string, filename ...string) error {
 	return c.ctx.Download(file, filename...)
 }
 
+// Request returns the request.
 func (c *ContextNoRequest) Request() *fasthttp.Request {
 	return c.ctx.Request()
 }
 
+// Response returns the response.
 func (c *ContextNoRequest) Response() *fasthttp.Response {
 	return c.ctx.Response()
 }
 
+// Format formats the response body.
 func (c *ContextNoRequest) Format(body interface{}) error {
 	return c.ctx.Format(body)
 }
 
+// Hostname returns the hostname on which the request is received.
 func (c *ContextNoRequest) Hostname() string {
 	return c.ctx.Hostname()
 }
 
+// Port returns the port on which the request is received.
 func (c *ContextNoRequest) Port() string {
 	return c.ctx.Port()
 }
 
+// IP returns the client IP.
 func (c *ContextNoRequest) IP() string {
 	return c.ctx.IP()
 }
 
+// IPs returns the client IPs.
 func (c *ContextNoRequest) IPs() []string {
 	return c.ctx.IPs()
 }
 
+// Is returns true if the request has the specified extension.
 func (c *ContextNoRequest) Is(extension string) bool {
 	return c.ctx.Is(extension)
 }
 
+// Links adds the specified link to the response.
 func (c *ContextNoRequest) Links(link ...string) {
 	c.ctx.Links(link...)
 }
 
+// Method returns the HTTP method used for the request.
 func (c *ContextNoRequest) Method(override ...string) string {
 	return c.ctx.Method(override...)
 }
 
-func (c *ContextNoRequest) Next() error {
-	return c.ctx.Next()
-}
-
+// OriginalURL returns the original URL.
 func (c *ContextNoRequest) OriginalURL() string {
 	return c.ctx.OriginalURL()
 }
 
+// SaveFile saves the file to the specified path.
 func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
 	return c.ctx.SaveFile(file, path)
 }
@@ -228,24 +245,28 @@ func (c *ContextNoRequest) Set(key string, val string) {
 	c.ctx.Set(key, val)
 }
 
+// Status sets the HTTP status code.
 func (c *ContextNoRequest) Status(status int) Context[any] {
 	c.ctx = c.ctx.Status(status)
 
 	return c
 }
 
+// Status sets the HTTP status code.
 func (c *ContextWithRequest[Request]) Status(status int) Context[Request] {
 	c.ctx = c.ctx.Status(status)
 
 	return c
 }
 
+// SetContentType sets the Content-Type response header with the given type and charset.
 func (c *ContextNoRequest) SetContentType(extension string, charset ...string) Context[any] {
 	c.ctx = c.ctx.Type(extension, charset...)
 
 	return c
 }
 
+// SetContentType sets the Content-Type response header with the given type and charset.
 func (c *ContextWithRequest[Request]) SetContentType(extension string, charset ...string) Context[Request] {
 	c.ctx = c.ctx.Type(extension, charset...)
 

@@ -153,12 +153,9 @@ func parseMultipartForm(ctx *fasthttp.RequestCtx, dst any) error {
 
 	for key, files := range mr.File {
 		if len(files) > 0 {
-			fileHeader := files[0]
-			if fileHeader == nil {
-				continue
+			if fileHeader := files[0]; fileHeader != nil {
+				data[key] = fileHeader
 			}
-
-			data[key] = fileHeader
 		}
 	}
 
