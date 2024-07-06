@@ -54,6 +54,8 @@ type App struct {
 
 	Serializer func(ctx *fasthttp.RequestCtx, response any) error
 
+	basePath string
+
 	// OpenAPI documentation tags used for logical groupings of operations
 	// These tags will be inherited by child Routes/Groups
 	tags []string

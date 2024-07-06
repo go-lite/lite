@@ -89,10 +89,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	operation.AddResponse(statusCode, response)
 
 	// Add error responses
-	responses, err := s.createDefaultErrorResponses()
-	if err != nil {
-		return nil, err
-	}
+	responses, _ := s.createDefaultErrorResponses()
 
 	for code, resp := range responses {
 		operation.AddResponse(code, resp)

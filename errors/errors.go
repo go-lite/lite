@@ -54,9 +54,6 @@ func (e HTTPError) SetMessage(message string) HTTPError {
 var DefaultErrorResponses = map[int]HTTPError{
 	http.StatusBadRequest:          newErrorResponse(uuid.NewString(), http.StatusBadRequest, "Bad Request"),
 	http.StatusInternalServerError: newErrorResponse(uuid.NewString(), http.StatusInternalServerError, "Internal Server Error"),
-	http.StatusUnauthorized:        newErrorResponse(uuid.NewString(), http.StatusUnauthorized, "Unauthorized"),
-	http.StatusNotFound:            newErrorResponse(uuid.NewString(), http.StatusNotFound, "Not Found"),
-	http.StatusConflict:            newErrorResponse(uuid.NewString(), http.StatusConflict, "Conflict"),
 }
 
 var DefaultErrorContentTypeResponses = []string{
@@ -86,7 +83,7 @@ func NewNotFoundError(message ...string) HTTPError {
 		return newErrorResponse(uuid.NewString(), http.StatusNotFound, message[0])
 	}
 
-	return DefaultErrorResponses[http.StatusNotFound]
+	return newErrorResponse(uuid.NewString(), http.StatusNotFound, "Not Found")
 }
 
 func NewUnauthorizedError(message ...string) HTTPError {
@@ -94,7 +91,7 @@ func NewUnauthorizedError(message ...string) HTTPError {
 		return newErrorResponse(uuid.NewString(), http.StatusUnauthorized, message[0])
 	}
 
-	return DefaultErrorResponses[http.StatusUnauthorized]
+	return newErrorResponse(uuid.NewString(), http.StatusUnauthorized, "Unauthorized")
 }
 
 func NewConflictError(message ...string) HTTPError {
@@ -102,7 +99,7 @@ func NewConflictError(message ...string) HTTPError {
 		return newErrorResponse(uuid.NewString(), http.StatusConflict, message[0])
 	}
 
-	return DefaultErrorResponses[http.StatusConflict]
+	return newErrorResponse(uuid.NewString(), http.StatusConflict, "Conflict")
 }
 
 func NewError(status int, message ...string) HTTPError {

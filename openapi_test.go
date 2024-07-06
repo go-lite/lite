@@ -36,6 +36,44 @@ func TestRegisterOpenAPIOperationGenerateError(t *testing.T) {
 	}
 }
 
+func TestRegisterOpenAPIOperationGenerateBodyStringError(t *testing.T) {
+	app := New()
+
+	var err error
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	_, err = registerOpenAPIOperation[string, string](app, "GET", "/test", "application/json", 200)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestRegisterOpenAPIOperationGenerateSliceByteError(t *testing.T) {
+	app := New()
+
+	var err error
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	_, err = registerOpenAPIOperation[[]byte, []byte](app, "GET", "/test", "application/json", 200)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
 func TestRegisterOpenAPIOperationGenerateError2(t *testing.T) {
 	app := New()
 

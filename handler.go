@@ -6,34 +6,35 @@ import (
 	"log/slog"
 	"net/http"
 	"regexp"
+	"strings"
 
 	liteErrors "github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
 )
 
-func newLiteContext[Request any, Contexted Context[Request]](ctx ContextNoRequest) Contexted {
-	var c Contexted
+func newLiteContext[Request any, Contexter Context[Request]](ctx ContextNoRequest) Contexter {
+	var c Contexter
 
 	switch any(c).(type) {
 	case *ContextNoRequest:
-		return any(&ctx).(Contexted)
+		return any(&ctx).(Contexter)
 	case *ContextWithRequest[Request]:
 		return any(&ContextWithRequest[Request]{
 			ContextNoRequest: ctx,
-		}).(Contexted)
+		}).(Contexter)
 	default:
 		panic("unknown type")
 	}
 }
 
-func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
-	controller func(c Contexted) (ResponseBody, error),
+func fiberHandler[ResponseBody, Request any, Contexter Context[Request]](
+	controller func(c Contexter) (ResponseBody, error),
 	path string,
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		c.Context().SetContentType("application/json")
 
-		ctx := newLiteContext[Request, Contexted](ContextNoRequest{ctx: c, path: path})
+		ctx := newLiteContext[Request, Contexter](ContextNoRequest{ctx: c, path: path})
 
 		c.Status(getStatusCode(c.Method()))
 
@@ -56,10 +57,24 @@ func fiberHandler[ResponseBody, Request any, Contexted Context[Request]](
 	}
 }
 
-func Get[ResponseBody, Request any, Contexted Context[Request]](
+func Group(app *App, path string) *App {
+	path = strings.TrimRight(path, "/")
+
+	a := *app
+	newApp := &a
+	newApp.basePath += path
+
+	return newApp
+}
+
+func Use(app *App, args ...any) {
+	app.Use(args...)
+}
+
+func Get[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -75,10 +90,10 @@ func Get[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Post[ResponseBody, Request any, Contexted Context[Request]](
+func Post[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -94,10 +109,10 @@ func Post[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Put[ResponseBody, Request any, Contexted Context[Request]](
+func Put[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -113,10 +128,10 @@ func Put[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Delete[ResponseBody, Request any, Contexted Context[Request]](
+func Delete[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -132,10 +147,10 @@ func Delete[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Patch[ResponseBody, Request any, Contexted Context[Request]](
+func Patch[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -151,10 +166,10 @@ func Patch[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Head[ResponseBody, Request any, Contexted Context[Request]](
+func Head[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -170,10 +185,10 @@ func Head[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Connect[ResponseBody, Request any, Contexted Context[Request]](
+func Connect[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -189,10 +204,10 @@ func Connect[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Trace[ResponseBody, Request any, Contexted Context[Request]](
+func Trace[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -208,10 +223,10 @@ func Trace[ResponseBody, Request any, Contexted Context[Request]](
 	)
 }
 
-func Options[ResponseBody, Request any, Contexted Context[Request]](
+func Options[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 	path string,
-	controller func(Contexted) (ResponseBody, error),
+	controller func(Contexter) (ResponseBody, error),
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
 	return registerRoute[ResponseBody, Request](
@@ -233,23 +248,26 @@ func registerRoute[ResponseBody, Request any](
 	controller fiber.Handler,
 	middleware ...fiber.Handler,
 ) Route[ResponseBody, Request] {
+	fullPath := app.basePath + route.path
+
 	if len(middleware) > 0 {
-		app.Add(route.method,
-			route.path,
+		app.Add(
+			route.method,
+			fullPath,
 			middleware...,
 		)
 	}
 
 	app.Add(
 		route.method,
-		route.path,
+		fullPath,
 		controller,
 	)
 
 	operation, err := registerOpenAPIOperation[ResponseBody, Request](
 		app,
 		route.method,
-		route.path,
+		fullPath,
 		route.contentType,
 		route.statusCode,
 	)

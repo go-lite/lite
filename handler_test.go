@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -25,6 +26,53 @@ func (suite *HandlerTestSuite) SetupTest() {
 
 func TestHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
+}
+
+func (suite *HandlerTestSuite) TestUse() {
+	app := New()
+	Use(app, func(c *fiber.Ctx) error {
+		c.Set("test", "test")
+		return nil
+	})
+
+	req := httptest.NewRequest("GET", "/foo", nil)
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
+	assert.Equal(suite.T(), "test", resp.Header.Get("test"), "Expected test header")
+}
+
+func (suite *HandlerTestSuite) TestGroup() {
+	app := New()
+
+	newApp := Group(app, "/foo/")
+
+	Get(newApp, "/bar", func(c *ContextNoRequest) (ret struct{}, err error) {
+		return
+	})
+
+	req := httptest.NewRequest("GET", "/foo/bar", nil)
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
+}
+
+func (suite *HandlerTestSuite) TestGroup2() {
+	app := New()
+
+	newApp := Group(app, "/")
+
+	Get(newApp, "/bar", func(c *ContextNoRequest) (ret struct{}, err error) {
+		return
+	})
+
+	req := httptest.NewRequest("GET", "/bar", nil)
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
 }
 
 type requestApplicationJSON struct {
@@ -636,9 +684,18 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 			return testResponse{}, err
 		}
 
+		if req.Filter == nil {
+			c.Set("filter", "test")
+		}
+
 		err = c.SaveFile(req.Body.File, "./logo/lite.png")
 		if err != nil {
 			return testResponse{}, err
+		}
+
+		method := c.Method()
+		if method != http.MethodPost {
+			return testResponse{}, errors.NewBadRequestError("Method is not POST")
 		}
 
 		return testResponse{
@@ -849,42 +906,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Bad Request
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Unauthorized
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Not Found
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Conflict
                 "500":
                     content:
                         application/json:
@@ -1097,42 +1118,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Bad Request
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Unauthorized
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Not Found
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Conflict
                 "500":
                     content:
                         application/json:
@@ -1224,42 +1209,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Bad Request
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Unauthorized
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Not Found
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Conflict
                 "500":
                     content:
                         application/json:
@@ -1347,42 +1296,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Bad Request
-                "401":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Unauthorized
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Not Found
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Conflict
                 "500":
                     content:
                         application/json:
