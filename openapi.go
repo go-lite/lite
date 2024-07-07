@@ -106,6 +106,11 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 func getRequiredValue(contentType string, fieldType reflect.Type, schema *openapi3.Schema) bool {
 	switch fieldType.Kind() {
 	case reflect.Struct:
+		// if fieldType is time.Time, skip it
+		if fieldType.Name() == "Time" {
+			return true
+		}
+
 		for k := 0; k < fieldType.NumField(); k++ {
 			field := fieldType.Field(k)
 			fieldName := field.Name

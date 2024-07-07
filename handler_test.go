@@ -730,7 +730,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	if err != nil {
 		suite.T().Fatalf("Failed to create form field: %s", err)
 	}
-	data := `{"first_name":"John","last_name":"Doe"}`
+	data := `{"first_name":"John","last_name":"Doe", "birthday": "2000-01-01T00:00:00Z"}`
 	_, err = metadataWriter.Write([]byte(data))
 	if err != nil {
 		suite.T().Fatalf("Failed to write metadata: %s", err)
@@ -792,6 +792,9 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
                     type: string
                 metadata:
                     properties:
+                        birthday:
+                            format: date-time
+                            type: string
                         first_name:
                             type: string
                         last_name:
