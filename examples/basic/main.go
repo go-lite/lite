@@ -68,6 +68,19 @@ func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (return
 	return res, nil
 }
 
+func putHandler(c *lite.ContextWithRequest[parameters.PutReq]) (returns.PutResponse, error) {
+	request, err := c.Requests()
+	if err != nil {
+		return returns.PutResponse{}, err
+	}
+
+	return returns.PutResponse{
+		ID:        request.ID,
+		FirstName: request.Body.FirstName,
+		LastName:  request.Body.LastName,
+	}, nil
+}
+
 func main() {
 	app := lite.New()
 
@@ -82,6 +95,8 @@ func main() {
 		AddTags("example")
 
 	lite.Get(app, "/example", getArrayHandler)
+
+	lite.Put(app, "/example/:id", putHandler)
 
 	app.AddServer("http://localhost:6001", "example server")
 

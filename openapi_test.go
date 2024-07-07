@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestRegisterOpenAPIOperationGenerateError(t *testing.T) {
@@ -727,8 +728,9 @@ type params struct {
 }
 
 type metadata struct {
-	FirstName string `form:"first_name" json:"first_name"`
-	LastName  string `form:"last_name" json:"last_name"`
+	FirstName string    `form:"first_name" json:"first_name"`
+	LastName  string    `form:"last_name" json:"last_name"`
+	Birthday  time.Time `form:"birthday" json:"birthday"`
 }
 
 type bodyRequest struct {
