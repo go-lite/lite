@@ -30,6 +30,7 @@ type Context[Request any] interface {
 	Download(file string, filename ...string) error
 	Request() *fasthttp.Request
 	Response() *fasthttp.Response
+	Get(key string) string
 	Format(body interface{}) error
 	Hostname() string
 	Port() string
@@ -188,6 +189,10 @@ func (c *ContextNoRequest) Request() *fasthttp.Request {
 // Response returns the response.
 func (c *ContextNoRequest) Response() *fasthttp.Response {
 	return c.ctx.Response()
+}
+
+func (c *ContextNoRequest) Get(key string) string {
+	return c.ctx.Get(key)
 }
 
 // Format formats the response body.
