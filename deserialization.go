@@ -247,9 +247,19 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		} else {
 			return fmt.Errorf("unsupported slice type %s", fieldVal.Type().Elem().Kind())
 		}
+	case reflect.Interface:
+		fieldVal.Set(reflect.ValueOf(valueStr))
+	case reflect.Map:
+		if fieldVal.Type().Key().Kind() == reflect.String {
+			if err := json.Unmarshal([]byte(valueStr.(string)), fieldVal.Addr().Interface()); err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("unsupported map key type %s", fieldVal.Type().Key().Kind())
+		}
 
 	case reflect.Invalid, reflect.Uintptr, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func,
-		reflect.Interface, reflect.Map, reflect.UnsafePointer:
+		reflect.UnsafePointer:
 		fallthrough
 	default:
 		return fmt.Errorf("unsupported kind %s", fieldVal.Kind())
