@@ -10,6 +10,7 @@ require (
 	github.com/o1egl/paseto v1.0.0
 	github.com/stretchr/testify v1.9.0
 	github.com/valyala/fasthttp v1.53.0
+	golang.org/x/text v0.14.0
 )
 
 require (
