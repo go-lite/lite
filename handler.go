@@ -3,6 +3,9 @@ package lite
 import (
 	"context"
 	"errors"
+	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -63,6 +66,7 @@ func Group(app *App, path string) *App {
 	a := *app
 	newApp := &a
 	newApp.basePath += path
+	newApp.tag = toTitle(strings.TrimLeft(path, "/"))
 
 	return newApp
 }
@@ -276,9 +280,44 @@ func registerRoute[ResponseBody, Request any](
 		panic(err)
 	}
 
+	if app.tag != "" {
+		operation.Tags = append(operation.Tags, app.tag)
+		operation.Description = setDescription(route.method, app.tag)
+	}
+
+	operation.OperationID = route.path
+
 	route.operation = operation
 
 	return route
+}
+
+// setDescription set the description of the route based on the method and tag
+func setDescription(method string, tag string) (description string) {
+	switch method {
+	case http.MethodGet:
+		description = fmt.Sprintf("Get the %s resource", tag)
+	case http.MethodPost:
+		description = fmt.Sprintf("Create a new %s resource", tag)
+	case http.MethodPut:
+		description = fmt.Sprintf("Replace the %s resource", tag)
+	case http.MethodPatch:
+		description = fmt.Sprintf("Update the %s resource", tag)
+	case http.MethodDelete:
+		description = fmt.Sprintf("Delete the %s resource", tag)
+	case http.MethodHead:
+		description = fmt.Sprintf("Get the %s resource header", tag)
+	case http.MethodOptions:
+		description = fmt.Sprintf("Get the %s resource options", tag)
+	case http.MethodConnect:
+		description = fmt.Sprintf("Get the %s resource connect", tag)
+	case http.MethodTrace:
+		description = fmt.Sprintf("Get the %s resource trace", tag)
+	default:
+		description = fmt.Sprintf("Get the %s resource", tag)
+	}
+
+	return description
 }
 
 // parseRoutePath parses the route path and returns the path and the query parameters.
@@ -316,4 +355,17 @@ func getStatusCode(method string) int {
 	default:
 		return http.StatusOK
 	}
+}
+
+// toTitle transform string to title case
+func toTitle(s string, opt ...bool) string {
+	if len(opt) > 0 && opt[0] {
+		caser := cases.Title(language.Und, cases.NoLower)
+
+		return caser.String(s)
+	}
+
+	caser := cases.Title(language.Und)
+
+	return caser.String(s)
 }

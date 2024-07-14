@@ -143,7 +143,7 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 		return getRequiredValue(contentType, fieldType.Elem(), schema.Items.Value)
 	case reflect.Map:
 		getRequiredValue(contentType, fieldType.Elem(), schema.AdditionalProperties.Schema.Value)
-		return false
+		return true
 	case reflect.Interface:
 		return false
 	case reflect.Ptr:
@@ -299,7 +299,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 			continue
 		} else {
-			return fmt.Errorf("unknown parameter type")
+			return fmt.Errorf("unknown parameter type %s", tag)
 		}
 	}
 
@@ -314,14 +314,13 @@ func setBodySchema(
 	fieldName string,
 	contentType string,
 ) error {
-	if kind != reflect.Struct && kind != reflect.String &&
-		!(kind == reflect.Slice && fieldType.Elem().Kind() == reflect.Uint8) {
-		return fmt.Errorf("invalid request body type %s", kind)
-	}
-
 	_, ok := s.OpenAPISpec.Components.Schemas[fieldName]
 	if !ok {
 		var err error
+
+		if fieldType == reflect.TypeOf(multipart.FileHeader{}) || fieldType == reflect.TypeOf(&multipart.FileHeader{}) {
+			fieldType = reflect.TypeOf([]byte{})
+		}
 
 		if kind == reflect.Struct {
 			fieldType = updateFileHeaderFieldType(fieldType)
