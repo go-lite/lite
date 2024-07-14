@@ -41,7 +41,6 @@ type Context[Request any] interface {
 	Method(override ...string) string
 	OriginalURL() string
 	SaveFile(fileheader *multipart.FileHeader, path string) error
-	SendFile(file string, filename ...string) ([]byte, error)
 	Set(key string, val string)
 	Status(status int) Context[Request]
 	// SetContentType sets the Content-Type response header with the given type and charset.
@@ -244,11 +243,6 @@ func (c *ContextNoRequest) OriginalURL() string {
 // SaveFile saves the file to the specified path.
 func (c *ContextNoRequest) SaveFile(file *multipart.FileHeader, path string) error {
 	return c.ctx.SaveFile(file, path)
-}
-
-// SendFile sends the file to the client.
-func (c *ContextNoRequest) SendFile(file string, compress ...bool) ([]byte, error) {
-	return c.ctx.SendFile(file, compress...)
 }
 
 // Set sets the response's HTTP header field to the specified key, value.
