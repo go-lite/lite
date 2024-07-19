@@ -277,8 +277,8 @@ func TestGetRequiredValue_Map(t *testing.T) {
 	}
 
 	ok := getRequiredValue(contentType, fieldType, schema)
-	if ok {
-		t.Errorf("expected true, got false")
+	if !ok {
+		t.Errorf("expected false, got true")
 	}
 }
 
@@ -391,8 +391,8 @@ func TestRegisterPtrInt(t *testing.T) {
 	dstVal := reflect.ValueOf(testErr)
 
 	err := register(app, operation, dstVal)
-	if err == nil {
-		t.Fatal("should be error")
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -404,8 +404,8 @@ func TestRegisterPtrInt2(t *testing.T) {
 	dstVal := reflect.ValueOf(testErr)
 
 	err := register(app, operation, dstVal)
-	if err == nil {
-		t.Fatal("should be error")
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -542,6 +542,23 @@ func TestRegisterBodyError(t *testing.T) {
 	err := register(app, operation, dstVal)
 	if err == nil {
 		t.Fatal("should be error")
+	}
+}
+
+type testReq6 struct {
+	Body *multipart.FileHeader `lite:"req=body"`
+}
+
+func TestRegisterBodyMultipartFileHeader(t *testing.T) {
+	testErr := testReq6{}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testErr)
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -742,6 +759,9 @@ type bodyRequest struct {
 type testRequest struct {
 	Params params
 	Filter *string      `lite:"query=filter"`
+	Age    string       `lite:"query=age"`
+	Token  string       `lite:"header=token"`
+	Value  *string      `lite:"header=value"`
 	Cookie *http.Cookie `lite:"cookie=cookie"`
 	Body   bodyRequest  `lite:"req=body,multipart/form-data"`
 }

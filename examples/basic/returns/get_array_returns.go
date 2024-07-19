@@ -1,6 +1,8 @@
 package returns
 
-type GetArrayReturnsResponse = []Ret
+import "github.com/go-lite/lite"
+
+type GetArrayReturnsResponse = lite.List[Ret]
 
 type Ret struct {
 	Message  string                 `json:"message"`

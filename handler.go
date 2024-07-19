@@ -359,13 +359,7 @@ func getStatusCode(method string) int {
 }
 
 // toTitle transform string to title case
-func toTitle(s string, opt ...bool) string {
-	if len(opt) > 0 && opt[0] {
-		caser := cases.Title(language.Und, cases.NoLower)
-
-		return caser.String(s)
-	}
-
+func toTitle(s string) string {
 	caser := cases.Title(language.Und)
 
 	return caser.String(s)

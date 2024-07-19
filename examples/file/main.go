@@ -32,8 +32,8 @@ type info struct {
 func main() {
 	app := lite.New()
 
-	app.Use(logger.New())
-	app.Use(recover.New())
+	lite.Use(app, logger.New())
+	lite.Use(app, recover.New())
 
 	lite.Post(app, "/v1/image/analyse", func(c *lite.ContextWithRequest[ImagePayload]) (ImageResponse, error) {
 		req, err := c.Requests()

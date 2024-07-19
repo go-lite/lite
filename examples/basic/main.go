@@ -64,7 +64,7 @@ func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (return
 		},
 	)
 
-	return res, nil
+	return lite.NewList(res), nil
 }
 
 func putHandler(c *lite.ContextWithRequest[parameters.PutReq]) (returns.PutResponse, error) {
@@ -83,8 +83,8 @@ func putHandler(c *lite.ContextWithRequest[parameters.PutReq]) (returns.PutRespo
 func main() {
 	app := lite.New()
 
-	app.Use(logger.New())
-	app.Use(recover.New())
+	lite.Use(app, logger.New())
+	lite.Use(app, recover.New())
 
 	lite.Get(app, "/example/:name", getHandler).SetResponseContentType("application/xml")
 

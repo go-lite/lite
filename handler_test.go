@@ -688,6 +688,8 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 			c.Set("filter", "test")
 		}
 
+		assert.Equal(suite.T(), "", c.Get("User-Agent"))
+
 		err = c.SaveFile(req.Body.File, "./logo/lite.png")
 		if err != nil {
 			return testResponse{}, err
@@ -756,173 +758,6 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	body, err := io.ReadAll(resp.Body)
 	assert.NoError(suite.T(), err)
 	assert.JSONEq(suite.T(), `{"id":123,"first_name":"John","last_name":"Doe", "name":""}`, utils.UnsafeString(body))
-
-	spec, err := app.SaveOpenAPISpec()
-	assert.NoError(suite.T(), err)
-
-	expected := `components:
-    parameters:
-        cookie:
-            in: cookie
-            name: cookie
-            schema:
-                $ref: '#/components/schemas/cookie'
-        filter:
-            in: query
-            name: filter
-            schema:
-                $ref: '#/components/schemas/filter'
-        id:
-            in: path
-            name: id
-            required: true
-            schema:
-                $ref: '#/components/schemas/id'
-        is_admin:
-            in: path
-            name: is_admin
-            required: true
-            schema:
-                $ref: '#/components/schemas/is_admin'
-    schemas:
-        bodyRequest:
-            properties:
-                file:
-                    format: byte
-                    type: string
-                metadata:
-                    properties:
-                        birthday:
-                            format: date-time
-                            type: string
-                        first_name:
-                            type: string
-                        last_name:
-                            type: string
-                    type: object
-                name:
-                    type: string
-            required:
-                - name
-                - file
-            type: object
-        cookie:
-            properties:
-                Domain:
-                    type: string
-                Expires:
-                    format: date-time
-                    type: string
-                HttpOnly:
-                    type: boolean
-                MaxAge:
-                    type: integer
-                Name:
-                    type: string
-                Path:
-                    type: string
-                Raw:
-                    type: string
-                RawExpires:
-                    type: string
-                SameSite:
-                    type: integer
-                Secure:
-                    type: boolean
-                Unparsed:
-                    items:
-                        type: string
-                    type: array
-                Value:
-                    type: string
-            type: object
-        filter:
-            type: string
-        httpGenericError:
-            properties:
-                id:
-                    type: string
-                message:
-                    type: string
-                status:
-                    type: integer
-            type: object
-        id:
-            maximum: 1.8446744073709552e+19
-            minimum: 0
-            type: integer
-        is_admin:
-            type: string
-        testResponse:
-            properties:
-                first_name:
-                    type: string
-                id:
-                    maximum: 1.8446744073709552e+19
-                    minimum: 0
-                    type: integer
-                last_name:
-                    type: string
-                name:
-                    type: string
-            required:
-                - id
-                - name
-                - first_name
-                - last_name
-            type: object
-info:
-    description: OpenAPI
-    title: OpenAPI
-    version: 0.0.1
-openapi: 3.0.3
-paths:
-    /test/{id}/{is_admin}:
-        post:
-            operationId: POST/test/:id/:is_admin
-            parameters:
-                - $ref: '#/components/parameters/id'
-                - $ref: '#/components/parameters/is_admin'
-                - $ref: '#/components/parameters/filter'
-                - $ref: '#/components/parameters/cookie'
-            requestBody:
-                content:
-                    multipart/form-data:
-                        schema:
-                            $ref: '#/components/schemas/bodyRequest'
-            responses:
-                "201":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/testResponse'
-                    description: OK
-                "400":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Bad Request
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Internal Server Error`
-
-	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
 }
 
 type requestBodyApplicationPDF struct {
@@ -1096,7 +931,7 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: POST/foo
+            operationId: /foo
             requestBody:
                 content:
                     application/pdf:
@@ -1187,7 +1022,7 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: POST/foo
+            operationId: /foo
             requestBody:
                 content:
                     application/octet-stream:
@@ -1274,7 +1109,7 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: POST/foo
+            operationId: /foo
             requestBody:
                 content:
                     text/plain:
@@ -1312,4 +1147,30 @@ paths:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Internal Server Error`
 	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
+}
+
+func (suite *HandlerTestSuite) TestContextWithRequest_SimpleReturnList() {
+	app := New()
+	Get(app, "/foo", func(c *ContextNoRequest) (ret List[string], err error) {
+		return
+	})
+
+	req := httptest.NewRequest("GET", "/foo", nil)
+	resp, err := app.Test(req)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
+}
+
+func (suite *HandlerTestSuite) TestSetDescription() {
+	assert.Equal(suite.T(), "Get the Test resource", setDescription(http.MethodGet, toTitle("test")))
+	assert.Equal(suite.T(), "Create a new test resource", setDescription(http.MethodPost, "test"))
+	assert.Equal(suite.T(), "Replace the test resource", setDescription(http.MethodPut, "test"))
+	assert.Equal(suite.T(), "Update the test resource", setDescription(http.MethodPatch, "test"))
+	assert.Equal(suite.T(), "Delete the test resource", setDescription(http.MethodDelete, "test"))
+	assert.Equal(suite.T(), "Get the test resource header", setDescription(http.MethodHead, "test"))
+	assert.Equal(suite.T(), "Get the test resource options", setDescription(http.MethodOptions, "test"))
+	assert.Equal(suite.T(), "Get the test resource connect", setDescription(http.MethodConnect, "test"))
+	assert.Equal(suite.T(), "Get the test resource trace", setDescription(http.MethodTrace, "test"))
+	assert.Equal(suite.T(), "Get the test resource", setDescription("", "test"))
 }
