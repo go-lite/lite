@@ -481,14 +481,12 @@ func setHeaderScheme(
 	parameter.Schema = openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", tag), &openapi3.Schema{})
 	parameter.Required = isRequired
 
-	s.OpenAPISpec.Components.Headers[headerName] = &openapi3.HeaderRef{
-		Value: &openapi3.Header{
-			Parameter: *parameter,
-		},
+	s.OpenAPISpec.Components.Parameters[headerName] = &openapi3.ParameterRef{
+		Value: parameter,
 	}
 
 	operation.Parameters = append(operation.Parameters, &openapi3.ParameterRef{
-		Ref: "#/components/headers/" + headerName,
+		Ref: "#/components/parameters/" + headerName,
 	})
 
 	return nil

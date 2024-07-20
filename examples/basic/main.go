@@ -86,7 +86,7 @@ func main() {
 	lite.Use(app, logger.New())
 	lite.Use(app, recover.New())
 
-	lite.Get(app, "/example/:name", getHandler).SetResponseContentType("application/xml")
+	lite.Get(app, "/example/:params", getHandler).SetResponseContentType("application/xml")
 
 	lite.Post(app, "/example/:id", postHandler).
 		OperationID("createExample").
