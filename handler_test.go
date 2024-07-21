@@ -931,7 +931,6 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: /foo
             requestBody:
                 content:
                     application/pdf:
@@ -1022,7 +1021,6 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: /foo
             requestBody:
                 content:
                     application/octet-stream:
@@ -1109,7 +1107,6 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: /foo
             requestBody:
                 content:
                     text/plain:
