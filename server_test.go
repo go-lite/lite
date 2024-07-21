@@ -29,12 +29,20 @@ func TestNewOpenAPISpec(t *testing.T) {
 }
 
 func TestNewApp(t *testing.T) {
-	app := New()
+	app := New(
+		SetDisableSwagger(true),
+		SetSwaggerURL("/swagger/*"),
+		SetOpenAPIPath("/api/openapi.json"),
+		SetUIHandler(defaultOpenAPIHandler),
+		SetDisableLocalSave(false),
+		SetTypeOfExtension(JSONExtension),
+		SetAddress(":8080"),
+	)
 
 	assert.NotNil(t, app.app)
 	assert.Equal(t, "OpenAPI", app.openAPISpec.Info.Title)
 	assert.Equal(t, defaultOpenAPIConfig.swaggerURL, app.openAPIConfig.swaggerURL)
-	assert.Equal(t, defaultOpenAPIConfig.openapiPath, app.openAPIConfig.openapiPath)
+	assert.Equal(t, "/api/openapi.json", app.openAPIConfig.openapiPath)
 }
 
 func TestApp_AddTags(t *testing.T) {
@@ -216,4 +224,24 @@ func TestApp_Listen(t *testing.T) {
 
 	// Shutdown the server
 	assert.NoError(t, app.Shutdown())
+}
+
+func TestApp_SetAddress(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	New(SetAddress("8080"))
+}
+
+func TestApp_SetAddress2(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	New(SetAddress(":invalid"))
 }
