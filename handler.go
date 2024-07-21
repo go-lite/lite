@@ -286,8 +286,6 @@ func registerRoute[ResponseBody, Request any](
 		operation.Description = setDescription(route.method, app.tag)
 	}
 
-	operation.OperationID = route.path
-
 	route.operation = operation
 
 	return route
