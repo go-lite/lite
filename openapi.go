@@ -26,7 +26,6 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	statusCode int,
 ) (operation *openapi3.Operation, err error) {
 	operation = openapi3.NewOperation()
-	operation.OperationID = method + path
 
 	var reqBody RequestBody
 	valGen := reflect.ValueOf(&reqBody).Elem()
