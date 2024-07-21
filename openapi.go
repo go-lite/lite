@@ -78,7 +78,7 @@ func registerOpenAPIOperation[ResponseBody, RequestBody any](
 	// Remove default response
 	operation.Responses.Delete("default")
 
-	s.OpenAPISpec.AddOperation(routePath, method, operation)
+	s.openAPISpec.AddOperation(routePath, method, operation)
 
 	return operation, nil
 }
@@ -302,9 +302,9 @@ func setResponseSchema(
 	statusCode int,
 	fieldType reflect.Type,
 ) (err error) {
-	responseSchema, ok := s.OpenAPISpec.Components.Schemas[tag]
+	responseSchema, ok := s.openAPISpec.Components.Schemas[tag]
 	if !ok {
-		responseSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.OpenAPISpec.Components.Schemas)
+		responseSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return
 		}
@@ -313,11 +313,11 @@ func setResponseSchema(
 			getRequiredValue(resContentType, fieldType, responseSchema.Value)
 		}
 
-		s.OpenAPISpec.Components.Schemas[tag] = responseSchema
+		s.openAPISpec.Components.Schemas[tag] = responseSchema
 	} else {
 		var newSchema *openapi3.SchemaRef
 
-		newSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.OpenAPISpec.Components.Schemas)
+		newSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return
 		}
@@ -327,7 +327,7 @@ func setResponseSchema(
 		if !reflect.DeepEqual(newSchema.Value, responseSchema.Value) {
 			hash := computeHash(newSchemaContent)
 			hashedTag := fmt.Sprintf("%s%s", tag, hash)
-			s.OpenAPISpec.Components.Schemas[hashedTag] = newSchema
+			s.openAPISpec.Components.Schemas[hashedTag] = newSchema
 
 			tag = hashedTag
 		}
@@ -359,7 +359,7 @@ func setBodySchema(
 	fieldName string,
 	contentType string,
 ) error {
-	existingSchema, exists := s.OpenAPISpec.Components.Schemas[fieldName]
+	existingSchema, exists := s.openAPISpec.Components.Schemas[fieldName]
 	if !exists {
 		var err error
 
@@ -373,17 +373,17 @@ func setBodySchema(
 
 		tp := reflect.New(fieldType).Elem().Interface()
 
-		bodySchema, err := generatorNewSchemaRefForValue(tp, s.OpenAPISpec.Components.Schemas)
+		bodySchema, err := generatorNewSchemaRefForValue(tp, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
 
 		getRequiredValue(contentType, fieldType, bodySchema.Value)
 
-		s.OpenAPISpec.Components.Schemas[fieldName] = bodySchema
+		s.openAPISpec.Components.Schemas[fieldName] = bodySchema
 	} else {
 		newInstance := reflect.New(fieldType).Elem().Interface()
-		newBodySchema, err := generatorNewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		newBodySchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
@@ -393,7 +393,7 @@ func setBodySchema(
 		if !reflect.DeepEqual(newBodySchema.Value, existingSchema.Value) {
 			hash := computeHash(newSchemaContent)
 			hashedFieldName := fmt.Sprintf("%s%s", fieldName, hash)
-			s.OpenAPISpec.Components.Schemas[hashedFieldName] = newBodySchema
+			s.openAPISpec.Components.Schemas[hashedFieldName] = newBodySchema
 
 			fieldName = hashedFieldName
 		}
@@ -444,23 +444,23 @@ func setHeaderScheme(
 	fieldType reflect.Type,
 	isRequired bool,
 ) error {
-	existingSchema, exists := s.OpenAPISpec.Components.Schemas[tag]
+	existingSchema, exists := s.openAPISpec.Components.Schemas[tag]
 	if !exists {
 		var err error
 		newInstance := reflect.New(fieldType).Elem().Interface()
 
-		headerSchema, err := generatorNewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		headerSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
 
 		headerSchema.Value.Nullable = !isRequired
 
-		s.OpenAPISpec.Components.Schemas[tag] = headerSchema
+		s.openAPISpec.Components.Schemas[tag] = headerSchema
 	} else {
 		newInstance := reflect.New(fieldType).Elem().Interface()
 
-		headerSchema, err := generatorNewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		headerSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
@@ -472,7 +472,7 @@ func setHeaderScheme(
 		if !reflect.DeepEqual(headerSchema.Value, existingSchema.Value) {
 			hash := computeHash(newSchemaContent)
 			hashedTag := fmt.Sprintf("%s%s", tag, hash)
-			s.OpenAPISpec.Components.Schemas[hashedTag] = headerSchema
+			s.openAPISpec.Components.Schemas[hashedTag] = headerSchema
 
 			tag = hashedTag
 		}
@@ -481,7 +481,7 @@ func setHeaderScheme(
 	parameter.Schema = openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", tag), &openapi3.Schema{})
 	parameter.Required = isRequired
 
-	s.OpenAPISpec.Components.Parameters[headerName] = &openapi3.ParameterRef{
+	s.openAPISpec.Components.Parameters[headerName] = &openapi3.ParameterRef{
 		Value: parameter,
 	}
 
@@ -513,7 +513,7 @@ func setSecurityScheme(s *App, operation *openapi3.Operation, name string, tpe s
 		Value: securityScheme,
 	}
 
-	s.OpenAPISpec.Components.SecuritySchemes[name] = securitySchemes[name]
+	s.openAPISpec.Components.SecuritySchemes[name] = securitySchemes[name]
 }
 
 // computeHash generates a SHA256 hash for the given input and returns the first 4 characters.
@@ -531,24 +531,24 @@ func setParamSchema(
 	isRequired bool,
 	fieldType reflect.Type,
 ) error {
-	existingSchema, exists := s.OpenAPISpec.Components.Schemas[tag]
+	existingSchema, exists := s.openAPISpec.Components.Schemas[tag]
 	if !exists {
 		var err error
 
 		newInstance := reflect.New(fieldType).Elem().Interface()
 
-		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
 
 		paramSchema.Value.Nullable = !isRequired
 
-		s.OpenAPISpec.Components.Schemas[tag] = paramSchema
+		s.openAPISpec.Components.Schemas[tag] = paramSchema
 	} else {
 		newInstance := reflect.New(fieldType).Elem().Interface()
 
-		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.OpenAPISpec.Components.Schemas)
+		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
 		}
@@ -560,7 +560,7 @@ func setParamSchema(
 		if !reflect.DeepEqual(paramSchema.Value, existingSchema.Value) {
 			hash := computeHash(newSchemaContent)
 			hashedTag := fmt.Sprintf("%s%s", tag, hash)
-			s.OpenAPISpec.Components.Schemas[hashedTag] = paramSchema
+			s.openAPISpec.Components.Schemas[hashedTag] = paramSchema
 
 			tag = hashedTag
 		}
@@ -569,7 +569,7 @@ func setParamSchema(
 	parameter.Schema = openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", tag), &openapi3.Schema{})
 	parameter.Required = isRequired
 
-	s.OpenAPISpec.Components.Parameters[parameterName] = &openapi3.ParameterRef{
+	s.openAPISpec.Components.Parameters[parameterName] = &openapi3.ParameterRef{
 		Value: parameter,
 	}
 
