@@ -119,9 +119,11 @@ func SetUIHandler(handler func(specURL string) fiber.Handler) Config {
 	}
 }
 
-func SetOpenAPIURL(url string) Config {
+func SetOpenAPIPath(path string) Config {
+	path = strings.TrimLeft(path, ".")
+
 	return func(s *App) {
-		s.openAPIConfig.openapiPath = url
+		s.openAPIConfig.openapiPath = path
 	}
 }
 
@@ -180,12 +182,12 @@ func (s *App) saveOpenAPIToFile(path string, swaggerSpec []byte) error {
 
 	err := os.MkdirAll(jsonFolder, 0o750)
 	if err != nil {
-		return errors.NewInternalServerError("error creating directory")
+		return errors.NewInternalServerError(fmt.Sprintf("error creating directory %s", jsonFolder))
 	}
 
 	f, err := os.Create(path)
 	if err != nil {
-		return errors.NewInternalServerError("error creating file")
+		return errors.NewInternalServerError(fmt.Sprintf("error creating file %s", path))
 	}
 	defer f.Close()
 
