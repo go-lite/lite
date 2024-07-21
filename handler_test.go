@@ -903,7 +903,7 @@ startxref
 565
 %%EOF`, utils.UnsafeString(body))
 
-	spec, err := app.SaveOpenAPISpec()
+	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
 	expected := `components:
@@ -995,7 +995,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(body))
 
-	spec, err := app.SaveOpenAPISpec()
+	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
 	expected := `components:
@@ -1085,7 +1085,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_String() {
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(body))
 
-	spec, err := app.SaveOpenAPISpec()
+	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
 	expected := `components:

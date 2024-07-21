@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewOpenAPISpec(t *testing.T) {
-	spec := NewOpenAPISpec()
+	spec := newOpenAPISpec()
 
 	assert.Equal(t, "OpenAPI", spec.Info.Title)
 	assert.Equal(t, "OpenAPI", spec.Info.Description)
@@ -33,8 +33,8 @@ func TestNewApp(t *testing.T) {
 
 	assert.NotNil(t, app.App)
 	assert.Equal(t, "OpenAPI", app.openAPISpec.Info.Title)
-	assert.Equal(t, defaultOpenAPIConfig.SwaggerURL, app.openAPIConfig.SwaggerURL)
-	assert.Equal(t, defaultOpenAPIConfig.YamlURL, app.openAPIConfig.YamlURL)
+	assert.Equal(t, defaultOpenAPIConfig.swaggerURL, app.openAPIConfig.swaggerURL)
+	assert.Equal(t, defaultOpenAPIConfig.openapiPath, app.openAPIConfig.openapiPath)
 }
 
 func TestApp_AddTags(t *testing.T) {
@@ -47,7 +47,7 @@ func TestApp_AddTags(t *testing.T) {
 
 func TestApp_SaveOpenAPISpec(t *testing.T) {
 	app := New()
-	yamlData, err := app.SaveOpenAPISpec()
+	yamlData, err := app.saveOpenAPISpec()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, yamlData)
@@ -132,7 +132,7 @@ func TestApp_SaveOpenAPISpec_Error(t *testing.T) {
 		},
 	}
 
-	_, err := app.SaveOpenAPISpec()
+	_, err := app.saveOpenAPISpec()
 	assert.NotNil(t, err)
 }
 
@@ -165,7 +165,7 @@ func TestApp_SaveOpenAPISpec_YAMLError(t *testing.T) {
 	defer restoreJSONToYAML()
 
 	// Attempt to save OpenAPI spec and check for errors
-	_, err := app.SaveOpenAPISpec()
+	_, err := app.saveOpenAPISpec()
 
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "error converting to YAML")

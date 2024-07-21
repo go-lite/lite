@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// DefaultOpenAPIHandler serve Swagger UI with the YAML file spec
-func DefaultOpenAPIHandler(specURL string) fiber.Handler {
+// defaultOpenAPIHandler serve Swagger UI with the YAML file spec
+func defaultOpenAPIHandler(specURL string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if c.Params("*") == "index.html" || c.Params("*") == "" {
 			log.Println("swagger ui")
@@ -35,7 +35,7 @@ func indexHTML(specURL string) string {
 <script>
   window.onload = () => {
     window.ui = SwaggerUIBundle({
-      url: 'http://localhost:6001/api/openapi.yaml',
+      url: '` + specURL + `',
       dom_id: '#swagger-ui',
     });
   };

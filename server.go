@@ -1,12 +1,17 @@
 package lite
 
 import (
+	"context"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/invopop/yaml"
-	"github.com/valyala/fasthttp"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 type TypeOfExtension string
@@ -16,16 +21,16 @@ const (
 	JSONExtension TypeOfExtension = "json"
 )
 
-type OpenAPIConfig struct {
-	DisableSwagger   bool                               // If true, the server will not serve the swagger ui nor the openapi json spec
-	DisableLocalSave bool                               // If true, the server will not save the openapi json spec locally
-	SwaggerURL       string                             // URL to serve the swagger ui
-	UIHandler        func(specURL string) fiber.Handler // Handler to serve the openapi ui from spec url
-	YamlURL          string                             // Local path to save the openapi json spec
-	TypeOfExtension  TypeOfExtension                    // Type of extension to use for the openapi spec
+type config struct {
+	disableSwagger   bool                               // If true, the server will not serve the swagger ui nor the openapi json spec
+	disableLocalSave bool                               // If true, the server will not save the openapi json spec locally
+	swaggerURL       string                             // URL to serve the swagger ui
+	uiHandler        func(specURL string) fiber.Handler // Handler to serve the openapi ui from spec url
+	openapiPath      string                             // Local path to save the openapi json spec
+	typeOfExtension  TypeOfExtension                    // Type of extension to use for the openapi spec
 }
 
-func NewOpenAPISpec() openapi3.T {
+func newOpenAPISpec() openapi3.T {
 	info := &openapi3.Info{
 		Title:       "OpenAPI",
 		Description: "OpenAPI",
@@ -48,20 +53,18 @@ func NewOpenAPISpec() openapi3.T {
 	return spec
 }
 
-var defaultOpenAPIConfig = OpenAPIConfig{
-	SwaggerURL:      "/swagger/*",
-	YamlURL:         "/api/openapi.yaml",
-	UIHandler:       DefaultOpenAPIHandler,
-	TypeOfExtension: YAMLExtension,
+var defaultOpenAPIConfig = config{
+	swaggerURL:      "/swagger/*",
+	openapiPath:     "/api/openapi.yaml",
+	uiHandler:       defaultOpenAPIHandler,
+	typeOfExtension: YAMLExtension,
 }
 
 type App struct {
-	*fiber.App
+	app *fiber.App
 
 	openAPISpec   openapi3.T
-	openAPIConfig OpenAPIConfig
-
-	Serializer func(ctx *fasthttp.RequestCtx, response any) error
+	openAPIConfig config
 
 	tag string
 
@@ -70,13 +73,78 @@ type App struct {
 	// OpenAPI documentation tags used for logical groupings of operations
 	// These tags will be inherited by child Routes/Groups
 	tags []string
+
+	address string // Address to listen on
 }
 
-func New() *App {
-	return &App{
-		App:           fiber.New(),
-		openAPISpec:   NewOpenAPISpec(),
+func New(config ...Config) *App {
+	app := &App{
+		app:           fiber.New(),
+		openAPISpec:   newOpenAPISpec(),
 		openAPIConfig: defaultOpenAPIConfig,
+		address:       ":9000",
+	}
+
+	for _, c := range config {
+		c(app)
+	}
+
+	return app
+}
+
+type Config func(s *App)
+
+func SetDisableSwagger(disable bool) Config {
+	return func(s *App) {
+		s.openAPIConfig.disableSwagger = disable
+	}
+}
+
+func SetDisableLocalSave(disable bool) Config {
+	return func(s *App) {
+		s.openAPIConfig.disableLocalSave = disable
+	}
+}
+
+func SetSwaggerURL(url string) Config {
+	return func(s *App) {
+		s.openAPIConfig.swaggerURL = url
+	}
+}
+
+func SetUIHandler(handler func(specURL string) fiber.Handler) Config {
+	return func(s *App) {
+		s.openAPIConfig.uiHandler = handler
+	}
+}
+
+func SetOpenAPIURL(url string) Config {
+	return func(s *App) {
+		s.openAPIConfig.openapiPath = url
+	}
+}
+
+func SetTypeOfExtension(extension TypeOfExtension) Config {
+	return func(s *App) {
+		s.openAPIConfig.typeOfExtension = extension
+	}
+}
+
+func SetAddress(address string) Config {
+	// check if address is valid
+	if !strings.HasPrefix(address, ":") {
+		panic("address must start with :")
+	}
+
+	port := strings.TrimPrefix(address, ":")
+
+	_, err := strconv.Atoi(port)
+	if err != nil {
+		panic(err)
+	}
+
+	return func(s *App) {
+		s.address = address
 	}
 }
 
@@ -87,11 +155,15 @@ func (s *App) AddTags(tags ...string) *App {
 	return s
 }
 
-// SaveOpenAPISpec saves the OpenAPI spec to a file in YAML format
-func (s *App) SaveOpenAPISpec() ([]byte, error) {
+// saveOpenAPISpec saves the OpenAPI spec to a file in YAML format
+func (s *App) saveOpenAPISpec() ([]byte, error) {
 	json, err := s.openAPISpec.MarshalJSON()
 	if err != nil {
 		return nil, err
+	}
+
+	if s.openAPIConfig.typeOfExtension == JSONExtension {
+		return json, nil
 	}
 
 	yamlData, err := writeOpenAPISpec(json)
@@ -100,6 +172,28 @@ func (s *App) SaveOpenAPISpec() ([]byte, error) {
 	}
 
 	return yamlData, nil
+}
+
+func (s *App) saveOpenAPIToFile(path string, swaggerSpec []byte) error {
+	jsonFolder := filepath.Dir(path)
+
+	err := os.MkdirAll(jsonFolder, 0o750)
+	if err != nil {
+		return errors.NewInternalServerError("error creating directory")
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return errors.NewInternalServerError("error creating file")
+	}
+	defer f.Close()
+
+	_, err = f.Write(swaggerSpec)
+	if err != nil {
+		return errors.NewInternalServerError("error writing file")
+	}
+
+	return nil
 }
 
 var yamlJSONToYAML = yaml.JSONToYAML
@@ -186,10 +280,44 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 	return responses, nil
 }
 
+func (s *App) setup() error {
+	if s.openAPIConfig.disableSwagger {
+		return nil
+	}
+
+	swaggerSpec, err := s.saveOpenAPISpec()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err := s.saveOpenAPIToFile(s.openAPIConfig.openapiPath, swaggerSpec)
+		if err != nil {
+			slog.ErrorContext(context.Background(), "failed to save openapi spec", slog.Any("error", err))
+		}
+	}()
+
+	return nil
+}
+
 func (s *App) Listen(address string) error {
-	return s.App.Listen(address)
+	err := s.setup()
+	if err != nil {
+		return err
+	}
+
+	return s.app.Listen(address)
+}
+
+func (s *App) Run() error {
+	err := s.setup()
+	if err != nil {
+		return err
+	}
+
+	return s.app.Listen(s.address)
 }
 
 func (s *App) Shutdown() error {
-	return s.App.Shutdown()
+	return s.app.Shutdown()
 }

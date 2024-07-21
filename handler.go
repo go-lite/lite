@@ -74,7 +74,7 @@ func Group(app *App, path string) *App {
 }
 
 func Use(app *App, args ...any) {
-	app.Use(args...)
+	app.app.Use(args...)
 }
 
 func Get[ResponseBody, Request any, Contexter Context[Request]](
@@ -257,28 +257,28 @@ func registerRoute[ResponseBody, Request any](
 	fullPath := app.basePath + route.path
 
 	if len(middleware) > 0 {
-		app.Add(
+		app.app.Add(
 			route.method,
 			fullPath,
 			middleware...,
 		)
 	}
 
-	if !app.openAPIConfig.DisableSwagger {
-		app.Use(cors.New(cors.Config{
+	if !app.openAPIConfig.disableSwagger {
+		app.app.Use(cors.New(cors.Config{
 			AllowOrigins: "*",
-			AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+			AllowMethods: "GET",
 		}))
 
 		// Route pour servir le fichier OpenAPI
-		app.Get("/api/openapi.yaml", func(c *fiber.Ctx) error {
-			return c.SendFile("./api/openapi.yaml")
+		app.app.Get(app.openAPIConfig.openapiPath, func(c *fiber.Ctx) error {
+			return c.SendFile("." + app.openAPIConfig.openapiPath)
 		})
 
-		app.Get(app.openAPIConfig.SwaggerURL, app.openAPIConfig.UIHandler(app.openAPIConfig.YamlURL))
+		app.app.Get(app.openAPIConfig.swaggerURL, app.openAPIConfig.uiHandler(app.openAPIConfig.openapiPath))
 	}
 
-	app.Add(
+	app.app.Add(
 		route.method,
 		fullPath,
 		controller,

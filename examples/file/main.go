@@ -1,17 +1,15 @@
 package main
 
 import (
-	"io"
-	"log"
-	"mime/multipart"
-	"os"
-	"path/filepath"
-
 	"github.com/go-lite/lite"
 	"github.com/go-lite/lite/errors"
 	"github.com/go-lite/lite/mime"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"io"
+	"log"
+	"mime/multipart"
+	"os"
 )
 
 type ImageResponse = []byte
@@ -76,39 +74,39 @@ func main() {
 
 	app.AddServer("http://localhost:9999", "example server")
 
-	yamlBytes, err := app.SaveOpenAPISpec()
-	if err != nil {
-		log.Fatal(err)
-	}
+	//yamlBytes, err := app.saveOpenAPISpec()
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//// Ensure the directory exists
+	//err = os.MkdirAll(filepath.Dir("./examples/file/api/openapi.yaml"), os.ModePerm)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//f, err := os.Create("./examples/file/api/openapi.yaml")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//defer func() {
+	//	closeErr := f.Close()
+	//	if err != nil {
+	//		if closeErr != nil {
+	//			err = closeErr
+	//		}
+	//
+	//		log.Fatal(err)
+	//	}
+	//}()
+	//
+	//_, err = f.Write(yamlBytes)
+	//if err != nil {
+	//	return
+	//}
 
-	// Ensure the directory exists
-	err = os.MkdirAll(filepath.Dir("./examples/file/api/openapi.yaml"), os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	f, err := os.Create("./examples/file/api/openapi.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		closeErr := f.Close()
-		if err != nil {
-			if closeErr != nil {
-				err = closeErr
-			}
-
-			log.Fatal(err)
-		}
-	}()
-
-	_, err = f.Write(yamlBytes)
-	if err != nil {
-		return
-	}
-
-	if err = app.Listen(":9999"); err != nil {
+	if err := app.Listen(":9999"); err != nil {
 		return
 	}
 }
