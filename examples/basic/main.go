@@ -2,8 +2,6 @@ package main
 
 import (
 	"errors"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log"
 	"os"
 
@@ -171,22 +169,6 @@ func main() {
 
 	lite.Put(app, "/example/:id", putHandler)
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
-	}))
-
-	// Route pour servir le fichier OpenAPI
-	app.Get("/api/openapi.yaml", func(c *fiber.Ctx) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Println("Error getting current working directory:", err)
-			return c.Status(500).SendString("Internal Server Error")
-		}
-		log.Println("Current working directory:", cwd)
-		return c.SendFile("./examples/basic/api/openapi.yaml")
-	})
-
 	app.AddServer("http://localhost:6001", "example server")
 
 	yamlBytes, err := app.SaveOpenAPISpec()
@@ -194,7 +176,7 @@ func main() {
 		return
 	}
 
-	f, err := os.Create("./examples/basic/api/openapi.yaml")
+	f, err := os.Create("./api/openapi.yaml")
 	if err != nil {
 		return
 	}

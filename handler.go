@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -263,19 +264,19 @@ func registerRoute[ResponseBody, Request any](
 		)
 	}
 
-	//if !app.openAPIConfig.DisableSwagger {
-	//	app.Use(cors.New(cors.Config{
-	//		AllowOrigins: "*",
-	//		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
-	//	}))
-	//
-	//	// Route pour servir le fichier OpenAPI
-	//	app.Get("/api/openapi.yaml", func(c *fiber.Ctx) error {
-	//		return c.SendFile("./examples/basic/api/openapi.yaml")
-	//	})
-	//
-	//	app.Get(app.openAPIConfig.SwaggerURL, app.openAPIConfig.UIHandler(app.openAPIConfig.YamlURL))
-	//}
+	if !app.openAPIConfig.DisableSwagger {
+		app.Use(cors.New(cors.Config{
+			AllowOrigins: "*",
+			AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		}))
+
+		// Route pour servir le fichier OpenAPI
+		app.Get("/api/openapi.yaml", func(c *fiber.Ctx) error {
+			return c.SendFile("./api/openapi.yaml")
+		})
+
+		app.Get(app.openAPIConfig.SwaggerURL, app.openAPIConfig.UIHandler(app.openAPIConfig.YamlURL))
+	}
 
 	app.Add(
 		route.method,
