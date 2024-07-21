@@ -4,12 +4,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/getkin/kin-openapi v0.126.0 h1:c2cSgLnAsS0xYfKsgt5oBV6MYRM/giU8/RtwUY4wyfY=
 github.com/getkin/kin-openapi v0.126.0/go.mod h1:7mONz8IwmSRg6RttPu6v8U/OJ+gr+J99qSFNjPGSQqw=
-github.com/go-lite/lite v0.0.8-0.20240721043337-63b0111ca0fc h1:a8oVG0wlyEwJnyVzpjQHVWbtTyOK1KU1eE0avSmsIe8=
-github.com/go-lite/lite v0.0.8-0.20240721043337-63b0111ca0fc/go.mod h1:F7RHqL1iDAAEyCgG8G5Bk8WGCbGBJi52/J9Tpe/pQ7I=
-github.com/go-lite/lite v0.0.8-0.20240721055849-d4523fde422b h1:SVASl/Y0y0iM/PZhxvNlvQGTBf0X6/bFBZLKw6P7SGg=
-github.com/go-lite/lite v0.0.8-0.20240721055849-d4523fde422b/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
-github.com/go-lite/lite v0.0.8-0.20240721103035-d21a7cb1065a h1:iG9YQxPqEIES8iWrWXE9eFAK+tZSukNvuLl+oWm/mYQ=
-github.com/go-lite/lite v0.0.8-0.20240721103035-d21a7cb1065a/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
+github.com/go-lite/lite v0.1.0 h1:YPFiTTpfaolUJ76bRiQXAuBOHxjUhaLx2QtmZXY8XQE=
+github.com/go-lite/lite v0.1.0/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
 github.com/go-openapi/jsonpointer v0.21.0 h1:YgdVicSA9vH5RiHs9TZW5oyafXZFc6+2Vc1rr/O9oNQ=
 github.com/go-openapi/jsonpointer v0.21.0/go.mod h1:IUyH9l/+uyhIYQ/PXVA41Rexl+kOkAPDdXEYns6fzUY=
 github.com/go-openapi/swag v0.23.0 h1:vsEVJDUo2hPJ2tu0/Xc+4noaxyEffXNIs3cOULZ+GrE=

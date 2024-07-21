@@ -14,7 +14,6 @@ import (
 
 	liteErrors "github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func newLiteContext[Request any, Contexter Context[Request]](ctx ContextNoRequest) Contexter {
@@ -262,20 +261,6 @@ func registerRoute[ResponseBody, Request any](
 			fullPath,
 			middleware...,
 		)
-	}
-
-	if !app.openAPIConfig.disableSwagger {
-		app.app.Use(cors.New(cors.Config{
-			AllowOrigins: "*",
-			AllowMethods: "GET",
-		}))
-
-		// Route to serve the OpenAPI file
-		app.app.Get(app.openAPIConfig.openapiPath, func(c *fiber.Ctx) error {
-			return c.SendFile("." + app.openAPIConfig.openapiPath)
-		})
-
-		app.app.Get(app.openAPIConfig.swaggerURL, app.openAPIConfig.uiHandler(app.openAPIConfig.openapiPath))
 	}
 
 	app.app.Add(
