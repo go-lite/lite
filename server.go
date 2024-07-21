@@ -12,6 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/invopop/yaml"
 )
 
@@ -76,6 +77,8 @@ type App struct {
 	tags []string
 
 	address string // Address to listen on
+
+	serverURL string
 }
 
 func New(config ...Config) *App {
@@ -216,6 +219,8 @@ func writeOpenAPISpec(d []byte) ([]byte, error) {
 func (s *App) AddServer(url, description string) {
 	var servers []*openapi3.Server
 
+	s.serverURL = url
+
 	servers = append(servers, &openapi3.Server{
 		URL:         url,
 		Description: description,
@@ -284,8 +289,30 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 }
 
 func (s *App) setup() error {
+	if s.serverURL == "" {
+		s.serverURL = "http://localhost" + s.address
+		s.openAPISpec.Servers = append(s.openAPISpec.Servers, &openapi3.Server{
+			URL:         s.serverURL,
+			Description: "Local server",
+		})
+	}
+
 	if s.openAPIConfig.disableSwagger {
 		return nil
+	}
+
+	if !s.openAPIConfig.disableSwagger {
+		s.app.Use(cors.New(cors.Config{
+			AllowOrigins: "*",
+			AllowMethods: "GET",
+		}))
+
+		// Route to serve the OpenAPI file
+		s.app.Get(s.openAPIConfig.openapiPath, func(c *fiber.Ctx) error {
+			return c.SendFile("." + s.openAPIConfig.openapiPath)
+		})
+
+		s.app.Get(s.openAPIConfig.swaggerURL, s.openAPIConfig.uiHandler(s.serverURL+s.openAPIConfig.openapiPath))
 	}
 
 	swaggerSpec, err := s.saveOpenAPISpec()
@@ -304,6 +331,8 @@ func (s *App) setup() error {
 }
 
 func (s *App) Listen(address string) error {
+	s.address = address
+
 	err := s.setup()
 	if err != nil {
 		return err
