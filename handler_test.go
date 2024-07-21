@@ -909,7 +909,7 @@ startxref
 	expected := `components:
     schemas:
         Body:
-            format: byte
+            format: binary
             type: string
         httpGenericError:
             properties:
@@ -921,7 +921,7 @@ startxref
                     type: integer
             type: object
         uint8:
-            format: byte
+            format: binary
             type: string
 info:
     description: OpenAPI
@@ -1012,7 +1012,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
         string:
             type: string
         uint8:
-            format: byte
+            format: binary
             type: string
 info:
     description: OpenAPI

@@ -294,7 +294,7 @@ func (s *App) setup() error {
 	}
 
 	go func() {
-		err := s.saveOpenAPIToFile(s.openAPIConfig.openapiPath, swaggerSpec)
+		err := s.saveOpenAPIToFile("."+s.openAPIConfig.openapiPath, swaggerSpec)
 		if err != nil {
 			slog.ErrorContext(context.Background(), "failed to save openapi spec", slog.Any("error", err))
 		}

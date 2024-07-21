@@ -119,6 +119,8 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 		return true
 	case reflect.Array, reflect.Slice:
 		if fieldType.Elem().Kind() == reflect.Uint8 {
+			schema.Format = "binary"
+
 			return true
 		}
 
