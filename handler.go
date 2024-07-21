@@ -272,7 +272,6 @@ func registerRoute[ResponseBody, Request any](
 
 		// Route to serve the OpenAPI file
 		app.app.Get(app.openAPIConfig.openapiPath, func(c *fiber.Ctx) error {
-
 			return c.SendFile("." + app.openAPIConfig.openapiPath)
 		})
 

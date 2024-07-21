@@ -8,6 +8,8 @@ github.com/getkin/kin-openapi v0.126.0 h1:c2cSgLnAsS0xYfKsgt5oBV6MYRM/giU8/RtwUY
 github.com/getkin/kin-openapi v0.126.0/go.mod h1:7mONz8IwmSRg6RttPu6v8U/OJ+gr+J99qSFNjPGSQqw=
 github.com/go-lite/lite v0.0.8-0.20240721061754-9c5c60b86b17 h1:W/fLuXR+yW1tc9F5C/BWzaupQrcv+pzMsP0Ov5IedSA=
 github.com/go-lite/lite v0.0.8-0.20240721061754-9c5c60b86b17/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
+github.com/go-lite/lite v0.0.8-0.20240721103035-d21a7cb1065a h1:iG9YQxPqEIES8iWrWXE9eFAK+tZSukNvuLl+oWm/mYQ=
+github.com/go-lite/lite v0.0.8-0.20240721103035-d21a7cb1065a/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
 github.com/go-lite/lite v0.0.93 h1:Oi5PFHeS5Tayzue4+bJvuTaBX/xWKLHkdud8mQYRliw=
 github.com/go-lite/lite v0.0.93/go.mod h1:cB57X66qaMc3OncNgNUm0Kf9/d5JOduzbLrBGQ4U2hc=
 github.com/go-openapi/jsonpointer v0.20.2 h1:mQc3nmndL8ZBzStEo3JYF8wzmeWffDH4VbXz58sAx6Q=

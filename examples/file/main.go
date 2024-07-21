@@ -73,7 +73,7 @@ func main() {
 		return nil, nil
 	})
 
-	app.AddServer("http://localhost:9999", "example server")
+	app.AddServer("http://localhost:9000", "example server")
 
 	if err := app.Run(); err != nil {
 		return
