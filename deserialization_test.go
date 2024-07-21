@@ -48,8 +48,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyMultipart() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[multipartForm](ctx, app, "/foo")
 	c.Request().Header.SetContentType("multipart/form-data" + `;boundary="b"`)
@@ -77,8 +77,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyMultipartError() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[multipartForm](ctx, app, "/foo")
 	defer c.Request().Reset()
@@ -100,8 +100,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationOctetStrea
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/octet-stream")
@@ -124,8 +124,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationOctetStrea
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[multipartForm](ctx, app, "/foo")
 	defer c.Request().Reset()
@@ -158,8 +158,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationXWwwFormUr
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/x-www-form-urlencoded")
@@ -182,8 +182,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyTextHTML() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("text/html")
@@ -206,8 +206,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationPDF() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/pdf")
@@ -230,8 +230,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationZip() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/zip")
@@ -254,8 +254,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyImage() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("image/png")
@@ -278,8 +278,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyUnsupportedContentTyp
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/test")

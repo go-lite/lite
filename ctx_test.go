@@ -37,8 +37,8 @@ func newContext[Request any](ctx *fiber.Ctx, app *App, path string) Context[Requ
 func (suite *CtxTestSuite) TestContextWithRequest_Body_TextPlain() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "text/plain")
 	ctx.Request().SetBodyString("Hello World")
@@ -56,8 +56,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_TextPlain() {
 func (suite *CtxTestSuite) TestContextNoRequest_Requests() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[string](ctx, app, "/foo")
 	_, err := c.Requests()
@@ -67,8 +67,8 @@ func (suite *CtxTestSuite) TestContextNoRequest_Requests() {
 func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/pdf")
 	ctx.Request().SetBody([]byte{0x01, 0x02, 0x03})
@@ -82,8 +82,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte() {
 func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/pdf")
 	ctx.Request().SetBodyString("Hello World")
@@ -95,8 +95,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte_Error() {
 
 func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice_Error() {
 	app := New()
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
@@ -108,8 +108,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice_Error() {
 
 func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice() {
 	app := New()
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
@@ -144,8 +144,8 @@ type bodyTest struct {
 func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
@@ -159,8 +159,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests() {
 func (suite *CtxTestSuite) TestContextWithRequest_ApplicationXML_Requests() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/xml")
 	ctx.Request().SetBodyString(`<request><A>a</A><B>1</B><C>true</C></request>`)
@@ -174,8 +174,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_ApplicationXML_Requests() {
 func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":"1"}`)
@@ -188,8 +188,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests_Error
 func (suite *CtxTestSuite) TestContextWithRequest_Path() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/42")
@@ -204,8 +204,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Path() {
 func (suite *CtxTestSuite) TestContextWithRequest_MultiPath() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/42/john")
@@ -221,8 +221,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_MultiPath() {
 func (suite *CtxTestSuite) TestContextWithRequest_MultiPath_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/doe/john")
@@ -236,8 +236,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_MultiPath_Error() {
 func (suite *CtxTestSuite) TestContextWithRequest_Path_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/abc")
@@ -251,8 +251,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Path_Error() {
 func (suite *CtxTestSuite) TestContextWithRequest_Missing_Path_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/abc")
@@ -266,8 +266,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Missing_Path_Error() {
 func (suite *CtxTestSuite) TestContextWithRequest_Query() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/42?q=true")
@@ -282,8 +282,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Query() {
 func (suite *CtxTestSuite) TestContextWithRequest_Query_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/42?q=hello")
@@ -297,8 +297,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Query_Error() {
 func (suite *CtxTestSuite) TestContextWithRequest_Header() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().Header.Set("X-Real-Ip", "true")
@@ -314,8 +314,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Header() {
 func (suite *CtxTestSuite) TestContextWithRequest_Header_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().Header.Set("X-Real-Ip", "test")
@@ -330,8 +330,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Header_Error() {
 func (suite *CtxTestSuite) TestContextWithRequest_Error() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[chan int](ctx, app, "/foo/:id")
 	_, err := c.Requests()
@@ -341,8 +341,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Error() {
 func (suite *CtxTestSuite) TestContextWithRequest_Accepts() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Accept", "application/json")
 
@@ -354,8 +354,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Accepts() {
 func (suite *CtxTestSuite) TestContextWithRequest_AcceptsCharsets() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Accept-Charset", "utf-8")
 
@@ -367,8 +367,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_AcceptsCharsets() {
 func (suite *CtxTestSuite) TestContextWithRequest_AcceptsEncodings() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Accept-Encoding", "gzip")
 
@@ -380,8 +380,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_AcceptsEncodings() {
 func (suite *CtxTestSuite) TestContextWithRequest_AcceptsLanguages() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Accept-Language", "en")
 
@@ -393,8 +393,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_AcceptsLanguages() {
 func (suite *CtxTestSuite) TestContextWithRequest_Is() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 
@@ -406,8 +406,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Is() {
 func (suite *CtxTestSuite) TestContextWithRequest_App() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	assert.Equal(suite.T(), app, c.App())
@@ -416,8 +416,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_App() {
 func (suite *CtxTestSuite) TestContextWithRequest_OriginalURL() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().SetRequestURI("/foo")
 
@@ -428,8 +428,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_OriginalURL() {
 func (suite *CtxTestSuite) TestContextWithRequest_Append() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Authorization", "test")
 
@@ -441,8 +441,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Append() {
 func (suite *CtxTestSuite) TestContextWithRequest_Attachment() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	c.Attachment("test")
@@ -452,8 +452,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Attachment() {
 func (suite *CtxTestSuite) TestContextWithRequest_BaseURL() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().SetRequestURI("http://www.test.com/")
 
@@ -464,8 +464,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_BaseURL() {
 func (suite *CtxTestSuite) TestContextWithRequest_BodyRaw() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().SetBodyString("test")
 
@@ -476,8 +476,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_BodyRaw() {
 func (suite *CtxTestSuite) TestContextWithRequest_ClearCookie() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.SetCookie("test", "test")
 
@@ -489,8 +489,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_ClearCookie() {
 func (suite *CtxTestSuite) TestContextWithRequest_RequestContext() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	assert.Equal(suite.T(), ctx.Context(), c.RequestContext())
@@ -499,8 +499,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_RequestContext() {
 func (suite *CtxTestSuite) TestContextWithRequest_SetUserContext() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	c.SetUserContext(context.Background())
@@ -510,8 +510,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_SetUserContext() {
 func (suite *CtxTestSuite) TestContextWithRequest_Cookie() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.SetCookie("test", "test")
 
@@ -534,8 +534,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Cookie() {
 func (suite *CtxTestSuite) TestContextWithRequest_Cookies() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.SetCookie("test", "test")
 
@@ -547,8 +547,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Cookies() {
 func (suite *CtxTestSuite) TestContextWithRequestDownload() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 
@@ -560,8 +560,8 @@ func (suite *CtxTestSuite) TestContextWithRequestDownload() {
 func (suite *CtxTestSuite) TestContextWithRequest_Request() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 
@@ -571,8 +571,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Request() {
 func (suite *CtxTestSuite) TestContextWithRequest_Response() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	c.Status(200)
@@ -583,8 +583,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Response() {
 func (suite *CtxTestSuite) TestContextWithRequest_Format() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 
@@ -596,8 +596,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Format() {
 func (suite *CtxTestSuite) TestContextWithRequest_Hostname() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().SetRequestURI("http://www.test.com/")
 
@@ -608,8 +608,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Hostname() {
 func (suite *CtxTestSuite) TestContextWithRequest_Port() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().SetRequestURI("http://www.test.com/")
 
@@ -620,8 +620,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_Port() {
 func (suite *CtxTestSuite) TestContextWithRequest_IP() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	assert.Equal(suite.T(), "0.0.0.0", c.IP())
@@ -630,8 +630,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_IP() {
 func (suite *CtxTestSuite) TestContextWithRequest_IPs() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/foo")
 	assert.Equal(suite.T(), []string{}, c.IPs())
@@ -640,8 +640,8 @@ func (suite *CtxTestSuite) TestContextWithRequest_IPs() {
 func (suite *CtxTestSuite) TestContextWithRequest_Links() {
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[request](ctx, app, "/")
 

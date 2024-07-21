@@ -36,7 +36,7 @@ func (suite *HandlerTestSuite) TestUse() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -53,7 +53,7 @@ func (suite *HandlerTestSuite) TestGroup() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo/bar", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -69,7 +69,7 @@ func (suite *HandlerTestSuite) TestGroup2() {
 	})
 
 	req := httptest.NewRequest("GET", "/bar", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -99,7 +99,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests()
 	})
 
 	req := httptest.NewRequest("GET", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -134,7 +134,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationXML_Requests() 
 
 	req := httptest.NewRequest("GET", "/foo/123", nil)
 	req.Header.Set("Content-Type", "application/xml")
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -158,7 +158,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests_E
 	})
 
 	req := httptest.NewRequest("GET", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
@@ -190,7 +190,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Path_Error() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo/abc", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 400")
@@ -220,7 +220,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Query() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo?id=123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -235,7 +235,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Query_Error() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo?id=abc", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
@@ -267,7 +267,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Header() {
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req.Header.Set("id", "123")
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -292,7 +292,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Header_Error() {
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req.Header.Set("id", "abc")
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
@@ -330,7 +330,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 200")
 	body, err := io.ReadAll(resp.Body)
@@ -357,7 +357,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Error() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
 }
@@ -389,7 +389,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bdyXML))
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 200")
 	body, err := io.ReadAll(resp.Body)
@@ -416,7 +416,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML_Error(
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyXML))
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
 }
@@ -440,7 +440,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML_Invali
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
 }
@@ -472,7 +472,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Put() {
 	req := httptest.NewRequest("PUT", "/foo", strings.NewReader(bodyJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
 	body, err := io.ReadAll(resp.Body)
@@ -502,7 +502,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Delete() {
 	})
 
 	req := httptest.NewRequest("DELETE", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 204, resp.StatusCode, "Expected status code 204")
@@ -530,7 +530,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
 	})
 
 	req := httptest.NewRequest("PATCH", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -558,7 +558,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
 	})
 
 	req := httptest.NewRequest("PATCH", "/foo/0", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 400, resp.StatusCode, "Expected status code 200")
@@ -574,7 +574,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Head() {
 	})
 
 	req := httptest.NewRequest("HEAD", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -588,7 +588,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Options() {
 	})
 
 	req := httptest.NewRequest("OPTIONS", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -602,7 +602,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Trace() {
 	})
 
 	req := httptest.NewRequest("TRACE", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -616,7 +616,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Connect() {
 	})
 
 	req := httptest.NewRequest("CONNECT", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -752,7 +752,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	req := httptest.NewRequest("POST", "/test/123/true", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
@@ -840,7 +840,7 @@ startxref
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyPDF))
 	req.Header.Set("Content-Type", "application/pdf")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
@@ -988,7 +988,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader("Hello World"))
 	req.Header.Set("Content-Type", "application/octet-stream")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
@@ -1078,7 +1078,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_String() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader("Hello World"))
 	req.Header.Set("Content-Type", "text/plain")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
@@ -1156,7 +1156,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_SimpleReturnList() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")

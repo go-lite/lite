@@ -1,19 +1,20 @@
 package lite
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"log"
 	"net/http"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // defaultOpenAPIHandler serve Swagger UI with the YAML file spec
 func defaultOpenAPIHandler(specURL string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if c.Params("*") == "index.html" || c.Params("*") == "" {
-			log.Println("swagger ui")
 			c.Type("html")
+
 			return c.SendString(indexHTML(specURL))
 		}
+
 		return c.SendStatus(http.StatusNotFound)
 	}
 }

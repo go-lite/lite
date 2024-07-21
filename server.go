@@ -3,15 +3,16 @@ package lite
 import (
 	"context"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-lite/lite/errors"
-	"github.com/gofiber/fiber/v2"
-	"github.com/invopop/yaml"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-lite/lite/errors"
+	"github.com/gofiber/fiber/v2"
+	"github.com/invopop/yaml"
 )
 
 type TypeOfExtension string

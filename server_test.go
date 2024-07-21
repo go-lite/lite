@@ -31,7 +31,7 @@ func TestNewOpenAPISpec(t *testing.T) {
 func TestNewApp(t *testing.T) {
 	app := New()
 
-	assert.NotNil(t, app.App)
+	assert.NotNil(t, app.app)
 	assert.Equal(t, "OpenAPI", app.openAPISpec.Info.Title)
 	assert.Equal(t, defaultOpenAPIConfig.swaggerURL, app.openAPIConfig.swaggerURL)
 	assert.Equal(t, defaultOpenAPIConfig.openapiPath, app.openAPIConfig.openapiPath)

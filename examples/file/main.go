@@ -1,15 +1,16 @@
 package main
 
 import (
+	"io"
+	"log"
+	"mime/multipart"
+	"os"
+
 	"github.com/go-lite/lite"
 	"github.com/go-lite/lite/errors"
 	"github.com/go-lite/lite/mime"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"io"
-	"log"
-	"mime/multipart"
-	"os"
 )
 
 type ImageResponse = []byte
@@ -74,13 +75,13 @@ func main() {
 
 	app.AddServer("http://localhost:9999", "example server")
 
-	//yamlBytes, err := app.saveOpenAPISpec()
-	//if err != nil {
+	// yamlBytes, err := app.saveOpenAPISpec()
+	// if err != nil {
 	//	log.Fatal(err)
 	//}
 	//
 	//// Ensure the directory exists
-	//err = os.MkdirAll(filepath.Dir("./examples/file/api/openapi.yaml"), os.ModePerm)
+	// err = os.MkdirAll(filepath.Dir("./examples/file/api/openapi.yaml"), os.ModePerm)
 	//if err != nil {
 	//	log.Fatal(err)
 	//}

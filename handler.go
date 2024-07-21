@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -15,6 +14,7 @@ import (
 
 	liteErrors "github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func newLiteContext[Request any, Contexter Context[Request]](ctx ContextNoRequest) Contexter {
