@@ -14,6 +14,7 @@ import (
 
 	liteErrors "github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func newLiteContext[Request any, Contexter Context[Request]](ctx ContextNoRequest) Contexter {
@@ -73,7 +74,7 @@ func Group(app *App, path string) *App {
 }
 
 func Use(app *App, args ...any) {
-	app.Use(args...)
+	app.app.Use(args...)
 }
 
 func Get[ResponseBody, Request any, Contexter Context[Request]](
@@ -256,14 +257,28 @@ func registerRoute[ResponseBody, Request any](
 	fullPath := app.basePath + route.path
 
 	if len(middleware) > 0 {
-		app.Add(
+		app.app.Add(
 			route.method,
 			fullPath,
 			middleware...,
 		)
 	}
 
-	app.Add(
+	if !app.openAPIConfig.disableSwagger {
+		app.app.Use(cors.New(cors.Config{
+			AllowOrigins: "*",
+			AllowMethods: "GET",
+		}))
+
+		// Route to serve the OpenAPI file
+		app.app.Get(app.openAPIConfig.openapiPath, func(c *fiber.Ctx) error {
+			return c.SendFile("." + app.openAPIConfig.openapiPath)
+		})
+
+		app.app.Get(app.openAPIConfig.swaggerURL, app.openAPIConfig.uiHandler(app.openAPIConfig.openapiPath))
+	}
+
+	app.app.Add(
 		route.method,
 		fullPath,
 		controller,
@@ -359,13 +374,7 @@ func getStatusCode(method string) int {
 }
 
 // toTitle transform string to title case
-func toTitle(s string, opt ...bool) string {
-	if len(opt) > 0 && opt[0] {
-		caser := cases.Title(language.Und, cases.NoLower)
-
-		return caser.String(s)
-	}
-
+func toTitle(s string) string {
 	caser := cases.Title(language.Und)
 
 	return caser.String(s)

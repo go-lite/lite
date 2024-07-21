@@ -2,78 +2,147 @@ package main
 
 import (
 	"errors"
-	"log"
-	"os"
-
 	"github.com/go-lite/lite"
-	"github.com/go-lite/lite/examples/basic/parameters"
-	"github.com/go-lite/lite/examples/basic/returns"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
+type GetReq struct {
+	Login  string  `lite:"header=Basic,isauth,scheme=basic,name=Basic"`
+	Name   string  `lite:"header=name"`
+	Value  *string `lite:"header=value"`
+	Params string  `lite:"path=params"`
+}
+
+type GetArrayReq struct{}
+
+type CreateBody struct {
+	FirstName string  `json:"first_name"`
+	LastName  *string `json:"last_name"`
+}
+
+type CreateReq struct {
+	Authorization *string    `lite:"header=Authorization,isauth,scheme=bearer"`
+	ID            uint64     `lite:"path=id"`
+	Body          CreateBody `lite:"req=body"`
+}
+
+type PutReq struct {
+	ID   uint64  `lite:"path=id"`
+	Body PutBody `lite:"req=body"`
+}
+
+type PutBody struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+}
+
+type GetArrayReturnsResponse = lite.List[Ret]
+
+type Ret struct {
+	Message  string                 `json:"message"`
+	Embed    Embed                  `json:"embed"`
+	Map      map[string]string      `json:"map"`
+	OtherMap map[string]OtherEmbed2 `json:"other_map"`
+}
+
+type Embed struct {
+	Key        string     `json:"key"`
+	ValueEmbed ValueEmbed `json:"value"`
+	Others     []*string  `json:"others"`
+	OtherEmbed OtherEmbed `json:"other_embed"`
+}
+
+type ValueEmbed = *string
+
+type OtherEmbed struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type OtherEmbed2 struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type GetResponse struct {
+	Message string `json:"message" xml:"message"`
+}
+
+type CreateResponse struct {
+	ID        uint64  `json:"id"`
+	FirstName string  `json:"fist_name"`
+	LastName  *string `json:"last_name"`
+}
+
+type PutResponse struct {
+	ID        uint64 `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+}
+
 // Define example handler
-func getHandler(c *lite.ContextWithRequest[parameters.GetReq]) (returns.GetResponse, error) {
+func getHandler(c *lite.ContextWithRequest[GetReq]) (GetResponse, error) {
 	request, err := c.Requests()
 	if err != nil {
-		return returns.GetResponse{}, err
+		return GetResponse{}, err
 	}
 
 	if request.Params == "test" {
-		return returns.GetResponse{}, errors.New("test is not valid name")
+		return GetResponse{}, errors.New("test is not valid name")
 	}
 
-	return returns.GetResponse{
+	return GetResponse{
 		Message: "Hello World!, " + request.Params,
 	}, nil
 }
 
-func postHandler(c *lite.ContextWithRequest[parameters.CreateReq]) (returns.CreateResponse, error) {
+func postHandler(c *lite.ContextWithRequest[CreateReq]) (CreateResponse, error) {
 	request, err := c.Requests()
 	if err != nil {
-		return returns.CreateResponse{}, err
+		return CreateResponse{}, err
 	}
 
 	if request.Body.FirstName == "" {
-		return returns.CreateResponse{}, errors.New("first_name are required")
+		return CreateResponse{}, errors.New("first_name are required")
 	}
 
-	return returns.CreateResponse{
+	return CreateResponse{
 		ID:        request.ID,
 		FirstName: request.Body.FirstName,
 		LastName:  request.Body.LastName,
 	}, nil
 }
 
-func getArrayHandler(_ *lite.ContextWithRequest[parameters.GetArrayReq]) (returns.GetArrayReturnsResponse, error) {
-	res := make([]returns.Ret, 0)
+func getArrayHandler(_ *lite.ContextWithRequest[GetArrayReq]) (GetArrayReturnsResponse, error) {
+	res := make([]Ret, 0)
 
 	value := "value"
-	res = append(res, returns.Ret{
+	res = append(res, Ret{
 		Message: "Hello World!",
-		Embed: returns.Embed{
+		Embed: Embed{
 			Key:        "key",
 			ValueEmbed: &value,
 		},
 	},
-		returns.Ret{
+		Ret{
 			Message: "Hello World 2!",
-			Embed: returns.Embed{
+			Embed: Embed{
 				Key: "key2",
 			},
 		},
 	)
 
-	return res, nil
+	return lite.NewList(res), nil
 }
 
-func putHandler(c *lite.ContextWithRequest[parameters.PutReq]) (returns.PutResponse, error) {
+func putHandler(c *lite.ContextWithRequest[PutReq]) (PutResponse, error) {
 	request, err := c.Requests()
 	if err != nil {
-		return returns.PutResponse{}, err
+		return PutResponse{}, err
 	}
 
-	return returns.PutResponse{
+	return PutResponse{
 		ID:        request.ID,
 		FirstName: request.Body.FirstName,
 		LastName:  request.Body.LastName,
@@ -83,10 +152,10 @@ func putHandler(c *lite.ContextWithRequest[parameters.PutReq]) (returns.PutRespo
 func main() {
 	app := lite.New()
 
-	app.Use(logger.New())
-	app.Use(recover.New())
+	lite.Use(app, logger.New())
+	lite.Use(app, recover.New())
 
-	lite.Get(app, "/example/:name", getHandler).SetResponseContentType("application/xml")
+	lite.Get(app, "/example/:params", getHandler).SetResponseContentType("application/xml")
 
 	lite.Post(app, "/example/:id", postHandler).
 		OperationID("createExample").
@@ -99,33 +168,7 @@ func main() {
 
 	app.AddServer("http://localhost:6001", "example server")
 
-	yamlBytes, err := app.SaveOpenAPISpec()
-	if err != nil {
-		return
-	}
-
-	f, err := os.Create("./examples/basic/api/openapi.yaml")
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		closeErr := f.Close()
-		if err != nil {
-			if closeErr != nil {
-				err = closeErr
-			}
-
-			log.Fatal(err)
-		}
-	}()
-
-	_, err = f.Write(yamlBytes)
-	if err != nil {
-		return
-	}
-
-	if err = app.Listen(":6001"); err != nil {
+	if err := app.Listen(":6001"); err != nil {
 		return
 	}
 }

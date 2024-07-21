@@ -8,6 +8,11 @@ import (
 	"github.com/o1egl/paseto"
 )
 
+var (
+	jsonMarshal   = json.Marshal
+	jsonUnmarshal = json.Unmarshal
+)
+
 func Parse[T any](token string, key []byte) (T, error) {
 	var result T
 	var jsonToken paseto.JSONToken
@@ -24,12 +29,12 @@ func Parse[T any](token string, key []byte) (T, error) {
 		return result, fmt.Errorf("token has expired")
 	}
 
-	payload, err := json.Marshal(jsonToken)
+	payload, err := jsonMarshal(jsonToken)
 	if err != nil {
 		return result, fmt.Errorf("failed to marshal token payload: %w", err)
 	}
 
-	err = json.Unmarshal(payload, &result)
+	err = jsonUnmarshal(payload, &result)
 	if err != nil {
 		return result, fmt.Errorf("failed to unmarshal token payload: %w", err)
 	}

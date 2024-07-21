@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewOpenAPISpec(t *testing.T) {
-	spec := NewOpenAPISpec()
+	spec := newOpenAPISpec()
 
 	assert.Equal(t, "OpenAPI", spec.Info.Title)
 	assert.Equal(t, "OpenAPI", spec.Info.Description)
@@ -29,12 +29,20 @@ func TestNewOpenAPISpec(t *testing.T) {
 }
 
 func TestNewApp(t *testing.T) {
-	app := New()
+	app := New(
+		SetDisableSwagger(true),
+		SetSwaggerURL("/swagger/*"),
+		SetOpenAPIPath("/api/openapi.json"),
+		SetUIHandler(defaultOpenAPIHandler),
+		SetDisableLocalSave(false),
+		SetTypeOfExtension(JSONExtension),
+		SetAddress(":8080"),
+	)
 
-	assert.NotNil(t, app.App)
-	assert.Equal(t, "OpenAPI", app.OpenAPISpec.Info.Title)
-	assert.Equal(t, defaultOpenAPIConfig.SwaggerURL, app.OpenAPIConfig.SwaggerURL)
-	assert.Equal(t, defaultOpenAPIConfig.YamlURL, app.OpenAPIConfig.YamlURL)
+	assert.NotNil(t, app.app)
+	assert.Equal(t, "OpenAPI", app.openAPISpec.Info.Title)
+	assert.Equal(t, defaultOpenAPIConfig.swaggerURL, app.openAPIConfig.swaggerURL)
+	assert.Equal(t, "/api/openapi.json", app.openAPIConfig.openapiPath)
 }
 
 func TestApp_AddTags(t *testing.T) {
@@ -47,7 +55,7 @@ func TestApp_AddTags(t *testing.T) {
 
 func TestApp_SaveOpenAPISpec(t *testing.T) {
 	app := New()
-	yamlData, err := app.SaveOpenAPISpec()
+	yamlData, err := app.saveOpenAPISpec()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, yamlData)
@@ -57,30 +65,30 @@ func TestApp_AddServer(t *testing.T) {
 	app := New()
 	app.AddServer("http://localhost", "Local server")
 
-	assert.Len(t, app.OpenAPISpec.Servers, 1)
-	assert.Equal(t, "http://localhost", app.OpenAPISpec.Servers[0].URL)
-	assert.Equal(t, "Local server", app.OpenAPISpec.Servers[0].Description)
+	assert.Len(t, app.openAPISpec.Servers, 1)
+	assert.Equal(t, "http://localhost", app.openAPISpec.Servers[0].URL)
+	assert.Equal(t, "Local server", app.openAPISpec.Servers[0].Description)
 }
 
 func TestApp_Description(t *testing.T) {
 	app := New()
 	app.Description("New Description")
 
-	assert.Equal(t, "New Description", app.OpenAPISpec.Info.Description)
+	assert.Equal(t, "New Description", app.openAPISpec.Info.Description)
 }
 
 func TestApp_Title(t *testing.T) {
 	app := New()
 	app.Title("New Title")
 
-	assert.Equal(t, "New Title", app.OpenAPISpec.Info.Title)
+	assert.Equal(t, "New Title", app.openAPISpec.Info.Title)
 }
 
 func TestApp_Version(t *testing.T) {
 	app := New()
 	app.Version("1.0.0")
 
-	assert.Equal(t, "1.0.0", app.OpenAPISpec.Info.Version)
+	assert.Equal(t, "1.0.0", app.openAPISpec.Info.Version)
 }
 
 func TestApp_createDefaultErrorResponses(t *testing.T) {
@@ -124,7 +132,7 @@ type NonSerializableStruct struct {
 func TestApp_SaveOpenAPISpec_Error(t *testing.T) {
 	app := New()
 
-	app.OpenAPISpec.Components.Schemas["nonSerializable"] = &openapi3.SchemaRef{
+	app.openAPISpec.Components.Schemas["nonSerializable"] = &openapi3.SchemaRef{
 		Value: &openapi3.Schema{
 			Extensions: map[string]interface{}{
 				"x-non-serializable": NonSerializableStruct{},
@@ -132,7 +140,7 @@ func TestApp_SaveOpenAPISpec_Error(t *testing.T) {
 		},
 	}
 
-	_, err := app.SaveOpenAPISpec()
+	_, err := app.saveOpenAPISpec()
 	assert.NotNil(t, err)
 }
 
@@ -150,7 +158,7 @@ func TestApp_SaveOpenAPISpec_YAMLError(t *testing.T) {
 	app := New()
 
 	// Struct that can be serialized to JSON but will fail for YAML conversion
-	app.OpenAPISpec.Components.Schemas["serializable"] = &openapi3.SchemaRef{
+	app.openAPISpec.Components.Schemas["serializable"] = &openapi3.SchemaRef{
 		Value: &openapi3.Schema{
 			Properties: map[string]*openapi3.SchemaRef{
 				"valid": {
@@ -165,7 +173,7 @@ func TestApp_SaveOpenAPISpec_YAMLError(t *testing.T) {
 	defer restoreJSONToYAML()
 
 	// Attempt to save OpenAPI spec and check for errors
-	_, err := app.SaveOpenAPISpec()
+	_, err := app.saveOpenAPISpec()
 
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "error converting to YAML")
@@ -216,4 +224,24 @@ func TestApp_Listen(t *testing.T) {
 
 	// Shutdown the server
 	assert.NoError(t, app.Shutdown())
+}
+
+func TestApp_SetAddress(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	New(SetAddress("8080"))
+}
+
+func TestApp_SetAddress2(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	New(SetAddress(":invalid"))
 }

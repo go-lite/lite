@@ -5,7 +5,6 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
-	"path/filepath"
 
 	"github.com/go-lite/lite"
 	"github.com/go-lite/lite/errors"
@@ -32,8 +31,8 @@ type info struct {
 func main() {
 	app := lite.New()
 
-	app.Use(logger.New())
-	app.Use(recover.New())
+	lite.Use(app, logger.New())
+	lite.Use(app, recover.New())
 
 	lite.Post(app, "/v1/image/analyse", func(c *lite.ContextWithRequest[ImagePayload]) (ImageResponse, error) {
 		req, err := c.Requests()
@@ -74,41 +73,9 @@ func main() {
 		return nil, nil
 	})
 
-	app.AddServer("http://localhost:9999", "example server")
+	app.AddServer("http://localhost:9000", "example server")
 
-	yamlBytes, err := app.SaveOpenAPISpec()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Ensure the directory exists
-	err = os.MkdirAll(filepath.Dir("./examples/file/api/openapi.yaml"), os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	f, err := os.Create("./examples/file/api/openapi.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		closeErr := f.Close()
-		if err != nil {
-			if closeErr != nil {
-				err = closeErr
-			}
-
-			log.Fatal(err)
-		}
-	}()
-
-	_, err = f.Write(yamlBytes)
-	if err != nil {
-		return
-	}
-
-	if err = app.Listen(":9999"); err != nil {
+	if err := app.Run(); err != nil {
 		return
 	}
 }

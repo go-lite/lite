@@ -69,6 +69,40 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParseJsonMarshalError(t *testing.T) {
+	secretKey := []byte("YELLOW SUBMARINE, BLACK WIZARDRY") // Utilisez une clé appropriée pour vos tests
+
+	realJsonMarshal := jsonMarshal
+	jsonMarshal = func(v any) ([]byte, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		jsonMarshal = realJsonMarshal
+	}()
+
+	_, err := Parse[TestPayload](createTestToken(TestPayload{Exp: time.Now().Add(time.Hour), Foo: "bar"}, secretKey), secretKey)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestParseJsonUnmarshalError(t *testing.T) {
+	secretKey := []byte("YELLOW SUBMARINE, BLACK WIZARDRY") // Utilisez une clé appropriée pour vos tests
+
+	realJsonUnmarshal := jsonUnmarshal
+	jsonUnmarshal = func(data []byte, v any) error {
+		return assert.AnError
+	}
+	defer func() {
+		jsonUnmarshal = realJsonUnmarshal
+	}()
+
+	_, err := Parse[TestPayload](createTestToken(TestPayload{Exp: time.Now().Add(time.Hour), Foo: "bar"}, secretKey), secretKey)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
 func createTestToken(payload TestPayload, key []byte) string {
 	jsonToken := paseto.JSONToken{
 		Expiration: payload.Exp,

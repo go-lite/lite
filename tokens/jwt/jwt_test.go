@@ -67,6 +67,21 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParseJsonUnmarshalError(t *testing.T) {
+	realJsonUnmarshal := jsonUnmarshal
+	jsonUnmarshal = func(data []byte, v any) error {
+		return assert.AnError
+	}
+	defer func() {
+		jsonUnmarshal = realJsonUnmarshal
+	}()
+
+	_, err := Parse[TestPayload](createTestToken(TestPayload{Exp: time.Now().Add(time.Hour).Unix(), Foo: "bar"}))
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
 func createTestToken(payload TestPayload) string {
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
 	payloadBytes, _ := json.Marshal(payload)

@@ -48,8 +48,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyMultipart() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[multipartForm](ctx, app, "/foo")
 	c.Request().Header.SetContentType("multipart/form-data" + `;boundary="b"`)
@@ -77,8 +77,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyMultipartError() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[multipartForm](ctx, app, "/foo")
 	defer c.Request().Reset()
@@ -100,8 +100,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationOctetStrea
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/octet-stream")
@@ -124,8 +124,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationOctetStrea
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[multipartForm](ctx, app, "/foo")
 	defer c.Request().Reset()
@@ -158,8 +158,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationXWwwFormUr
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/x-www-form-urlencoded")
@@ -182,8 +182,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyTextHTML() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("text/html")
@@ -206,8 +206,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationPDF() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/pdf")
@@ -230,8 +230,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyApplicationZip() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/zip")
@@ -254,8 +254,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyImage() {
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("image/png")
@@ -278,8 +278,8 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyUnsupportedContentTyp
 
 	app := New()
 
-	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-	defer app.ReleaseCtx(ctx)
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
 
 	c := newContext[testStruct](ctx, app, "/foo")
 	c.Request().Header.SetContentType("application/test")
@@ -295,25 +295,28 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyUnsupportedContentTyp
 
 func (suite *DeserializerTestSuite) TestSetFieldValue() {
 	type testStruct struct {
-		Name    string  `form:"name"`
-		Age     int     `form:"age"`
-		Price   float64 `form:"price"`
-		IsAdmin bool    `form:"is_admin"`
-		Int8    int8    `form:"int8"`
-		Int16   int16   `form:"int16"`
-		Int32   int32   `form:"int32"`
-		Int64   int64   `form:"int64"`
-		Uint    uint    `form:"uint"`
-		Uint8   uint8   `form:"uint8"`
-		Uint16  uint16  `form:"uint16"`
-		Uint32  uint32  `form:"uint32"`
-		Uint64  uint64  `form:"uint64"`
-		F32     float32 `form:"f32"`
-		F64     float64 `form:"f64"`
-		Slice   []int   `form:"slice"`
-		Fun     func()  `form:"fun"`
-		Val     Val     `form:"val"`
-		Byt     []byte  `form:"byt"`
+		Name    string         `form:"name"`
+		Age     int            `form:"age"`
+		Price   float64        `form:"price"`
+		IsAdmin bool           `form:"is_admin"`
+		Int8    int8           `form:"int8"`
+		Int16   int16          `form:"int16"`
+		Int32   int32          `form:"int32"`
+		Int64   int64          `form:"int64"`
+		Uint    uint           `form:"uint"`
+		Uint8   uint8          `form:"uint8"`
+		Uint16  uint16         `form:"uint16"`
+		Uint32  uint32         `form:"uint32"`
+		Uint64  uint64         `form:"uint64"`
+		F32     float32        `form:"f32"`
+		F64     float64        `form:"f64"`
+		Slice   []int          `form:"slice"`
+		Fun     func()         `form:"fun"`
+		Val     Val            `form:"val"`
+		Byt     []byte         `form:"byt"`
+		Any     any            `form:"any"`
+		Map     map[string]int `form:"map"`
+		Map2    map[int]any    `form:"map2"`
 	}
 
 	var test = testStruct{}
@@ -418,6 +421,18 @@ func (suite *DeserializerTestSuite) TestSetFieldValue() {
 
 	err = setFieldValue(val.Field(18), "test")
 	assert.NoError(suite.T(), err)
+
+	err = setFieldValue(val.Field(19), "test")
+	assert.NoError(suite.T(), err)
+
+	err = setFieldValue(val.Field(20), `{"name":"john"}`)
+	assert.Error(suite.T(), err)
+
+	err = setFieldValue(val.Field(20), `{"name":1}`)
+	assert.NoError(suite.T(), err)
+
+	err = setFieldValue(val.Field(21), `{"name":"john"}`)
+	assert.Error(suite.T(), err)
 }
 
 func (suite *DeserializerTestSuite) TestMapToStruct() {

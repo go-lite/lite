@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var jsonUnmarshal = json.Unmarshal
+
 func Parse[T any](token string) (T, error) {
 	var result T
 
@@ -31,7 +33,7 @@ func Parse[T any](token string) (T, error) {
 
 	var payloadMap map[string]interface{}
 
-	err = json.Unmarshal(payload, &payloadMap)
+	err = jsonUnmarshal(payload, &payloadMap)
 	if err != nil {
 		return result, fmt.Errorf(
 			"failed to unmarshal token payload for expiration check: %w",

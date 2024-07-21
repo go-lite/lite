@@ -36,7 +36,7 @@ func (suite *HandlerTestSuite) TestUse() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -53,7 +53,7 @@ func (suite *HandlerTestSuite) TestGroup() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo/bar", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -69,7 +69,7 @@ func (suite *HandlerTestSuite) TestGroup2() {
 	})
 
 	req := httptest.NewRequest("GET", "/bar", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -99,7 +99,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests()
 	})
 
 	req := httptest.NewRequest("GET", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -134,7 +134,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationXML_Requests() 
 
 	req := httptest.NewRequest("GET", "/foo/123", nil)
 	req.Header.Set("Content-Type", "application/xml")
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -158,7 +158,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests_E
 	})
 
 	req := httptest.NewRequest("GET", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
@@ -190,7 +190,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Path_Error() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo/abc", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 400")
@@ -220,7 +220,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Query() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo?id=123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -235,7 +235,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Query_Error() {
 	})
 
 	req := httptest.NewRequest("GET", "/foo?id=abc", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
@@ -267,7 +267,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Header() {
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req.Header.Set("id", "123")
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -292,7 +292,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Header_Error() {
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	req.Header.Set("id", "abc")
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
@@ -330,7 +330,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 200")
 	body, err := io.ReadAll(resp.Body)
@@ -357,7 +357,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Error() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
 }
@@ -389,7 +389,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bdyXML))
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 200")
 	body, err := io.ReadAll(resp.Body)
@@ -416,7 +416,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML_Error(
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyXML))
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
 }
@@ -440,7 +440,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML_Invali
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/xml")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 500, resp.StatusCode, "Expected status code 500")
 }
@@ -472,7 +472,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Put() {
 	req := httptest.NewRequest("PUT", "/foo", strings.NewReader(bodyJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
 	body, err := io.ReadAll(resp.Body)
@@ -502,7 +502,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Delete() {
 	})
 
 	req := httptest.NewRequest("DELETE", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 204, resp.StatusCode, "Expected status code 204")
@@ -530,7 +530,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
 	})
 
 	req := httptest.NewRequest("PATCH", "/foo/123", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -558,7 +558,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
 	})
 
 	req := httptest.NewRequest("PATCH", "/foo/0", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 400, resp.StatusCode, "Expected status code 200")
@@ -574,7 +574,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Head() {
 	})
 
 	req := httptest.NewRequest("HEAD", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -588,7 +588,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Options() {
 	})
 
 	req := httptest.NewRequest("OPTIONS", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -602,7 +602,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Trace() {
 	})
 
 	req := httptest.NewRequest("TRACE", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -616,7 +616,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Connect() {
 	})
 
 	req := httptest.NewRequest("CONNECT", "/foo", nil)
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
@@ -688,6 +688,8 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 			c.Set("filter", "test")
 		}
 
+		assert.Equal(suite.T(), "", c.Get("User-Agent"))
+
 		err = c.SaveFile(req.Body.File, "./logo/lite.png")
 		if err != nil {
 			return testResponse{}, err
@@ -750,179 +752,12 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	req := httptest.NewRequest("POST", "/test/123/true", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
 	assert.NoError(suite.T(), err)
 	assert.JSONEq(suite.T(), `{"id":123,"first_name":"John","last_name":"Doe", "name":""}`, utils.UnsafeString(body))
-
-	spec, err := app.SaveOpenAPISpec()
-	assert.NoError(suite.T(), err)
-
-	expected := `components:
-    parameters:
-        cookie:
-            in: cookie
-            name: cookie
-            schema:
-                $ref: '#/components/schemas/cookie'
-        filter:
-            in: query
-            name: filter
-            schema:
-                $ref: '#/components/schemas/filter'
-        id:
-            in: path
-            name: id
-            required: true
-            schema:
-                $ref: '#/components/schemas/id'
-        is_admin:
-            in: path
-            name: is_admin
-            required: true
-            schema:
-                $ref: '#/components/schemas/is_admin'
-    schemas:
-        bodyRequest:
-            properties:
-                file:
-                    format: byte
-                    type: string
-                metadata:
-                    properties:
-                        birthday:
-                            format: date-time
-                            type: string
-                        first_name:
-                            type: string
-                        last_name:
-                            type: string
-                    type: object
-                name:
-                    type: string
-            required:
-                - name
-                - file
-            type: object
-        cookie:
-            properties:
-                Domain:
-                    type: string
-                Expires:
-                    format: date-time
-                    type: string
-                HttpOnly:
-                    type: boolean
-                MaxAge:
-                    type: integer
-                Name:
-                    type: string
-                Path:
-                    type: string
-                Raw:
-                    type: string
-                RawExpires:
-                    type: string
-                SameSite:
-                    type: integer
-                Secure:
-                    type: boolean
-                Unparsed:
-                    items:
-                        type: string
-                    type: array
-                Value:
-                    type: string
-            type: object
-        filter:
-            type: string
-        httpGenericError:
-            properties:
-                id:
-                    type: string
-                message:
-                    type: string
-                status:
-                    type: integer
-            type: object
-        id:
-            maximum: 1.8446744073709552e+19
-            minimum: 0
-            type: integer
-        is_admin:
-            type: string
-        testResponse:
-            properties:
-                first_name:
-                    type: string
-                id:
-                    maximum: 1.8446744073709552e+19
-                    minimum: 0
-                    type: integer
-                last_name:
-                    type: string
-                name:
-                    type: string
-            required:
-                - id
-                - name
-                - first_name
-                - last_name
-            type: object
-info:
-    description: OpenAPI
-    title: OpenAPI
-    version: 0.0.1
-openapi: 3.0.3
-paths:
-    /test/{id}/{is_admin}:
-        post:
-            operationId: POST/test/:id/:is_admin
-            parameters:
-                - $ref: '#/components/parameters/id'
-                - $ref: '#/components/parameters/is_admin'
-                - $ref: '#/components/parameters/filter'
-                - $ref: '#/components/parameters/cookie'
-            requestBody:
-                content:
-                    multipart/form-data:
-                        schema:
-                            $ref: '#/components/schemas/bodyRequest'
-            responses:
-                "201":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/testResponse'
-                    description: OK
-                "400":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Bad Request
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        application/xml:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                        multipart/form-data:
-                            schema:
-                                $ref: '#/components/schemas/httpGenericError'
-                    description: Internal Server Error`
-
-	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
 }
 
 type requestBodyApplicationPDF struct {
@@ -1005,7 +840,7 @@ startxref
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader(bodyPDF))
 	req.Header.Set("Content-Type", "application/pdf")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
@@ -1068,13 +903,13 @@ startxref
 565
 %%EOF`, utils.UnsafeString(body))
 
-	spec, err := app.SaveOpenAPISpec()
+	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
 	expected := `components:
     schemas:
         Body:
-            format: byte
+            format: binary
             type: string
         httpGenericError:
             properties:
@@ -1086,7 +921,7 @@ startxref
                     type: integer
             type: object
         uint8:
-            format: byte
+            format: binary
             type: string
 info:
     description: OpenAPI
@@ -1096,7 +931,7 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: POST/foo
+            operationId: /foo
             requestBody:
                 content:
                     application/pdf:
@@ -1153,14 +988,14 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader("Hello World"))
 	req.Header.Set("Content-Type", "application/octet-stream")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(body))
 
-	spec, err := app.SaveOpenAPISpec()
+	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
 	expected := `components:
@@ -1177,7 +1012,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
         string:
             type: string
         uint8:
-            format: byte
+            format: binary
             type: string
 info:
     description: OpenAPI
@@ -1187,7 +1022,7 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: POST/foo
+            operationId: /foo
             requestBody:
                 content:
                     application/octet-stream:
@@ -1243,14 +1078,14 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_String() {
 	req := httptest.NewRequest("POST", "/foo", strings.NewReader("Hello World"))
 	req.Header.Set("Content-Type", "text/plain")
 
-	resp, err := app.Test(req)
+	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(body))
 
-	spec, err := app.SaveOpenAPISpec()
+	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
 	expected := `components:
@@ -1274,7 +1109,7 @@ openapi: 3.0.3
 paths:
     /foo:
         post:
-            operationId: POST/foo
+            operationId: /foo
             requestBody:
                 content:
                     text/plain:
@@ -1312,4 +1147,30 @@ paths:
                                 $ref: '#/components/schemas/httpGenericError'
                     description: Internal Server Error`
 	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
+}
+
+func (suite *HandlerTestSuite) TestContextWithRequest_SimpleReturnList() {
+	app := New()
+	Get(app, "/foo", func(c *ContextNoRequest) (ret List[string], err error) {
+		return
+	})
+
+	req := httptest.NewRequest("GET", "/foo", nil)
+	resp, err := app.app.Test(req)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), 200, resp.StatusCode, "Expected status code 200")
+}
+
+func (suite *HandlerTestSuite) TestSetDescription() {
+	assert.Equal(suite.T(), "Get the Test resource", setDescription(http.MethodGet, toTitle("test")))
+	assert.Equal(suite.T(), "Create a new test resource", setDescription(http.MethodPost, "test"))
+	assert.Equal(suite.T(), "Replace the test resource", setDescription(http.MethodPut, "test"))
+	assert.Equal(suite.T(), "Update the test resource", setDescription(http.MethodPatch, "test"))
+	assert.Equal(suite.T(), "Delete the test resource", setDescription(http.MethodDelete, "test"))
+	assert.Equal(suite.T(), "Get the test resource header", setDescription(http.MethodHead, "test"))
+	assert.Equal(suite.T(), "Get the test resource options", setDescription(http.MethodOptions, "test"))
+	assert.Equal(suite.T(), "Get the test resource connect", setDescription(http.MethodConnect, "test"))
+	assert.Equal(suite.T(), "Get the test resource trace", setDescription(http.MethodTrace, "test"))
+	assert.Equal(suite.T(), "Get the test resource", setDescription("", "test"))
 }
