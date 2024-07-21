@@ -683,7 +683,7 @@ func TestTagFromType(t *testing.T) {
 	var v interface{}
 
 	tag := tagFromType(v)
-	if tag != "unknown-interface" {
+	if tag != "unknown" {
 		t.Errorf("expected unknown-interface, got %s", tag)
 	}
 

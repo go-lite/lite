@@ -304,12 +304,17 @@ func setResponseSchema(
 ) (err error) {
 	responseSchema, ok := s.openAPISpec.Components.Schemas[tag]
 	if !ok {
-		responseSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.openAPISpec.Components.Schemas)
+		if fieldType != any(nil) {
+			responseSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.openAPISpec.Components.Schemas)
+		} else {
+			responseSchema, err = generatorNewSchemaRefForValue(new(any), s.openAPISpec.Components.Schemas)
+		}
+
 		if err != nil {
 			return
 		}
 
-		if tag != "unknown-interface" {
+		if tag != "unknown" {
 			getRequiredValue(resContentType, fieldType, responseSchema.Value)
 		}
 
@@ -582,7 +587,7 @@ func setParamSchema(
 
 func tagFromType(v any) string {
 	if v == nil {
-		return "unknown-interface"
+		return "unknown"
 	}
 
 	return dive(reflect.TypeOf(v), 4)
