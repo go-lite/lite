@@ -2,6 +2,7 @@ package paseto
 
 import (
 	"fmt"
+
 	"github.com/go-lite/lite/tokens"
 	"github.com/o1egl/paseto"
 )
