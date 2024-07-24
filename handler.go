@@ -90,7 +90,7 @@ func Get[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodGet),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }

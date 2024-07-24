@@ -65,6 +65,11 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 			}
 		case tagMap["header"] != "":
 			headerKey := tagMap["header"]
+
+			if tagMap["type"] == "apiKey" {
+				headerKey = tagMap["name"]
+			}
+
 			if value := ctx.Request.Header.Peek(headerKey); len(value) > 0 {
 				valueStr = string(value)
 			}
