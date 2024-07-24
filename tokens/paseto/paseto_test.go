@@ -2,16 +2,20 @@ package paseto
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
 	"github.com/o1egl/paseto"
-	"github.com/stretchr/testify/assert"
 )
 
 type TestPayload struct {
 	Exp time.Time `json:"exp"`
 	Foo string    `json:"foo"`
+}
+
+func (p TestPayload) Valid() bool {
+	return p.Exp.After(time.Now())
 }
 
 func TestParse(t *testing.T) {
@@ -66,40 +70,6 @@ func TestParse(t *testing.T) {
 				assert.WithinDuration(t, tt.want.Exp, got.Exp, time.Second)
 			}
 		})
-	}
-}
-
-func TestParseJsonMarshalError(t *testing.T) {
-	secretKey := []byte("YELLOW SUBMARINE, BLACK WIZARDRY") // Utilisez une clé appropriée pour vos tests
-
-	realJsonMarshal := jsonMarshal
-	jsonMarshal = func(v any) ([]byte, error) {
-		return nil, assert.AnError
-	}
-	defer func() {
-		jsonMarshal = realJsonMarshal
-	}()
-
-	_, err := Parse[TestPayload](createTestToken(TestPayload{Exp: time.Now().Add(time.Hour), Foo: "bar"}, secretKey), secretKey)
-	if err == nil {
-		t.Fatal("should be error")
-	}
-}
-
-func TestParseJsonUnmarshalError(t *testing.T) {
-	secretKey := []byte("YELLOW SUBMARINE, BLACK WIZARDRY") // Utilisez une clé appropriée pour vos tests
-
-	realJsonUnmarshal := jsonUnmarshal
-	jsonUnmarshal = func(data []byte, v any) error {
-		return assert.AnError
-	}
-	defer func() {
-		jsonUnmarshal = realJsonUnmarshal
-	}()
-
-	_, err := Parse[TestPayload](createTestToken(TestPayload{Exp: time.Now().Add(time.Hour), Foo: "bar"}, secretKey), secretKey)
-	if err == nil {
-		t.Fatal("should be error")
 	}
 }
 

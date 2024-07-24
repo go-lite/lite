@@ -3,10 +3,8 @@ package main
 import (
 	"errors"
 	"github.com/go-lite/lite"
-	"github.com/go-lite/lite/tokens/jwt"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"log"
 )
 
 type GetReq struct {
@@ -106,19 +104,6 @@ func postHandler(c *lite.ContextWithRequest[CreateReq]) (CreateResponse, error) 
 		return CreateResponse{}, err
 	}
 
-	type tokenValue struct {
-		Username string `json:"username"`
-	}
-
-	value, err := jwt.Parse[tokenValue](*request.Authorization)
-	if err != nil {
-		return CreateResponse{}, err
-	}
-
-	if value.Username != "votre_nom_utilisateur" {
-		return CreateResponse{}, errors.New("invalid username")
-	}
-
 	if request.Body.FirstName == "" {
 		return CreateResponse{}, errors.New("first_name are required")
 	}
@@ -157,8 +142,6 @@ func putHandler(c *lite.ContextWithRequest[PutReq]) (PutResponse, error) {
 	if err != nil {
 		return PutResponse{}, err
 	}
-
-	log.Println("ApiKey", request.ApiKey)
 
 	return PutResponse{
 		ID:        request.ID,
