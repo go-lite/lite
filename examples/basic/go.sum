@@ -4,8 +4,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/getkin/kin-openapi v0.126.0 h1:c2cSgLnAsS0xYfKsgt5oBV6MYRM/giU8/RtwUY4wyfY=
 github.com/getkin/kin-openapi v0.126.0/go.mod h1:7mONz8IwmSRg6RttPu6v8U/OJ+gr+J99qSFNjPGSQqw=
-github.com/go-lite/lite v0.1.1 h1:BEygNlUHQJKOn0BQzN8ED202nXkj1Rne5JZxjPrzP8c=
-github.com/go-lite/lite v0.1.1/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
+github.com/go-lite/lite v0.1.13 h1:Pg3I6HIU0EXYLIGVut/aqbPzeZFxTKvWDFUdGG+3heE=
+github.com/go-lite/lite v0.1.13/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
 github.com/go-openapi/jsonpointer v0.21.0 h1:YgdVicSA9vH5RiHs9TZW5oyafXZFc6+2Vc1rr/O9oNQ=
 github.com/go-openapi/jsonpointer v0.21.0/go.mod h1:IUyH9l/+uyhIYQ/PXVA41Rexl+kOkAPDdXEYns6fzUY=
 github.com/go-openapi/swag v0.23.0 h1:vsEVJDUo2hPJ2tu0/Xc+4noaxyEffXNIs3cOULZ+GrE=
