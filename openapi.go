@@ -244,8 +244,12 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 				name = valueName
 			}
 
+			if valueType, ok := tagMap["type"]; ok {
+				tpe = valueType
+			}
+
 			if isAuth {
-				setSecurityScheme(s, operation, name, tpe, scheme)
+				setSecurityScheme(s, operation, headerKey, name, tpe, scheme)
 			} else {
 				err := setHeaderScheme(s, operation, headerKey, ftype.Name(), parameter, fieldType, isRequired)
 				if err != nil {
@@ -498,28 +502,51 @@ func setHeaderScheme(
 	return nil
 }
 
-func setSecurityScheme(s *App, operation *openapi3.Operation, name string, tpe string, scheme string) {
+func setSecurityScheme(
+	s *App,
+	operation *openapi3.Operation,
+	headerKey string,
+	name string,
+	tpe string,
+	scheme string,
+) {
 	sec := openapi3.NewSecurityRequirement()
-	sec[name] = []string{}
+	sec[headerKey] = []string{}
 
 	securityScheme := openapi3.NewSecurityScheme()
-	securityScheme.Type = tpe
-	securityScheme.Scheme = scheme
+
+	switch tpe {
+	case "http":
+		securityScheme.Type = "http"
+		if scheme == "basic" {
+			securityScheme.Scheme = "basic"
+		} else {
+			securityScheme.Scheme = "bearer"
+		}
+	case "apiKey":
+		securityScheme.Type = "apiKey"
+		securityScheme.Name = name
+		securityScheme.In = "header"
+	case "oauth2":
+		securityScheme.Type = "oauth2"
+		securityScheme.Flows = &openapi3.OAuthFlows{}
+	default:
+		securityScheme.Type = "http"
+		securityScheme.Scheme = "bearer"
+	}
 
 	if operation.Security == nil {
 		operation.Security = openapi3.NewSecurityRequirements()
 	}
 
-	operation.Security.With(
-		sec,
-	)
+	operation.Security.With(sec)
 
 	securitySchemes := make(map[string]*openapi3.SecuritySchemeRef)
-	securitySchemes[name] = &openapi3.SecuritySchemeRef{
+	securitySchemes[headerKey] = &openapi3.SecuritySchemeRef{
 		Value: securityScheme,
 	}
 
-	s.openAPISpec.Components.SecuritySchemes[name] = securitySchemes[name]
+	s.openAPISpec.Components.SecuritySchemes[headerKey] = securitySchemes[headerKey]
 }
 
 // computeHash generates a SHA256 hash for the given input and returns the first 4 characters.
