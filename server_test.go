@@ -226,6 +226,37 @@ func TestApp_Listen(t *testing.T) {
 	assert.NoError(t, app.Shutdown())
 }
 
+func TestApp_Run(t *testing.T) {
+	// Find a free port to avoid conflicts
+	port, err := getFreePort()
+	assert.Nil(t, err)
+
+	address := fmt.Sprintf(":%d", port)
+
+	app := New(SetAddress(address))
+
+	// Run Listen in a separate goroutine since it is blocking
+	go func() {
+		err := app.Run()
+		assert.Nil(t, err)
+	}()
+
+	// Wait a bit for the server to start
+	// You might want to use a more reliable synchronization mechanism
+	// in real tests, like a sync.WaitGroup or a channel.
+	<-time.After(time.Second)
+
+	// Attempt to connect to the server
+	conn, err := net.Dial("tcp", address)
+	assert.Nil(t, err)
+	if err == nil {
+		conn.Close()
+	}
+
+	// Shutdown the server
+	assert.NoError(t, app.Shutdown())
+}
+
 func TestApp_SetAddress(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {

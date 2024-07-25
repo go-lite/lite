@@ -242,7 +242,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Query_Error() {
 }
 
 type requestHeader struct {
-	ID uint64 `lite:"header=id"`
+	ID uint64 `lite:"header=id,isauth,type=apiKey,name=id"`
 }
 
 type responseHeader struct {
