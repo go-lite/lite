@@ -109,7 +109,7 @@ func Post[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodPost),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -128,7 +128,7 @@ func Put[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodPut),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -147,7 +147,7 @@ func Delete[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodDelete),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -166,7 +166,7 @@ func Patch[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodPatch),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -185,7 +185,7 @@ func Head[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodHead),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -204,7 +204,7 @@ func Connect[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodConnect),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -223,7 +223,7 @@ func Trace[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodTrace),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
@@ -242,7 +242,7 @@ func Options[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodOptions),
 		},
-		fiberHandler[ResponseBody, Request](controller, path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
 		middleware...,
 	)
 }
