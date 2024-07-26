@@ -6,18 +6,17 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-lite/lite.svg)](https://pkg.go.dev/github.com/go-lite/lite)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-lite/lite)](https://goreportcard.com/report/github.com/go-lite/lite)
 [![codecov](https://codecov.io/gh/go-lite/lite/graph/badge.svg?token=5OFXTQKHEE)](https://codecov.io/gh/go-lite/lite)
-# Lite: A Typed Wrapper for GoFiber
-Lite is a typed wrapper for GoFiber, a web framework for Go. It is designed to be lightweight and easy to use, while still providing a powerful API for building web applications. Lite is built on top of GoFiber, so it inherits all of its features and performance benefits.
 
-## Features
-- **Typed Requests**: Define request types to ensure correct data handling.
-- **Typed Responses**: Define response types to ensure correct data serialization.
-- **Error Handling**: Simplify error management with typed responses.
-- **Middleware**: Use middleware to add functionality to your routes.
-- **OpenAPI Specification**: Generate OpenAPI specs from your routes.
+# Lite: A Typed Wrapper for GoFiber
+## Overview
+
+The `lite` package provides functionalities for automatically generating OpenAPI documentation for HTTP operations based 
+on the struct definitions and their tags within a Go application. This document explains how to use the `lite` package, 
+specifically focusing on the usage of the `lite` tag.
 
 ## Installation
-To install Lite, use `go get`:
+
+To use the `lite` package, you need to install it first. Assuming you have Go installed, you can add it to your project with:
 
 ```bash
 go get github.com/go-lite/lite
@@ -51,7 +50,7 @@ func main() {
 ```
 The swagger specs is available at `http://localhost:3000/swagger/index.html` if port `3000` is used.
 
-### Other Examples
+### Other Example
 ```go
 package main
 
@@ -136,10 +135,22 @@ func main() {
 }
 ```
 
+### Supported Tags
+
+The `lite` package supports the following tags within struct definitions to map fields to different parts of an HTTP request or response:
+
+| Tag     | SetDescription                                | Example                    |
+|---------|--------------------------------------------|----------------------------|
+| `path`  | Maps to a URL path parameter               | `lite:"path=id"`           |
+| `query` | Maps to a URL query parameter              | `lite:"query=name"`        |
+| `header`| Maps to an HTTP header                     | `lite:"header=Auth"`       |
+| `cookie`| Maps to an HTTP cookie                     | `lite:"cookie=session_id"` |
+| `req`   | Maps to the request body                   | `lite:"req=body"`          |
+
 
 ## Contributing
 Contributions are welcome! Please feel free to submit a pull request or open an issue.
 
-## License
-Lite is licensed under the MIT License. See [LICENSE](LICENSE) for more information.
+## SetLicense
+Lite is licensed under the MIT SetLicense. See [LICENSE](LICENSE) for more information.
 []: # (END)

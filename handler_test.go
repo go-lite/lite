@@ -1146,6 +1146,38 @@ paths:
 	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
 }
 
+func (suite *HandlerTestSuite) TestContextWithRequest_Body_StringJSONSwagger() {
+	app := New(
+		SetTypeOfExtension(JSONExtension),
+	)
+	Post(app, "/foo", func(c *ContextWithRequest[string]) (string, error) {
+		req, err := c.Requests()
+		if err != nil {
+			return "", err
+		}
+
+		c.SetContentType(mime.TextPlain)
+
+		return req, nil
+	}).SetResponseContentType("text/plain")
+
+	req := httptest.NewRequest("POST", "/foo", strings.NewReader("Hello World"))
+	req.Header.Set("Content-Type", "text/plain")
+
+	resp, err := app.app.Test(req)
+	assert.NoError(suite.T(), err, "Expected no error")
+	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(suite.T(), err, "Expected no error")
+	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(body))
+
+	spec, err := app.saveOpenAPISpec()
+	assert.NoError(suite.T(), err)
+
+	expected := `{"components":{"schemas":{"httpGenericError":{"properties":{"id":{"type":"string"},"message":{"type":"string"},"status":{"type":"integer"}},"type":"object"},"string":{"type":"string"}}},"info":{"description":"OpenAPI","title":"OpenAPI","version":"0.0.1"},"openapi":"3.0.3","paths":{"/foo":{"post":{"requestBody":{"content":{"text/plain":{"schema":{"$ref":"#/components/schemas/string"}}}},"responses":{"201":{"content":{"text/plain":{"schema":{"$ref":"#/components/schemas/string"}}},"description":"OK"},"400":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"application/xml":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"multipart/form-data":{"schema":{"$ref":"#/components/schemas/httpGenericError"}}},"description":"Bad Request"},"500":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"application/xml":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"multipart/form-data":{"schema":{"$ref":"#/components/schemas/httpGenericError"}}},"description":"Internal Server Error"}}}}}}`
+	assert.JSONEq(suite.T(), expected, string(spec), "openapi generated spec")
+}
+
 func (suite *HandlerTestSuite) TestContextWithRequest_SimpleReturnList() {
 	app := New()
 	Get(app, "/foo", func(c *ContextNoRequest) (ret List[string], err error) {

@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/invopop/yaml"
+	"io"
 	"net"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -46,11 +50,10 @@ func TestNewApp(t *testing.T) {
 }
 
 func TestApp_AddTags(t *testing.T) {
-	app := New()
-	app.AddTags("tag1", "tag2")
+	app := New(AddTags(&openapi3.Tag{Name: "tag1"}, &openapi3.Tag{Name: "tag2"}))
 
-	assert.Contains(t, app.tags, "tag1")
-	assert.Contains(t, app.tags, "tag2")
+	assert.Contains(t, app.openAPISpec.Tags, &openapi3.Tag{Name: "tag1"})
+	assert.Contains(t, app.openAPISpec.Tags, &openapi3.Tag{Name: "tag2"})
 }
 
 func TestApp_SaveOpenAPISpec(t *testing.T) {
@@ -62,8 +65,9 @@ func TestApp_SaveOpenAPISpec(t *testing.T) {
 }
 
 func TestApp_AddServer(t *testing.T) {
-	app := New()
-	app.AddServer("http://localhost", "Local server")
+	app := New(
+		AddServer("http://localhost", "Local server"),
+	)
 
 	assert.Len(t, app.openAPISpec.Servers, 1)
 	assert.Equal(t, "http://localhost", app.openAPISpec.Servers[0].URL)
@@ -71,24 +75,102 @@ func TestApp_AddServer(t *testing.T) {
 }
 
 func TestApp_Description(t *testing.T) {
-	app := New()
-	app.Description("New Description")
+	app := New(
+		SetDescription("New SetDescription"),
+	)
 
-	assert.Equal(t, "New Description", app.openAPISpec.Info.Description)
+	assert.Equal(t, "New SetDescription", app.openAPISpec.Info.Description)
 }
 
 func TestApp_Title(t *testing.T) {
-	app := New()
-	app.Title("New Title")
+	app := New(SetTitle("New SetTitle"))
 
-	assert.Equal(t, "New Title", app.openAPISpec.Info.Title)
+	assert.Equal(t, "New SetTitle", app.openAPISpec.Info.Title)
 }
 
 func TestApp_Version(t *testing.T) {
-	app := New()
-	app.Version("1.0.0")
+	app := New(SetVersion("1.0.0"))
 
 	assert.Equal(t, "1.0.0", app.openAPISpec.Info.Version)
+}
+
+func TestApp_Contact(t *testing.T) {
+	app := New(
+		SetContact(&openapi3.Contact{
+			Name:  "John Doe",
+			Email: "john.doe@example.com",
+		}),
+	)
+
+	assert.Equal(t, "John Doe", app.openAPISpec.Info.Contact.Name)
+	assert.Equal(t, "john.doe@example.com", app.openAPISpec.Info.Contact.Email)
+}
+
+func TestApp_License(t *testing.T) {
+	app := New(
+		SetLicense(&openapi3.License{
+			Name: "MIT",
+		}),
+	)
+
+	assert.Equal(t, "MIT", app.openAPISpec.Info.License.Name)
+}
+
+func TestApp_TermsOfService(t *testing.T) {
+	app := New(
+		SetTermsOfService("https://example.com/terms"),
+	)
+
+	assert.Equal(t, "https://example.com/terms", app.openAPISpec.Info.TermsOfService)
+}
+
+func TestApp_Setup(t *testing.T) {
+	app := New(SetDisableSwagger(true))
+
+	err := app.setup()
+	assert.Nil(t, err)
+}
+
+func TestApp_Setup_saveOpenAPIToFileError(t *testing.T) {
+	app := New()
+
+	realOsMkdirAll := osMkdirAll
+	defer func() {
+		osMkdirAll = realOsMkdirAll
+	}()
+
+	osMkdirAll = func(path string, perm os.FileMode) error {
+		return assert.AnError
+	}
+
+	err := app.setup()
+	time.Sleep(100 * time.Millisecond)
+	assert.NoError(t, err)
+}
+
+func TestApp_Setup_saveOpenAPISpecError(t *testing.T) {
+	app := New()
+
+	// Mock yaml.JSONToYAML to simulate an error
+	yamlJSONToYAML = mockJSONToYAML
+	defer restoreJSONToYAML()
+
+	err := app.setup()
+	assert.Error(t, err)
+}
+
+func TestOpenAPIHandler(t *testing.T) {
+	app := New()
+
+	app.app.Get("/swagger", app.openAPIPathHandler)
+
+	t.Run("returns the OpenAPI file", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/swagger", nil)
+		resp, err := app.app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 }
 
 func TestApp_createDefaultErrorResponses(t *testing.T) {
@@ -226,6 +308,17 @@ func TestApp_Listen(t *testing.T) {
 	assert.NoError(t, app.Shutdown())
 }
 
+func TestApp_ListenError(t *testing.T) {
+	app := New()
+
+	// Mock yaml.JSONToYAML to simulate an error
+	yamlJSONToYAML = mockJSONToYAML
+	defer restoreJSONToYAML()
+
+	err := app.Listen(":8080")
+	assert.Error(t, err)
+}
+
 func TestApp_Run(t *testing.T) {
 	// Find a free port to avoid conflicts
 	port, err := getFreePort()
@@ -257,6 +350,17 @@ func TestApp_Run(t *testing.T) {
 	assert.NoError(t, app.Shutdown())
 }
 
+func TestApp_RunError(t *testing.T) {
+	app := New()
+
+	// Mock yaml.JSONToYAML to simulate an error
+	yamlJSONToYAML = mockJSONToYAML
+	defer restoreJSONToYAML()
+
+	err := app.Run()
+	assert.Error(t, err)
+}
+
 func TestApp_SetAddress(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -275,4 +379,62 @@ func TestApp_SetAddress2(t *testing.T) {
 	}()
 
 	New(SetAddress(":invalid"))
+}
+
+func TestApp_saveOpenAPIToFile(t *testing.T) {
+	app := New()
+
+	realOsMkdirAll := osMkdirAll
+	defer func() {
+		osMkdirAll = realOsMkdirAll
+	}()
+
+	osMkdirAll = func(path string, perm os.FileMode) error {
+		return assert.AnError
+	}
+
+	err := app.saveOpenAPIToFile("test", []byte("test"))
+	assert.Error(t, err)
+}
+
+func TestApp_saveOpenAPIToFile2(t *testing.T) {
+	app := New()
+
+	realOsCreate := osCreate
+	defer func() {
+		osCreate = realOsCreate
+	}()
+
+	osCreate = func(path string) (*os.File, error) {
+		return nil, assert.AnError
+	}
+
+	err := app.saveOpenAPIToFile("test", []byte("test"))
+	assert.Error(t, err)
+}
+
+type writeCloserFail struct{}
+
+func (w writeCloserFail) Write(p []byte) (n int, err error) {
+	return 0, assert.AnError
+}
+
+func (w writeCloserFail) Close() error {
+	return nil
+}
+
+func TestApp_saveOpenAPIToFile3(t *testing.T) {
+	app := New()
+
+	realWrapperWriteCloser := wrapperWriteCloser
+	defer func() {
+		wrapperWriteCloser = realWrapperWriteCloser
+	}()
+
+	wrapperWriteCloser = func(w io.WriteCloser) io.WriteCloser {
+		return &writeCloserFail{}
+	}
+
+	err := app.saveOpenAPIToFile("test", []byte("test"))
+	assert.Error(t, err)
 }

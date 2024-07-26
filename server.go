@@ -3,6 +3,7 @@ package lite
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -22,6 +23,20 @@ const (
 	YAMLExtension TypeOfExtension = "yaml"
 	JSONExtension TypeOfExtension = "json"
 )
+
+var (
+	yamlJSONToYAML = yaml.JSONToYAML
+	osMkdirAll     = os.MkdirAll
+	osCreate       = os.Create
+)
+
+type writeCloser struct {
+	io.WriteCloser
+}
+
+var wrapperWriteCloser = func(w io.WriteCloser) io.WriteCloser {
+	return &writeCloser{w}
+}
 
 type config struct {
 	disableSwagger   bool                               // If true, the server will not serve the swagger ui nor the openapi json spec
@@ -71,10 +86,6 @@ type App struct {
 	tag string
 
 	basePath string
-
-	// OpenAPI documentation tags used for logical groupings of operations
-	// These tags will be inherited by child Routes/Groups
-	tags []string
 
 	address string // Address to listen on
 
@@ -156,9 +167,10 @@ func SetAddress(address string) Config {
 
 // AddTags adds tags from the Server (i.e Group)
 // Tags from the parent Groups will be respected
-func (s *App) AddTags(tags ...string) *App {
-	s.tags = append(s.tags, tags...)
-	return s
+func AddTags(tags ...*openapi3.Tag) Config {
+	return func(s *App) {
+		s.openAPISpec.Tags = append(s.openAPISpec.Tags, tags...)
+	}
 }
 
 // saveOpenAPISpec saves the OpenAPI spec to a file in YAML format
@@ -183,26 +195,27 @@ func (s *App) saveOpenAPISpec() ([]byte, error) {
 func (s *App) saveOpenAPIToFile(path string, swaggerSpec []byte) error {
 	jsonFolder := filepath.Dir(path)
 
-	err := os.MkdirAll(jsonFolder, 0o750)
+	err := osMkdirAll(jsonFolder, 0o750)
 	if err != nil {
 		return errors.NewInternalServerError(fmt.Sprintf("error creating directory %s", jsonFolder))
 	}
 
-	f, err := os.Create(path)
+	f, err := osCreate(path)
 	if err != nil {
 		return errors.NewInternalServerError(fmt.Sprintf("error creating file %s", path))
 	}
-	defer f.Close()
 
-	_, err = f.Write(swaggerSpec)
+	file := wrapperWriteCloser(f)
+
+	defer file.Close()
+
+	_, err = file.Write(swaggerSpec)
 	if err != nil {
 		return errors.NewInternalServerError("error writing file")
 	}
 
 	return nil
 }
-
-var yamlJSONToYAML = yaml.JSONToYAML
 
 // writeOpenAPISpec writes the OpenAPI spec to a file in YAML format
 func writeOpenAPISpec(d []byte) ([]byte, error) {
@@ -216,38 +229,61 @@ func writeOpenAPISpec(d []byte) ([]byte, error) {
 }
 
 // AddServer adds a server to the OpenAPI spec
-func (s *App) AddServer(url, description string) {
-	var servers []*openapi3.Server
+func AddServer(url, description string) Config {
+	return func(s *App) {
+		var servers []*openapi3.Server
 
-	s.serverURL = url
+		s.serverURL = url
 
-	servers = append(servers, &openapi3.Server{
-		URL:         url,
-		Description: description,
-	})
+		servers = append(servers, &openapi3.Server{
+			URL:         url,
+			Description: description,
+		})
 
-	s.openAPISpec.Servers = servers
+		s.openAPISpec.Servers = servers
+	}
 }
 
-// Description sets the description of the OpenAPI spec
-func (s *App) Description(description string) *App {
-	s.openAPISpec.Info.Description = description
-
-	return s
+// SetDescription sets the description of the OpenAPI spec
+func SetDescription(description string) Config {
+	return func(s *App) {
+		s.openAPISpec.Info.Description = description
+	}
 }
 
-// Title sets the title of the OpenAPI spec
-func (s *App) Title(title string) *App {
-	s.openAPISpec.Info.Title = title
-
-	return s
+// SetTitle sets the title of the OpenAPI spec
+func SetTitle(title string) Config {
+	return func(s *App) {
+		s.openAPISpec.Info.Title = title
+	}
 }
 
-// Version sets the version of the OpenAPI spec
-func (s *App) Version(version string) *App {
-	s.openAPISpec.Info.Version = version
+// SetVersion sets the version of the OpenAPI spec
+func SetVersion(version string) Config {
+	return func(s *App) {
+		s.openAPISpec.Info.Version = version
+	}
+}
 
-	return s
+// SetContact sets the contact of the OpenAPI spec
+func SetContact(contact *openapi3.Contact) Config {
+	return func(s *App) {
+		s.openAPISpec.Info.Contact = contact
+	}
+}
+
+// SetLicense sets the license of the OpenAPI spec
+func SetLicense(license *openapi3.License) Config {
+	return func(s *App) {
+		s.openAPISpec.Info.License = license
+	}
+}
+
+// SetTermsOfService sets the terms of service of the OpenAPI spec
+func SetTermsOfService(termsOfService string) Config {
+	return func(s *App) {
+		s.openAPISpec.Info.TermsOfService = termsOfService
+	}
 }
 
 func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) {
@@ -308,9 +344,7 @@ func (s *App) setup() error {
 		}))
 
 		// Route to serve the OpenAPI file
-		s.app.Get(s.openAPIConfig.openapiPath, func(c *fiber.Ctx) error {
-			return c.SendFile("." + s.openAPIConfig.openapiPath)
-		})
+		s.app.Get(s.openAPIConfig.openapiPath, s.openAPIPathHandler)
 
 		s.app.Get(s.openAPIConfig.swaggerURL, s.openAPIConfig.uiHandler(s.serverURL+s.openAPIConfig.openapiPath))
 	}
@@ -328,6 +362,10 @@ func (s *App) setup() error {
 	}()
 
 	return nil
+}
+
+func (s *App) openAPIPathHandler(c *fiber.Ctx) error {
+	return c.SendFile("." + s.openAPIConfig.openapiPath)
 }
 
 func (s *App) Listen(address string) error {

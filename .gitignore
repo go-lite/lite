@@ -5,3 +5,6 @@ examples/file/api
 examples/file/uploads
 
 scripts/.bin
+
+api
+test

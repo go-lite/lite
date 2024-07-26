@@ -527,9 +527,6 @@ func setSecurityScheme(
 		securityScheme.Type = "apiKey"
 		securityScheme.Name = name
 		securityScheme.In = "header"
-	case "oauth2":
-		securityScheme.Type = "oauth2"
-		securityScheme.Flows = &openapi3.OAuthFlows{}
 	default:
 		securityScheme.Type = "http"
 		securityScheme.Scheme = "bearer"

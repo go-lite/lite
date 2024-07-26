@@ -37,6 +37,21 @@ func TestRegisterOpenAPIOperationGenerateError(t *testing.T) {
 	}
 }
 
+func TestRegisterOpenAPIOperationResponseNil(t *testing.T) {
+	app := New()
+
+	var err error
+
+	type TestRequest struct {
+		Name string `lite:"path=name"`
+	}
+
+	_, err = registerOpenAPIOperation[any, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err != nil {
+		t.Fatal("should be error")
+	}
+}
+
 func TestRegisterOpenAPIOperationGenerateBodyStringError(t *testing.T) {
 	app := New()
 
@@ -123,10 +138,91 @@ func TestRegisterOpenAPIOperationGenerateError3(t *testing.T) {
 	}
 }
 
+func TestRegisterOpenAPIOperationGenerateError4(t *testing.T) {
+	app := New()
+
+	var err error
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+
+	type TestRequest struct{}
+
+	type TestResponse struct {
+		FirstName string `json:"first_name"`
+	}
+
+	_, err = registerOpenAPIOperation[TestResponse, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	type TestResponse2 struct {
+		LastName *string `json:"last_name"`
+	}
+
+	_, err = registerOpenAPIOperation[TestResponse2, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestRegisterOpenAPIOperationGenerateError5(t *testing.T) {
+	app := New()
+
+	var err error
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+
+	type TestRequest struct{}
+
+	_, err = registerOpenAPIOperation[string, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	_, err = registerOpenAPIOperation[*string, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestRegisterOpenAPIOperation(t *testing.T) {
+	app := New()
+
+	var err error
+
+	type TestRequest struct{}
+
+	_, err = registerOpenAPIOperation[string, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = registerOpenAPIOperation[*string, TestRequest](app, "GET", "/test", "application/json", 200)
+	if err != nil {
+		t.Fatal("should not be error")
+	}
+}
+
 type testStruct struct {
-	Name    string `json:"name" xml:"name" form:"name"`
-	Age     int    `json:"age" xml:"age" form:"age"`
-	Address string `json:"address" xml:"address" form:"Address"`
+	Name    string    `json:"name" xml:"name" form:"name"`
+	Age     int       `json:"age" xml:"age" form:"age"`
+	Address string    `json:"address" xml:"address" form:"Address"`
+	Time    time.Time `json:"time" xml:"time" form:"time"`
 }
 
 func TestGetRequiredValue_Struct(t *testing.T) {
@@ -137,6 +233,7 @@ func TestGetRequiredValue_Struct(t *testing.T) {
 			"name":    {Value: &openapi3.Schema{}},
 			"age":     {Value: &openapi3.Schema{}},
 			"address": {Value: &openapi3.Schema{}},
+			"time":    {Value: &openapi3.Schema{}},
 		},
 	}
 
@@ -144,8 +241,8 @@ func TestGetRequiredValue_Struct(t *testing.T) {
 	if !ok {
 		t.Errorf("expected true, got false")
 	}
-	if len(schema.Required) != 3 {
-		t.Errorf("expected 3 required fields, got %d", len(schema.Required))
+	if len(schema.Required) != 4 {
+		t.Errorf("expected 4 required fields, got %d", len(schema.Required))
 	}
 }
 
@@ -157,6 +254,7 @@ func TestGetRequiredValue_StructWithXML(t *testing.T) {
 			"name":    {Value: &openapi3.Schema{}},
 			"age":     {Value: &openapi3.Schema{}},
 			"address": {Value: &openapi3.Schema{}},
+			"time":    {Value: &openapi3.Schema{}},
 		},
 	}
 
@@ -164,8 +262,8 @@ func TestGetRequiredValue_StructWithXML(t *testing.T) {
 	if !ok {
 		t.Errorf("expected true, got false")
 	}
-	if len(schema.Required) != 3 {
-		t.Errorf("expected 3 required fields, got %d", len(schema.Required))
+	if len(schema.Required) != 4 {
+		t.Errorf("expected 4 required fields, got %d", len(schema.Required))
 	}
 }
 
@@ -177,6 +275,7 @@ func TestGetRequiredValue_StructWithForm(t *testing.T) {
 			"name":    {Value: &openapi3.Schema{}},
 			"age":     {Value: &openapi3.Schema{}},
 			"address": {Value: &openapi3.Schema{}},
+			"time":    {Value: &openapi3.Schema{}},
 		},
 	}
 
@@ -184,8 +283,8 @@ func TestGetRequiredValue_StructWithForm(t *testing.T) {
 	if !ok {
 		t.Errorf("expected true, got false")
 	}
-	if len(schema.Required) != 3 {
-		t.Errorf("expected 3 required fields, got %d", len(schema.Required))
+	if len(schema.Required) != 4 {
+		t.Errorf("expected 4 required fields, got %d", len(schema.Required))
 	}
 }
 
@@ -771,4 +870,194 @@ type testResponse struct {
 	Name      string `json:"name"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+}
+
+func TestRegisterSetParamSchemaError(t *testing.T) {
+	type testErrorParams struct {
+		ID  uint64 `lite:"path=id"`
+		Age string `lite:"path=age"`
+	}
+
+	testErr := testErrorParams{}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testErr)
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal("should be error")
+	}
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	err = register(app, operation, dstVal)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestRegisterSetHeaderSchemeError(t *testing.T) {
+	type testErrorHeader struct {
+		ID  uint64 `lite:"header=id"`
+		Age string `lite:"header=age"`
+	}
+
+	testErr := testErrorHeader{}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testErr)
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal("should be error")
+	}
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	err = register(app, operation, dstVal)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+func TestRegisterSetSecurityScheme(t *testing.T) {
+	type testHeader struct {
+		BasicAuth string `lite:"header=Authorization,isauth,scheme=basic"`
+	}
+
+	testErr := testHeader{}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testErr)
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRegisterSetSecurityScheme2(t *testing.T) {
+	type testHeader struct {
+		BearerAuth string `lite:"header=Authorization,isauth,scheme=bearer,type=test"`
+	}
+
+	testErr := testHeader{}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testErr)
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRegisterSetBodySchema(t *testing.T) {
+	type testStruct struct {
+		body string `lite:"req=body"`
+	}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testStruct{})
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type testStruct2 struct {
+		body *string `lite:"req=body"`
+	}
+
+	dstVal = reflect.ValueOf(testStruct2{})
+
+	err = register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRegisterSetBodySchemaError(t *testing.T) {
+	type testStruct struct {
+		body string `lite:"req=body"`
+	}
+
+	app := New()
+	operation := openapi3.NewOperation()
+	dstVal := reflect.ValueOf(testStruct{})
+
+	err := register(app, operation, dstVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	realgeneratorNewSchemaRefForValue := generatorNewSchemaRefForValue
+	generatorNewSchemaRefForValue = func(value interface{}, schemas openapi3.Schemas) (*openapi3.SchemaRef, error) {
+		return nil, assert.AnError
+	}
+	defer func() {
+		generatorNewSchemaRefForValue = realgeneratorNewSchemaRefForValue
+	}()
+
+	err = register(app, operation, dstVal)
+	if err == nil {
+		t.Fatal("should be error")
+	}
+}
+
+type MyType struct{}
+type MyParamType struct{}
+type AnotherParamType struct{}
+
+func TestExtractBaseName(t *testing.T) {
+	tests := []struct {
+		name      string
+		typeInput reflect.Type
+		expected  string
+	}{
+		{
+			name:      "generic type with slash",
+			typeInput: reflect.TypeOf(map[MyType]AnotherParamType{}),
+			expected:  "mapMyType",
+		},
+		{
+			name:      "generic type with dot",
+			typeInput: reflect.TypeOf(map[MyType]MyParamType{}),
+			expected:  "mapMyType",
+		},
+		{
+			name:      "generic type without slash or dot",
+			typeInput: reflect.TypeOf(map[MyType]MyParamType{}),
+			expected:  "mapMyType",
+		},
+		{
+			name:      "non-generic type",
+			typeInput: reflect.TypeOf(MyType{}),
+			expected:  "MyType",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractBaseName(tt.typeInput)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }
