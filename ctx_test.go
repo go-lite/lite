@@ -120,7 +120,7 @@ func (suite *CtxTestSuite) TestContextWithRequest_Body_Slice() {
 }
 
 type request struct {
-	ID     uint64   `lite:"path=id"`
+	ID     uint64   `lite:"params=id"`
 	Header bool     `lite:"header=X-Real-Ip"`
 	Q      bool     `lite:"query=q"`
 	Body   bodyTest `lite:"req=body"`
@@ -131,8 +131,8 @@ type requestMultiParams struct {
 }
 
 type pathParams struct {
-	ID   uint64 `lite:"path=id"`
-	Name string `lite:"path=name"`
+	ID   uint64 `lite:"params=id"`
+	Name string `lite:"params=name"`
 }
 
 type bodyTest struct {

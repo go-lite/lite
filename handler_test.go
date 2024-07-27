@@ -76,7 +76,7 @@ func (suite *HandlerTestSuite) TestGroup2() {
 }
 
 type requestApplicationJSON struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 type responserequestApplicationJSON struct {
@@ -108,7 +108,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests()
 }
 
 type requestApplicationXML struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 type responseApplicationXML struct {
@@ -143,7 +143,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationXML_Requests() 
 }
 
 type requestApplicationJSONError struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 type responseApplicationJSONError struct {
@@ -165,7 +165,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests_E
 }
 
 type requestPath struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 type responsePath struct {
@@ -481,7 +481,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Put() {
 }
 
 type requestDelete struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Delete() {
@@ -509,7 +509,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Delete() {
 }
 
 type requestPatch struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
@@ -537,7 +537,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
 }
 
 type requestPatchError struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
@@ -647,7 +647,7 @@ func (suite *HandlerTestSuite) TestCustomContext() {
 }
 
 type requestRoute struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 type responseRoute struct {

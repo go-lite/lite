@@ -211,10 +211,10 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 		var parameter *openapi3.Parameter
 		var scheme, tpe, name string
 
-		if pathKey, ok := tagMap["path"]; ok {
-			parameter = openapi3.NewPathParameter(pathKey)
+		if paramsKey, ok := tagMap["params"]; ok {
+			parameter = openapi3.NewPathParameter(paramsKey)
 
-			err := setParamSchema(s, operation, pathKey, ftype.Name(), parameter, isRequired, fieldType)
+			err := setParamSchema(s, operation, paramsKey, ftype.Name(), parameter, isRequired, fieldType)
 			if err != nil {
 				return err
 			}
