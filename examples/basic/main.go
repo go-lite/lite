@@ -11,7 +11,7 @@ type GetReq struct {
 	Login  string  `lite:"header=Basic,isauth,scheme=basic"`
 	Name   string  `lite:"header=name"`
 	Value  *string `lite:"header=value"`
-	Params string  `lite:"path=params"`
+	Params string  `lite:"params=params"`
 }
 
 type GetArrayReq struct{}
@@ -23,12 +23,12 @@ type CreateBody struct {
 
 type CreateReq struct {
 	Authorization *string    `lite:"header=Authorization,isauth,scheme=bearer"`
-	ID            uint64     `lite:"path=id"`
+	ID            uint64     `lite:"params=id"`
 	Body          CreateBody `lite:"req=body"`
 }
 
 type PutReq struct {
-	ID     uint64  `lite:"path=id"`
+	ID     uint64  `lite:"params=id"`
 	ApiKey string  `lite:"header=apiKey,isauth,type=apiKey,name=X-API-Key"`
 	Body   PutBody `lite:"req=body"`
 }
@@ -151,7 +151,9 @@ func putHandler(c *lite.ContextWithRequest[PutReq]) (PutResponse, error) {
 }
 
 func main() {
-	app := lite.New()
+	app := lite.New(
+		lite.AddServer("http://localhost:6001", "example server"),
+	)
 
 	lite.Use(app, logger.New())
 	lite.Use(app, recover.New())
@@ -166,8 +168,6 @@ func main() {
 	lite.Get(app, "/example", getArrayHandler)
 
 	lite.Put(app, "/example/:id", putHandler)
-
-	app.AddServer("http://localhost:6001", "example server")
 
 	if err := app.Listen(":6001"); err != nil {
 		return

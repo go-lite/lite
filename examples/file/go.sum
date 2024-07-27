@@ -6,6 +6,8 @@ github.com/getkin/kin-openapi v0.126.0 h1:c2cSgLnAsS0xYfKsgt5oBV6MYRM/giU8/RtwUY
 github.com/getkin/kin-openapi v0.126.0/go.mod h1:7mONz8IwmSRg6RttPu6v8U/OJ+gr+J99qSFNjPGSQqw=
 github.com/go-lite/lite v0.1.13 h1:Pg3I6HIU0EXYLIGVut/aqbPzeZFxTKvWDFUdGG+3heE=
 github.com/go-lite/lite v0.1.13/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
+github.com/go-lite/lite v0.1.17-0.20240727220623-92c9b953b065 h1:IUZ79GrWdoEPZlKJ2xOSjkmjSG9UfvXlIAL3atbsy5U=
+github.com/go-lite/lite v0.1.17-0.20240727220623-92c9b953b065/go.mod h1:zzQUy6aSadOJBsH/C+LP1pTMsHGzuUWT+4amZuY8R4Y=
 github.com/go-openapi/jsonpointer v0.21.0 h1:YgdVicSA9vH5RiHs9TZW5oyafXZFc6+2Vc1rr/O9oNQ=
 github.com/go-openapi/jsonpointer v0.21.0/go.mod h1:IUyH9l/+uyhIYQ/PXVA41Rexl+kOkAPDdXEYns6fzUY=
 github.com/go-openapi/swag v0.23.0 h1:vsEVJDUo2hPJ2tu0/Xc+4noaxyEffXNIs3cOULZ+GrE=
