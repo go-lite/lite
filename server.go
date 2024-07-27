@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-lite/lite/errors"
@@ -85,11 +86,11 @@ type App struct {
 
 	tag string
 
-	basePath string
-
-	address string // Address to listen on
-
+	basePath  string
+	address   string // Address to listen on
 	serverURL string
+
+	mu sync.Mutex
 }
 
 func New(config ...Config) *App {
@@ -325,6 +326,9 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 }
 
 func (s *App) setup() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.serverURL == "" {
 		s.serverURL = "http://localhost" + s.address
 		s.openAPISpec.Servers = append(s.openAPISpec.Servers, &openapi3.Server{
@@ -354,12 +358,16 @@ func (s *App) setup() error {
 		return err
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		err := s.saveOpenAPIToFile("."+s.openAPIConfig.openapiPath, swaggerSpec)
 		if err != nil {
 			slog.ErrorContext(context.Background(), "failed to save openapi spec", slog.Any("error", err))
 		}
 	}()
+	wg.Wait()
 
 	return nil
 }

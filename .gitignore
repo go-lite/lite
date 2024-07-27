@@ -8,3 +8,4 @@ scripts/.bin
 
 api
 test
+coverage.out

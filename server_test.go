@@ -3,8 +3,6 @@ package lite
 import (
 	"errors"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/invopop/yaml"
 	"io"
 	"net"
 	"net/http"
@@ -13,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
+	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/invopop/yaml"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -129,23 +130,6 @@ func TestApp_Setup(t *testing.T) {
 
 	err := app.setup()
 	assert.Nil(t, err)
-}
-
-func TestApp_Setup_saveOpenAPIToFileError(t *testing.T) {
-	app := New()
-
-	realOsMkdirAll := osMkdirAll
-	defer func() {
-		osMkdirAll = realOsMkdirAll
-	}()
-
-	osMkdirAll = func(path string, perm os.FileMode) error {
-		return assert.AnError
-	}
-
-	err := app.setup()
-	time.Sleep(100 * time.Millisecond)
-	assert.NoError(t, err)
 }
 
 func TestApp_Setup_saveOpenAPISpecError(t *testing.T) {
@@ -288,7 +272,7 @@ func TestApp_Listen(t *testing.T) {
 
 	// Run Listen in a separate goroutine since it is blocking
 	go func() {
-		err := app.Listen(address)
+		err = app.Listen(address)
 		assert.Nil(t, err)
 	}()
 
@@ -330,7 +314,7 @@ func TestApp_Run(t *testing.T) {
 
 	// Run Listen in a separate goroutine since it is blocking
 	go func() {
-		err := app.Run()
+		err = app.Run()
 		assert.Nil(t, err)
 	}()
 
@@ -437,4 +421,45 @@ func TestApp_saveOpenAPIToFile3(t *testing.T) {
 
 	err := app.saveOpenAPIToFile("test", []byte("test"))
 	assert.Error(t, err)
+}
+
+func TestApp_Setup_saveOpenAPIToFileError(t *testing.T) {
+	realOsMkdirAll := osMkdirAll
+	defer func() {
+		osMkdirAll = realOsMkdirAll
+	}()
+
+	osMkdirAll = func(path string, perm os.FileMode) error {
+		return assert.AnError
+	}
+
+	// Find a free port to avoid conflicts
+	port, err := getFreePort()
+	assert.Nil(t, err)
+
+	address := fmt.Sprintf(":%d", port)
+
+	app := New(SetAddress(address))
+
+	// Run Listen in a separate goroutine since it is blocking
+	go func() {
+		err = app.Run()
+		Use(app, fiberrecover.New())
+		assert.Nil(t, err)
+	}()
+
+	// Wait a bit for the server to start
+	// You might want to use a more reliable synchronization mechanism
+	// in real tests, like a sync.WaitGroup or a channel.
+	<-time.After(time.Second)
+
+	// Attempt to connect to the server
+	conn, err := net.Dial("tcp", address)
+	assert.Nil(t, err)
+	if err == nil {
+		conn.Close()
+	}
+
+	// Shutdown the server
+	assert.NoError(t, app.Shutdown())
 }
