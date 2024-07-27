@@ -141,7 +141,7 @@ The `lite` package supports the following tags within struct definitions to map 
 
 | Tag     | SetDescription                                | Example                    |
 |---------|--------------------------------------------|----------------------------|
-| `path`  | Maps to a URL path parameter               | `lite:"path=id"`           |
+| `params`| Maps to a URL path parameter               | `lite:"params=id"`           |
 | `query` | Maps to a URL query parameter              | `lite:"query=name"`        |
 | `header`| Maps to an HTTP header                     | `lite:"header=Auth"`       |
 | `cookie`| Maps to an HTTP cookie                     | `lite:"cookie=session_id"` |

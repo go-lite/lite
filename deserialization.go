@@ -47,13 +47,13 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		var valueStr string
 
 		switch {
-		case tagMap["path"] != "":
+		case tagMap["params"] != "":
 			if params != nil {
-				pathKey := tagMap["path"]
+				paramsKey := tagMap["params"]
 
-				paramsValue, ok := params[pathKey]
+				paramsValue, ok := params[paramsKey]
 				if !ok {
-					return fmt.Errorf("missing path parameter: %s", pathKey)
+					return fmt.Errorf("missing params parameter: %s", paramsKey)
 				}
 
 				valueStr = paramsValue

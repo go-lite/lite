@@ -24,7 +24,7 @@ func TestRegisterOpenAPIOperationGenerateError(t *testing.T) {
 	}()
 
 	type TestRequest struct {
-		Name string `lite:"path=name"`
+		Name string `lite:"params=name"`
 	}
 
 	type TestResponse struct {
@@ -43,7 +43,7 @@ func TestRegisterOpenAPIOperationResponseNil(t *testing.T) {
 	var err error
 
 	type TestRequest struct {
-		Name string `lite:"path=name"`
+		Name string `lite:"params=name"`
 	}
 
 	_, err = registerOpenAPIOperation[any, TestRequest](app, "GET", "/test", "application/json", 200)
@@ -514,7 +514,7 @@ type CreateBody struct {
 }
 
 type Params struct {
-	ID uint64 `lite:"path=id"`
+	ID uint64 `lite:"params=id"`
 }
 
 type testReq struct {
@@ -839,8 +839,8 @@ func TestDive(t *testing.T) {
 }
 
 type params struct {
-	ID      uint64 `lite:"path=id"`
-	IsAdmin string `lite:"path=is_admin"`
+	ID      uint64 `lite:"params=id"`
+	IsAdmin string `lite:"params=is_admin"`
 }
 
 type metadata struct {
@@ -874,8 +874,8 @@ type testResponse struct {
 
 func TestRegisterSetParamSchemaError(t *testing.T) {
 	type testErrorParams struct {
-		ID  uint64 `lite:"path=id"`
-		Age string `lite:"path=age"`
+		ID  uint64 `lite:"params=id"`
+		Age string `lite:"params=age"`
 	}
 
 	testErr := testErrorParams{}
