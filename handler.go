@@ -64,8 +64,16 @@ func fiberHandler[ResponseBody, Request any, Contexter Context[Request]](
 func Group(app *App, path string) *App {
 	path = strings.TrimRight(path, "/")
 
-	a := *app
-	newApp := &a
+	newApp := &App{
+		app:           app.app,
+		openAPISpec:   app.openAPISpec,
+		openAPIConfig: app.openAPIConfig,
+		tag:           app.tag,
+		basePath:      app.basePath,
+		address:       app.address,
+		serverURL:     app.serverURL,
+	}
+
 	newApp.basePath += path
 	newApp.tag = toTitle(strings.TrimLeft(path, "/"))
 

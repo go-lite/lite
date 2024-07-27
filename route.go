@@ -3,6 +3,8 @@ package lite
 import (
 	"strconv"
 
+	"github.com/go-lite/lite/errors"
+
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -49,6 +51,31 @@ func (r Route[ResponseBody, Request]) SetResponseContentType(contentType string)
 		Value(strconv.Itoa(r.statusCode)).Value.Content[r.contentType]
 
 	delete(r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content, r.contentType)
+
+	return r
+}
+
+func (r Route[ResponseBody, Request]) AddErrorResponse(statusCode int, contentType ...string) Route[ResponseBody, Request] {
+	if len(contentType) == 0 {
+		contentType = []string{r.contentType}
+	}
+
+	for _, c := range contentType {
+		httpError := errors.NewError(statusCode)
+		description := httpError.Description()
+
+		response := openapi3.NewResponse().WithDescription(description)
+
+		content := openapi3.NewContentWithSchemaRef(
+			openapi3.NewSchemaRef(
+				"#/components/schemas/httpGenericError",
+				&openapi3.Schema{}),
+			[]string{c},
+		)
+		response.WithContent(content)
+
+		r.operation.AddResponse(statusCode, response)
+	}
 
 	return r
 }

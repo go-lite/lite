@@ -138,7 +138,7 @@ var (
 		StatusBadGateway:                    "Bad Gateway",
 		StatusServiceUnavailable:            "Service Unavailable",
 		StatusGatewayTimeout:                "Gateway Timeout",
-		StatusHTTPVersionNotSupported:       "HTTP Version Not Supported",
+		StatusHTTPVersionNotSupported:       "HTTP SetVersion Not Supported",
 		StatusVariantAlsoNegotiates:         "Variant Also Negotiates",
 		StatusInsufficientStorage:           "Insufficient Storage",
 		StatusLoopDetected:                  "Loop Detected",

@@ -139,7 +139,7 @@ const (
 	HeaderSecWebSocketExtensions = "Sec-WebSocket-Extensions" /* #nosec G101 */
 	HeaderSecWebSocketKey        = "Sec-WebSocket-Key"
 	HeaderSecWebSocketProtocol   = "Sec-WebSocket-Protocol"
-	HeaderSecWebSocketVersion    = "Sec-WebSocket-Version"
+	HeaderSecWebSocketVersion    = "Sec-WebSocket-SetVersion"
 
 	// Other.
 	HeaderAcceptPatch         = "Accept-Patch"

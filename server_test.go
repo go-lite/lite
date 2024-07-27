@@ -3,12 +3,17 @@ package lite
 import (
 	"errors"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/invopop/yaml"
+	"io"
 	"net"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
+	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/invopop/yaml"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,11 +51,10 @@ func TestNewApp(t *testing.T) {
 }
 
 func TestApp_AddTags(t *testing.T) {
-	app := New()
-	app.AddTags("tag1", "tag2")
+	app := New(AddTags(&openapi3.Tag{Name: "tag1"}, &openapi3.Tag{Name: "tag2"}))
 
-	assert.Contains(t, app.tags, "tag1")
-	assert.Contains(t, app.tags, "tag2")
+	assert.Contains(t, app.openAPISpec.Tags, &openapi3.Tag{Name: "tag1"})
+	assert.Contains(t, app.openAPISpec.Tags, &openapi3.Tag{Name: "tag2"})
 }
 
 func TestApp_SaveOpenAPISpec(t *testing.T) {
@@ -62,8 +66,9 @@ func TestApp_SaveOpenAPISpec(t *testing.T) {
 }
 
 func TestApp_AddServer(t *testing.T) {
-	app := New()
-	app.AddServer("http://localhost", "Local server")
+	app := New(
+		AddServer("http://localhost", "Local server"),
+	)
 
 	assert.Len(t, app.openAPISpec.Servers, 1)
 	assert.Equal(t, "http://localhost", app.openAPISpec.Servers[0].URL)
@@ -71,24 +76,84 @@ func TestApp_AddServer(t *testing.T) {
 }
 
 func TestApp_Description(t *testing.T) {
-	app := New()
-	app.Description("New Description")
+	app := New(
+		SetDescription("New SetDescription"),
+	)
 
-	assert.Equal(t, "New Description", app.openAPISpec.Info.Description)
+	assert.Equal(t, "New SetDescription", app.openAPISpec.Info.Description)
 }
 
 func TestApp_Title(t *testing.T) {
-	app := New()
-	app.Title("New Title")
+	app := New(SetTitle("New SetTitle"))
 
-	assert.Equal(t, "New Title", app.openAPISpec.Info.Title)
+	assert.Equal(t, "New SetTitle", app.openAPISpec.Info.Title)
 }
 
 func TestApp_Version(t *testing.T) {
-	app := New()
-	app.Version("1.0.0")
+	app := New(SetVersion("1.0.0"))
 
 	assert.Equal(t, "1.0.0", app.openAPISpec.Info.Version)
+}
+
+func TestApp_Contact(t *testing.T) {
+	app := New(
+		SetContact(&openapi3.Contact{
+			Name:  "John Doe",
+			Email: "john.doe@example.com",
+		}),
+	)
+
+	assert.Equal(t, "John Doe", app.openAPISpec.Info.Contact.Name)
+	assert.Equal(t, "john.doe@example.com", app.openAPISpec.Info.Contact.Email)
+}
+
+func TestApp_License(t *testing.T) {
+	app := New(
+		SetLicense(&openapi3.License{
+			Name: "MIT",
+		}),
+	)
+
+	assert.Equal(t, "MIT", app.openAPISpec.Info.License.Name)
+}
+
+func TestApp_TermsOfService(t *testing.T) {
+	app := New(
+		SetTermsOfService("https://example.com/terms"),
+	)
+
+	assert.Equal(t, "https://example.com/terms", app.openAPISpec.Info.TermsOfService)
+}
+
+func TestApp_Setup(t *testing.T) {
+	app := New(SetDisableSwagger(true))
+
+	err := app.setup()
+	assert.Nil(t, err)
+}
+
+func TestApp_Setup_saveOpenAPISpecError(t *testing.T) {
+	app := New()
+
+	// Mock yaml.JSONToYAML to simulate an error
+	yamlJSONToYAML = mockJSONToYAML
+	defer restoreJSONToYAML()
+
+	err := app.setup()
+	assert.Error(t, err)
+}
+
+func TestOpenAPIHandler(t *testing.T) {
+	app := New()
+
+	app.app.Get("/swagger/*", app.openAPIPathHandler)
+
+	t.Run("returns the OpenAPI file", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/swagger/index.html", nil)
+		_, err := app.app.Test(req)
+
+		assert.NoError(t, err)
+	})
 }
 
 func TestApp_createDefaultErrorResponses(t *testing.T) {
@@ -206,7 +271,7 @@ func TestApp_Listen(t *testing.T) {
 
 	// Run Listen in a separate goroutine since it is blocking
 	go func() {
-		err := app.Listen(address)
+		err = app.Listen(address)
 		assert.Nil(t, err)
 	}()
 
@@ -226,6 +291,17 @@ func TestApp_Listen(t *testing.T) {
 	assert.NoError(t, app.Shutdown())
 }
 
+func TestApp_ListenError(t *testing.T) {
+	app := New()
+
+	// Mock yaml.JSONToYAML to simulate an error
+	yamlJSONToYAML = mockJSONToYAML
+	defer restoreJSONToYAML()
+
+	err := app.Listen(":8080")
+	assert.Error(t, err)
+}
+
 func TestApp_Run(t *testing.T) {
 	// Find a free port to avoid conflicts
 	port, err := getFreePort()
@@ -237,7 +313,7 @@ func TestApp_Run(t *testing.T) {
 
 	// Run Listen in a separate goroutine since it is blocking
 	go func() {
-		err := app.Run()
+		err = app.Run()
 		assert.Nil(t, err)
 	}()
 
@@ -255,6 +331,17 @@ func TestApp_Run(t *testing.T) {
 
 	// Shutdown the server
 	assert.NoError(t, app.Shutdown())
+}
+
+func TestApp_RunError(t *testing.T) {
+	app := New()
+
+	// Mock yaml.JSONToYAML to simulate an error
+	yamlJSONToYAML = mockJSONToYAML
+	defer restoreJSONToYAML()
+
+	err := app.Run()
+	assert.Error(t, err)
 }
 
 func TestApp_SetAddress(t *testing.T) {
@@ -275,4 +362,103 @@ func TestApp_SetAddress2(t *testing.T) {
 	}()
 
 	New(SetAddress(":invalid"))
+}
+
+func TestApp_saveOpenAPIToFile(t *testing.T) {
+	app := New()
+
+	realOsMkdirAll := osMkdirAll
+	defer func() {
+		osMkdirAll = realOsMkdirAll
+	}()
+
+	osMkdirAll = func(path string, perm os.FileMode) error {
+		return assert.AnError
+	}
+
+	err := app.saveOpenAPIToFile("test", []byte("test"))
+	assert.Error(t, err)
+}
+
+func TestApp_saveOpenAPIToFile2(t *testing.T) {
+	app := New()
+
+	realOsCreate := osCreate
+	defer func() {
+		osCreate = realOsCreate
+	}()
+
+	osCreate = func(path string) (*os.File, error) {
+		return nil, assert.AnError
+	}
+
+	err := app.saveOpenAPIToFile("test", []byte("test"))
+	assert.Error(t, err)
+}
+
+type writeCloserFail struct{}
+
+func (w writeCloserFail) Write(p []byte) (n int, err error) {
+	return 0, assert.AnError
+}
+
+func (w writeCloserFail) Close() error {
+	return nil
+}
+
+func TestApp_saveOpenAPIToFile3(t *testing.T) {
+	app := New()
+
+	realWrapperWriteCloser := wrapperWriteCloser
+	defer func() {
+		wrapperWriteCloser = realWrapperWriteCloser
+	}()
+
+	wrapperWriteCloser = func(w io.WriteCloser) io.WriteCloser {
+		return &writeCloserFail{}
+	}
+
+	err := app.saveOpenAPIToFile("test", []byte("test"))
+	assert.Error(t, err)
+}
+
+func TestApp_Setup_saveOpenAPIToFileError(t *testing.T) {
+	realOsMkdirAll := osMkdirAll
+	defer func() {
+		osMkdirAll = realOsMkdirAll
+	}()
+
+	osMkdirAll = func(path string, perm os.FileMode) error {
+		return assert.AnError
+	}
+
+	// Find a free port to avoid conflicts
+	port, err := getFreePort()
+	assert.Nil(t, err)
+
+	address := fmt.Sprintf(":%d", port)
+
+	app := New(SetAddress(address))
+
+	// Run Listen in a separate goroutine since it is blocking
+	go func() {
+		err = app.Run()
+		Use(app, fiberrecover.New())
+		assert.Nil(t, err)
+	}()
+
+	// Wait a bit for the server to start
+	// You might want to use a more reliable synchronization mechanism
+	// in real tests, like a sync.WaitGroup or a channel.
+	<-time.After(time.Second)
+
+	// Attempt to connect to the server
+	conn, err := net.Dial("tcp", address)
+	assert.Nil(t, err)
+	if err == nil {
+		conn.Close()
+	}
+
+	// Shutdown the server
+	assert.NoError(t, app.Shutdown())
 }

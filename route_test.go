@@ -95,3 +95,21 @@ func TestRoute_SetResponseContentType(t *testing.T) {
 	assert.Nil(t, oldExists.Value.Content["application/json"])
 	assert.NotNil(t, newExists.Value.Content["application/xml"])
 }
+
+func TestRoute_AddErrorResponse(t *testing.T) {
+	operation := &openapi3.Operation{
+		Responses: &openapi3.Responses{
+			Extensions: make(map[string]interface{}),
+		},
+	}
+
+	route := Route[ResponseBody, Request]{
+		operation:   operation,
+		contentType: "application/json",
+		statusCode:  200,
+	}
+
+	route = route.AddErrorResponse(400)
+
+	assert.Equal(t, "Bad Request", *route.operation.Responses.Value("400").Value.Description)
+}
