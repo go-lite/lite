@@ -3,7 +3,7 @@ module examples/basic
 go 1.22.4
 
 require (
-	github.com/go-lite/lite v0.1.13
+	github.com/go-lite/lite v0.1.17-0.20240727220623-92c9b953b065
 	github.com/gofiber/fiber/v2 v2.52.5
 )
 
