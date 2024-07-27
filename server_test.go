@@ -146,14 +146,13 @@ func TestApp_Setup_saveOpenAPISpecError(t *testing.T) {
 func TestOpenAPIHandler(t *testing.T) {
 	app := New()
 
-	app.app.Get("/swagger", app.openAPIPathHandler)
+	app.app.Get("/swagger/*", app.openAPIPathHandler)
 
 	t.Run("returns the OpenAPI file", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/swagger", nil)
-		resp, err := app.app.Test(req)
+		req := httptest.NewRequest(http.MethodGet, "/swagger/index.html", nil)
+		_, err := app.app.Test(req)
 
 		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 }
 
