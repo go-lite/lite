@@ -360,9 +360,11 @@ func (s *App) setup() error {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
-		err := s.saveOpenAPIToFile("."+s.openAPIConfig.openapiPath, swaggerSpec)
+
+		err = s.saveOpenAPIToFile("."+s.openAPIConfig.openapiPath, swaggerSpec)
 		if err != nil {
 			slog.ErrorContext(context.Background(), "failed to save openapi spec", slog.Any("error", err))
 		}
