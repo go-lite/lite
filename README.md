@@ -146,6 +146,7 @@ The `lite` package supports the following tags within struct definitions to map 
 | `header`| Maps to an HTTP header                     | `lite:"header=Auth"`       |
 | `cookie`| Maps to an HTTP cookie                     | `lite:"cookie=session_id"` |
 | `req`   | Maps to the request body                   | `lite:"req=body"`          |
+| `enums` | Maps to a string enums                     | `enums:"male,female"` |    
 
 
 ## Contributing
