@@ -870,7 +870,15 @@ type testResponse struct {
 	Name      string `json:"name"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	Gender    Gender `json:"gender" enums:"male,female"`
 }
+
+type Gender string
+
+const (
+	Male   Gender = "male"
+	Female Gender = "female"
+)
 
 func TestRegisterSetParamSchemaError(t *testing.T) {
 	type testErrorParams struct {
