@@ -94,6 +94,12 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 			field := fieldType.Field(k)
 			fieldName := field.Name
 
+			// check if field has tag enums
+			if field.Tag.Get(getStructTag("enums")) != "" {
+				enums := strings.Split(field.Tag.Get(getStructTag("enums")), ",")
+				schema.WithEnum(enums)
+			}
+
 			if field.Tag.Get(getStructTag(contentType)) != "" {
 				if contentType != "application/json" {
 					jsonFieldName := field.Tag.Get(getStructTag("application/json"))
