@@ -109,7 +109,7 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 
 			// check if field has tag enums
 			if field.Tag.Get("enums") != "" {
-				setEnums(field.Type, field.Tag, fieldName, schema.Properties[fieldName].Value)
+				setEnums(field.Type, field.Tag, schema.Properties[fieldName].Value)
 			}
 
 			ok := getRequiredValue(contentType, field.Type, schema.Properties[fieldName].Value)
@@ -147,7 +147,7 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 	}
 }
 
-func setEnums(fieldType reflect.Type, tag reflect.StructTag, fieldName string, schema *openapi3.Schema) {
+func setEnums(fieldType reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) {
 	enums := strings.Split(tag.Get("enums"), ",")
 	anySlice := make([]any, len(enums))
 
