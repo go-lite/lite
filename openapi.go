@@ -672,13 +672,18 @@ func extractBaseName(t reflect.Type) string {
 			paramType = paramType[strings.LastIndex(paramType, ".")+1:]
 		}
 
-		return genericType + paramType
+		name := genericType + paramType
+		name = strings.Trim(name, "[]")
+
+		return name
 	}
 
 	// Supprimer le préfixe du package pour les types non génériques
 	if strings.Contains(typeName, ".") {
 		typeName = typeName[strings.LastIndex(typeName, ".")+1:]
 	}
+
+	typeName = strings.Trim(typeName, "[]")
 
 	return typeName
 }

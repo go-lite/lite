@@ -34,12 +34,16 @@ func (e HTTPError) Description() string {
 		return "Bad Request"
 	case http.StatusUnauthorized:
 		return "Unauthorized"
+	case http.StatusForbidden:
+		return "Forbidden"
 	case http.StatusNotFound:
 		return "Not Found"
 	case http.StatusConflict:
 		return "Conflict"
 	case http.StatusInternalServerError:
 		return "Internal Server Error"
+	case http.StatusServiceUnavailable:
+		return "Service Unavailable"
 	default:
 		return "Unknown Error"
 	}
@@ -76,6 +80,22 @@ func NewBadRequestError(message ...string) HTTPError {
 	}
 
 	return DefaultErrorResponses[http.StatusBadRequest]
+}
+
+func NewForbiddenError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusForbidden, message[0])
+	}
+
+	return newErrorResponse(uuid.NewString(), http.StatusForbidden, "Forbidden")
+}
+
+func NewServiceUnavailableError(message ...string) HTTPError {
+	if len(message) > 0 {
+		return newErrorResponse(uuid.NewString(), http.StatusServiceUnavailable, message[0])
+	}
+
+	return newErrorResponse(uuid.NewString(), http.StatusServiceUnavailable, "Service Unavailable")
 }
 
 func NewNotFoundError(message ...string) HTTPError {
