@@ -112,6 +112,42 @@ func TestNewInternalServerError(t *testing.T) {
 	}
 }
 
+func TestNewServiceUnavailableError(t *testing.T) {
+	message := "test service unavailable"
+	err := NewServiceUnavailableError(message)
+
+	if err.Status != http.StatusServiceUnavailable {
+		t.Errorf("expected %v, got %v", http.StatusServiceUnavailable, err.Status)
+	}
+
+	if err.Message != message {
+		t.Errorf("expected %v, got %v", message, err.Message)
+	}
+
+	err = NewServiceUnavailableError()
+	if err.Status != http.StatusServiceUnavailable {
+		t.Errorf("expected %v, got %v", http.StatusServiceUnavailable, err.Status)
+	}
+}
+
+func TestNewForbiddenError(t *testing.T) {
+	message := "test forbidden"
+	err := NewForbiddenError(message)
+
+	if err.Status != http.StatusForbidden {
+		t.Errorf("expected %v, got %v", http.StatusForbidden, err.Status)
+	}
+
+	if err.Message != message {
+		t.Errorf("expected %v, got %v", message, err.Message)
+	}
+
+	err = NewForbiddenError()
+	if err.Status != http.StatusForbidden {
+		t.Errorf("expected %v, got %v", http.StatusForbidden, err.Status)
+	}
+}
+
 func TestNewBadRequestError(t *testing.T) {
 	message := "test bad request"
 	err := NewBadRequestError(message)
