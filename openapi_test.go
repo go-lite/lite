@@ -866,11 +866,12 @@ type testRequest struct {
 }
 
 type testResponse struct {
-	ID        uint64 `json:"id"`
-	Name      string `json:"name"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Gender    Gender `json:"gender" enums:"male,female"`
+	ID          uint64   `json:"id"`
+	Name        string   `json:"name"`
+	FirstName   string   `json:"first_name"`
+	LastName    string   `json:"last_name"`
+	Gender      Gender   `json:"gender" enums:"male,female"`
+	GenderSlice []Gender `json:"gender_slice" enums:"male,female"`
 }
 
 type Gender string

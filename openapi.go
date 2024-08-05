@@ -109,14 +109,7 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 
 			// check if field has tag enums
 			if field.Tag.Get("enums") != "" {
-				enums := strings.Split(field.Tag.Get("enums"), ",")
-				anySlice := make([]any, len(enums))
-
-				for i, v := range enums {
-					anySlice[i] = v
-				}
-
-				schema.Properties[fieldName].Value.WithEnum(anySlice...)
+				setEnums(field.Type, field.Tag, fieldName, schema.Properties[fieldName].Value)
 			}
 
 			ok := getRequiredValue(contentType, field.Type, schema.Properties[fieldName].Value)
@@ -151,6 +144,21 @@ func getRequiredValue(contentType string, fieldType reflect.Type, schema *openap
 		fallthrough
 	default:
 		return true
+	}
+}
+
+func setEnums(fieldType reflect.Type, tag reflect.StructTag, fieldName string, schema *openapi3.Schema) {
+	enums := strings.Split(tag.Get("enums"), ",")
+	anySlice := make([]any, len(enums))
+
+	for i, v := range enums {
+		anySlice[i] = v
+	}
+
+	if fieldType.Kind() == reflect.Slice {
+		schema.Items.Value.WithEnum(anySlice...)
+	} else {
+		schema.WithEnum(anySlice...)
 	}
 }
 

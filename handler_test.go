@@ -705,6 +705,10 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 			FirstName: req.Body.Metadata.FirstName,
 			LastName:  req.Body.Metadata.LastName,
 			Gender:    Male,
+			GenderSlice: []Gender{
+				Male,
+				Female,
+			},
 		}, nil
 	})
 
@@ -758,7 +762,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
 	body, err := io.ReadAll(resp.Body)
 	assert.NoError(suite.T(), err)
-	assert.JSONEq(suite.T(), `{"id":123,"first_name":"John","last_name":"Doe", "gender":"male", "name":""}`, utils.UnsafeString(body))
+	assert.JSONEq(suite.T(), `{"id":123,"first_name":"John","last_name":"Doe", "gender":"male", "gender_slice":["male","female"], "name":""}`, utils.UnsafeString(body))
 }
 
 type requestBodyApplicationPDF struct {
