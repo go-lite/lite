@@ -76,6 +76,20 @@ func TestHTTPError_Description(t *testing.T) {
 		t.Errorf("expected %v, got %v", expectedDescription, err.Description())
 	}
 
+	err = newErrorResponse("test-id", http.StatusForbidden, "test message")
+	expectedDescription = "Forbidden"
+
+	if err.Description() != expectedDescription {
+		t.Errorf("expected %v, got %v", expectedDescription, err.Description())
+	}
+
+	err = newErrorResponse("test-id", http.StatusServiceUnavailable, "test message")
+	expectedDescription = "Service Unavailable"
+
+	if err.Description() != expectedDescription {
+		t.Errorf("expected %v, got %v", expectedDescription, err.Description())
+	}
+
 	err = newErrorResponse("test-id", 999, "test message")
 	expectedDescription = "Unknown Error"
 
