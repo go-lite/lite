@@ -3,6 +3,7 @@ package lite
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"reflect"
@@ -187,7 +188,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			switch fieldVal.Elem().Kind() {
 			case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map, reflect.Complex64, reflect.Complex128,
 				reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer, reflect.Ptr:
-				return fmt.Errorf("not implemented")
+				return errors.New("not implemented")
 			case reflect.Invalid:
 				fallthrough
 			case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
@@ -198,7 +199,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			}
 		case reflect.Invalid, reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer, reflect.Complex64,
 			reflect.Complex128:
-			return fmt.Errorf("not implemented")
+			return errors.New("not implemented")
 		case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
 			reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64,
 			reflect.Array, reflect.Interface, reflect.Map, reflect.Slice, reflect.String, reflect.Struct:
@@ -278,6 +279,7 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			}
 		} else if cookieKey, ok := tagMap["cookie"]; ok {
 			parameter = openapi3.NewCookieParameter(cookieKey)
+
 			err := setParamSchema(s, operation, cookieKey, ftype.Name(), parameter, isRequired, fieldType)
 			if err != nil {
 				return err
@@ -367,10 +369,8 @@ func setResponseSchema(
 
 	if responseSchema != nil {
 		content := openapi3.NewContentWithSchemaRef(
-			openapi3.NewSchemaRef(fmt.Sprintf(
-				"#/components/schemas/%s",
-				tag,
-			), &openapi3.Schema{}),
+			openapi3.NewSchemaRef(
+				"#/components/schemas/"+tag, &openapi3.Schema{}),
 			[]string{resContentType},
 		)
 		response.WithContent(content)
@@ -413,6 +413,7 @@ func setBodySchema(
 		s.openAPISpec.Components.Schemas[fieldName] = bodySchema
 	} else {
 		newInstance := reflect.New(fieldType).Elem().Interface()
+
 		newBodySchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
 			return err
@@ -431,10 +432,8 @@ func setBodySchema(
 
 	requestBody := openapi3.NewRequestBody()
 	content := openapi3.NewContentWithSchemaRef(
-		openapi3.NewSchemaRef(fmt.Sprintf(
-			"#/components/schemas/%s",
-			fieldName,
-		), &openapi3.Schema{}),
+		openapi3.NewSchemaRef(
+			"#/components/schemas/"+fieldName, &openapi3.Schema{}),
 		[]string{contentType},
 	)
 
@@ -508,7 +507,7 @@ func setHeaderScheme(
 		}
 	}
 
-	parameter.Schema = openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", tag), &openapi3.Schema{})
+	parameter.Schema = openapi3.NewSchemaRef("#/components/schemas/"+tag, &openapi3.Schema{})
 	parameter.Required = isRequired
 
 	s.openAPISpec.Components.Parameters[headerName] = &openapi3.ParameterRef{
@@ -616,7 +615,7 @@ func setParamSchema(
 		}
 	}
 
-	parameter.Schema = openapi3.NewSchemaRef(fmt.Sprintf("#/components/schemas/%s", tag), &openapi3.Schema{})
+	parameter.Schema = openapi3.NewSchemaRef("#/components/schemas/"+tag, &openapi3.Schema{})
 	parameter.Required = isRequired
 
 	s.openAPISpec.Components.Parameters[parameterName] = &openapi3.ParameterRef{

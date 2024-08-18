@@ -3,6 +3,7 @@ package lite
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -68,7 +69,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 
 			ctx.SetBody([]byte(formData.Encode()))
 		} else {
-			err := fmt.Errorf("expected map[string]string for form data serialization")
+			err := errors.New("expected map[string]string for form data serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
@@ -77,7 +78,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		if data, ok := srcVal.Interface().([]byte); ok {
 			ctx.SetBody(data)
 		} else {
-			err := fmt.Errorf("expected []byte for octet-stream serialization")
+			err := errors.New("expected []byte for octet-stream serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
@@ -87,7 +88,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		if data, ok := srcVal.Interface().([]byte); ok {
 			ctx.SetBody(data)
 		} else {
-			err := fmt.Errorf("expected []byte for binary file serialization")
+			err := errors.New("expected []byte for binary file serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err

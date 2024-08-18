@@ -1,6 +1,7 @@
 package paseto
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/go-lite/lite/tokens"
@@ -19,7 +20,7 @@ func Parse[T tokens.Claims](token string, key []byte) (T, error) {
 	}
 
 	if !val.Valid() {
-		return val, fmt.Errorf("token is invalid")
+		return val, errors.New("token is invalid")
 	}
 
 	return val, nil
