@@ -3,6 +3,7 @@ package jwt
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,7 +16,7 @@ func Parse[T any](token string) (T, error) {
 
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return result, fmt.Errorf("invalid token format")
+		return result, errors.New("invalid token format")
 	}
 
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
@@ -43,7 +44,7 @@ func Parse[T any](token string) (T, error) {
 
 	if exp, ok := payloadMap["exp"].(float64); ok {
 		if time.Unix(int64(exp), 0).Before(time.Now()) {
-			return result, fmt.Errorf("token has expired")
+			return result, errors.New("token has expired")
 		}
 	}
 

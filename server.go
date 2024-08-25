@@ -2,7 +2,6 @@ package lite
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -91,6 +90,8 @@ type App struct {
 	serverURL string
 
 	mu sync.Mutex
+
+	logger *slog.Logger
 }
 
 func New(config ...Config) *App {
@@ -99,6 +100,7 @@ func New(config ...Config) *App {
 		openAPISpec:   newOpenAPISpec(),
 		openAPIConfig: defaultOpenAPIConfig,
 		address:       ":9000",
+		logger:        slog.Default(),
 	}
 
 	for _, c := range config {
@@ -109,6 +111,12 @@ func New(config ...Config) *App {
 }
 
 type Config func(s *App)
+
+func SetLogger(logger *slog.Logger) Config {
+	return func(s *App) {
+		s.logger = logger
+	}
+}
 
 func SetDisableSwagger(disable bool) Config {
 	return func(s *App) {
@@ -198,12 +206,12 @@ func (s *App) saveOpenAPIToFile(path string, swaggerSpec []byte) error {
 
 	err := osMkdirAll(jsonFolder, 0o750)
 	if err != nil {
-		return errors.NewInternalServerError(fmt.Sprintf("error creating directory %s", jsonFolder))
+		return errors.NewInternalServerError("error creating directory " + jsonFolder)
 	}
 
 	f, err := osCreate(path)
 	if err != nil {
-		return errors.NewInternalServerError(fmt.Sprintf("error creating file %s", path))
+		return errors.NewInternalServerError("error creating file " + path)
 	}
 
 	file := wrapperWriteCloser(f)
@@ -310,10 +318,8 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 
 		if responseSchema != nil {
 			content := openapi3.NewContentWithSchemaRef(
-				openapi3.NewSchemaRef(fmt.Sprintf(
-					"#/components/schemas/%s",
-					"httpGenericError",
-				), &openapi3.Schema{}),
+				openapi3.NewSchemaRef(
+					"#/components/schemas/httpGenericError", &openapi3.Schema{}),
 				consume,
 			)
 			response.WithContent(content)

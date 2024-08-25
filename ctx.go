@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"reflect"
 
+	"github.com/go-lite/lite/mime"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
 )
@@ -44,7 +45,7 @@ type Context[Request any] interface {
 	Set(key string, val string)
 	Status(status int) Context[Request]
 	// SetContentType sets the Content-Type response header with the given type and charset.
-	SetContentType(extension string, charset ...string) Context[Request]
+	SetContentType(extension mime.Mime, charset ...string) Context[Request]
 }
 
 var (
@@ -265,14 +266,14 @@ func (c *ContextWithRequest[Request]) Status(status int) Context[Request] {
 }
 
 // SetContentType sets the Content-Type response header with the given type and charset.
-func (c *ContextNoRequest) SetContentType(extension string, charset ...string) Context[any] {
+func (c *ContextNoRequest) SetContentType(extension mime.Mime, charset ...string) Context[any] {
 	c.ctx = c.ctx.Type(extension, charset...)
 
 	return c
 }
 
 // SetContentType sets the Content-Type response header with the given type and charset.
-func (c *ContextWithRequest[Request]) SetContentType(extension string, charset ...string) Context[Request] {
+func (c *ContextWithRequest[Request]) SetContentType(extension mime.Mime, charset ...string) Context[Request] {
 	c.ctx = c.ctx.Type(extension, charset...)
 
 	return c

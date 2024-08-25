@@ -33,7 +33,7 @@ func newLiteContext[Request any, Contexter Context[Request]](ctx ContextNoReques
 
 func fiberHandler[ResponseBody, Request any, Contexter Context[Request]](
 	controller func(c Contexter) (ResponseBody, error),
-	path string,
+	path string, logger *slog.Logger,
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		c.Context().SetContentType("application/json")
@@ -49,8 +49,12 @@ func fiberHandler[ResponseBody, Request any, Contexter Context[Request]](
 			if errors.As(err, &httpError) {
 				c.Status(httpError.StatusCode())
 
+				logger.ErrorContext(ctx.Context(), "error", slog.Any("error", err))
+
 				return c.JSON(httpError)
 			}
+
+			logger.ErrorContext(ctx.Context(), "error", slog.Any("error", err))
 
 			c.Status(http.StatusInternalServerError)
 
@@ -98,7 +102,7 @@ func Get[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodGet),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -117,7 +121,7 @@ func Post[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodPost),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -136,7 +140,7 @@ func Put[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodPut),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -155,7 +159,7 @@ func Delete[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodDelete),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -174,7 +178,7 @@ func Patch[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodPatch),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -193,7 +197,7 @@ func Head[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodHead),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -212,7 +216,7 @@ func Connect[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodConnect),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -231,7 +235,7 @@ func Trace[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodTrace),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }
@@ -250,7 +254,7 @@ func Options[ResponseBody, Request any, Contexter Context[Request]](
 			contentType: "application/json",
 			statusCode:  getStatusCode(http.MethodOptions),
 		},
-		fiberHandler[ResponseBody, Request](controller, app.basePath+path),
+		fiberHandler[ResponseBody, Request](controller, app.basePath+path, app.logger),
 		middleware...,
 	)
 }

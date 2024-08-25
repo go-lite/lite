@@ -3,6 +3,7 @@ package lite
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -181,7 +182,7 @@ func parseBinaryData(ctx *fasthttp.RequestCtx, dst any) error {
 		return nil
 	}
 
-	return fmt.Errorf("unsupported type for binary data")
+	return errors.New("unsupported type for binary data")
 }
 
 func mapToStruct(data map[string]any, dst any) error {
