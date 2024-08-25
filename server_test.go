@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -36,6 +37,7 @@ func TestNewOpenAPISpec(t *testing.T) {
 func TestNewApp(t *testing.T) {
 	app := New(
 		SetDisableSwagger(true),
+		SetLogger(slog.Default()),
 		SetSwaggerURL("/swagger/*"),
 		SetOpenAPIPath("/api/openapi.json"),
 		SetUIHandler(defaultOpenAPIHandler),

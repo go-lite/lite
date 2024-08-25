@@ -46,8 +46,8 @@ func (r Route[ResponseBody, Request]) AddTags(tags ...string) Route[ResponseBody
 	return r
 }
 
-func (r Route[ResponseBody, Request]) SetResponseContentType(contentType string) Route[ResponseBody, Request] {
-	r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content[contentType] = r.operation.Responses.
+func (r Route[ResponseBody, Request]) SetResponseContentType(contentType ContentType) Route[ResponseBody, Request] {
+	r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content[string(contentType)] = r.operation.Responses.
 		Value(strconv.Itoa(r.statusCode)).Value.Content[r.contentType]
 
 	delete(r.operation.Responses.Value(strconv.Itoa(r.statusCode)).Value.Content, r.contentType)
@@ -55,9 +55,9 @@ func (r Route[ResponseBody, Request]) SetResponseContentType(contentType string)
 	return r
 }
 
-func (r Route[ResponseBody, Request]) AddErrorResponse(statusCode int, contentType ...string) Route[ResponseBody, Request] {
+func (r Route[ResponseBody, Request]) AddErrorResponse(statusCode int, contentType ...ContentType) Route[ResponseBody, Request] {
 	if len(contentType) == 0 {
-		contentType = []string{r.contentType}
+		contentType = []ContentType{ContentType(r.contentType)}
 	}
 
 	for _, c := range contentType {
@@ -70,7 +70,7 @@ func (r Route[ResponseBody, Request]) AddErrorResponse(statusCode int, contentTy
 			openapi3.NewSchemaRef(
 				"#/components/schemas/httpGenericError",
 				&openapi3.Schema{}),
-			[]string{c},
+			[]string{string(c)},
 		)
 		response.WithContent(content)
 

@@ -90,6 +90,8 @@ type App struct {
 	serverURL string
 
 	mu sync.Mutex
+
+	logger *slog.Logger
 }
 
 func New(config ...Config) *App {
@@ -98,6 +100,7 @@ func New(config ...Config) *App {
 		openAPISpec:   newOpenAPISpec(),
 		openAPIConfig: defaultOpenAPIConfig,
 		address:       ":9000",
+		logger:        slog.Default(),
 	}
 
 	for _, c := range config {
@@ -108,6 +111,12 @@ func New(config ...Config) *App {
 }
 
 type Config func(s *App)
+
+func SetLogger(logger *slog.Logger) Config {
+	return func(s *App) {
+		s.logger = logger
+	}
+}
 
 func SetDisableSwagger(disable bool) Config {
 	return func(s *App) {

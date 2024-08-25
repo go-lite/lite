@@ -46,20 +46,20 @@ func serializeResponse(ctx *fasthttp.RequestCtx, src any) error {
 func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 	contentType := ctx.Response.Header.ContentType()
 
-	switch string(contentType) {
-	case "application/json":
+	switch ContentType(contentType) {
+	case ContentTypeJSON:
 		if err := json.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
 		}
-	case "application/xml":
+	case ContentTypeXML:
 		if err := xml.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
 		}
-	case "multipart/form-data", "application/x-www-form-urlencoded":
+	case ContentTypeXFormData, ContentTypeFormData:
 		if form, ok := srcVal.Interface().(map[string]string); ok {
 			formData := url.Values{}
 
@@ -74,17 +74,36 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 
 			return err
 		}
-	case "application/octet-stream":
+	case ContentTypeOctetStream, ContentTypePDF, ContentTypeZIP, ContentTypePNG, ContentTypeJPEG, ContentTypeGIF,
+		ContentTypeWEBP, ContentTypeSVG, ContentTypeTIFF, ContentTypeICO, ContentTypeJNG, ContentTypeDOC, ContentTypeBMP,
+		ContentTypeWOFF, ContentTypeWOFF2, ContentTypeJAR, ContentTypeHQX, ContentTypeXLS, ContentTypeXLSX, ContentTypePPT,
+		ContentTypePPTX, ContentTypeDOCX, ContentTypeWMLC, ContentTypeWASM, ContentType7Z, ContentTypeCCO, ContentTypeJARDIFF,
+		ContentTypeJNLP, ContentTypeEOT, ContentTypeODG, ContentTypeODP, ContentTypeODS, ContentTypeODT, ContentTypeRAR,
+		ContentTypeRPM, ContentTypeSEA, ContentTypeSWF, ContentTypeSIT, ContentTypeTCL, ContentTypeCRT, ContentTypeXPI,
+		ContentTypeXHTML, ContentTypeAVIF, ContentTypeWBMP, ContentTypePS, ContentTypeRTF, ContentTypeM3U8, ContentTypeKML,
+		ContentTypeKMZ, ContentTypeXSPF, ContentTypeRUN, ContentTypePL, ContentTypePRC:
 		if data, ok := srcVal.Interface().([]byte); ok {
 			ctx.SetBody(data)
 		} else {
-			err := errors.New("expected []byte for octet-stream serialization")
+			err := errors.New("expected []byte for binary file serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
 
 			return err
 		}
-	case "application/pdf", "application/zip", "image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml",
-		"image/tiff", "image/vnd.microsoft.icon", "image/vnd.wap.wbmp", "image/x-icon", "image/x-jng", "image/jpg":
+	case ContentTypeTXT, ContentTypeHTML, ContentTypeCSS, ContentTypeJS, ContentTypeATOM,
+		ContentTypeRSS, ContentTypeMML, ContentTypeJAD, ContentTypeWML, ContentTypeHTC:
+		if data, ok := srcVal.Interface().(string); ok {
+			ctx.SetBodyString(data)
+		} else {
+			err := errors.New("expected string for text serialization")
+			ctx.Error(err.Error(), StatusInternalServerError)
+
+			return err
+		}
+	case ContentTypeMIDI, ContentTypeMP3, ContentTypeOGG, ContentTypeM4A, ContentTypeRA,
+		ContentType3GP, ContentTypeTS, ContentTypeMP4, ContentTypeMPEG, ContentTypeMOV,
+		ContentTypeWEBM, ContentTypeFLV, ContentTypeM4V, ContentTypeMNG, ContentTypeASX,
+		ContentTypeWMV, ContentTypeAVI:
 		if data, ok := srcVal.Interface().([]byte); ok {
 			ctx.SetBody(data)
 		} else {
