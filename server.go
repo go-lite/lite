@@ -103,6 +103,7 @@ func New(config ...Config) *App {
 		openAPIConfig: defaultOpenAPIConfig,
 		address:       ":9000",
 		logger:        slog.Default(),
+		validator:     validator.New(),
 	}
 
 	for _, c := range config {

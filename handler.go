@@ -77,6 +77,8 @@ func Group(app *App, path string) *App {
 		basePath:      app.basePath,
 		address:       app.address,
 		serverURL:     app.serverURL,
+		logger:        app.logger,
+		validator:     app.validator,
 	}
 
 	newApp.basePath += path
