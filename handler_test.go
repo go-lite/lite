@@ -2,8 +2,8 @@ package lite
 
 import (
 	"bytes"
-	"github.com/go-lite/lite/errors"
 	"github.com/go-lite/lite/mime"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestHandlerTestSuite(t *testing.T) {
 }
 
 func (suite *HandlerTestSuite) TestUse() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Use(app, func(c *fiber.Ctx) error {
 		c.Set("test", "test")
 		return nil
@@ -44,7 +44,7 @@ func (suite *HandlerTestSuite) TestUse() {
 }
 
 func (suite *HandlerTestSuite) TestGroup() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	newApp := Group(app, "/foo/")
 
@@ -60,7 +60,7 @@ func (suite *HandlerTestSuite) TestGroup() {
 }
 
 func (suite *HandlerTestSuite) TestGroup2() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	newApp := Group(app, "/")
 
@@ -85,7 +85,8 @@ type responserequestApplicationJSON struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests() {
-	app := New()
+	app := New(SetValidator(validator.New()))
+
 	Get(app, "/foo/:id", func(c *ContextWithRequest[requestApplicationJSON]) (responserequestApplicationJSON, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -117,7 +118,7 @@ type responseApplicationXML struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationXML_Requests() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo/:id", func(c *ContextWithRequest[requestApplicationXML]) (responseApplicationXML, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -152,7 +153,7 @@ type responseApplicationJSONError struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_ApplicationJSON_Requests_Error() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo/:id", func(c *ContextWithRequest[requestApplicationJSONError]) (responseApplicationJSONError, error) {
 		return responseApplicationJSONError{}, assert.AnError
 	})
@@ -174,8 +175,7 @@ type responsePath struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Path_Error() {
-
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo/:id", func(c *ContextWithRequest[requestPath]) (responsePath, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -183,7 +183,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Path_Error() {
 		}
 
 		if req.ID == 0 {
-			return responsePath{}, errors.NewBadRequestError("ID is required")
+			return responsePath{}, NewBadRequestError("ID is required")
 		}
 
 		return responsePath{}, nil
@@ -206,7 +206,7 @@ type responseQuery struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Query() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo", func(c *ContextWithRequest[requestQuery]) (responseQuery, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -229,7 +229,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Query() {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Query_Error() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo", func(c *ContextWithRequest[requestPath]) (responsePath, error) {
 		return responsePath{}, assert.AnError
 	})
@@ -251,8 +251,7 @@ type responseHeader struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Header() {
-
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo", func(c *ContextWithRequest[requestHeader]) (responseHeader, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -285,7 +284,7 @@ type responseHeaderErr struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Header_Error() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo", func(c *ContextWithRequest[requestHeaderErr]) (responseHeaderErr, error) {
 		return responseHeaderErr{}, assert.AnError
 	})
@@ -312,8 +311,7 @@ type responseBody struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body() {
-
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[requestBody]) (responseBody, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -348,7 +346,7 @@ type responseBodyError struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_Error() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[requestBodyError]) (responseBodyError, error) {
 		return responseBodyError{}, assert.AnError
 	})
@@ -372,7 +370,7 @@ type responseBodyXML struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[requestBodyXML]) (responseBodyXML, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -407,7 +405,7 @@ type responseBodyXMLError struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML_Error() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[requestBodyXMLError]) (responseBodyXMLError, error) {
 		return responseBodyXMLError{}, assert.AnError
 	})
@@ -431,7 +429,7 @@ type responseBodyXMLInvalid struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationXML_Invalid() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[requestBodyXMLInvalid]) (responseBodyXMLInvalid, error) {
 		return responseBodyXMLInvalid{}, assert.AnError
 	})
@@ -455,7 +453,7 @@ type responseBodyPut struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_Put() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Put(app, "/foo", func(c *ContextWithRequest[requestBodyPut]) (responseBodyPut, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -485,7 +483,7 @@ type requestDelete struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Delete() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Delete(app, "/foo/:id", func(c *ContextWithRequest[requestDelete]) (ret struct{}, err error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -493,7 +491,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Delete() {
 		}
 
 		if req.ID == 0 {
-			err = errors.NewBadRequestError("ID is required")
+			err = NewBadRequestError("ID is required")
 
 			return
 		}
@@ -513,7 +511,7 @@ type requestPatch struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Patch(app, "/foo/:id", func(c *ContextWithRequest[requestPatch]) (ret struct{}, err error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -521,7 +519,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Patch() {
 		}
 
 		if req.ID == 0 {
-			err = errors.NewBadRequestError("ID is required")
+			err = NewBadRequestError("ID is required")
 
 			return
 		}
@@ -541,7 +539,7 @@ type requestPatchError struct {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Patch(app, "/foo/:id", func(c *ContextWithRequest[requestPatchError]) (ret struct{}, err error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -549,7 +547,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
 		}
 
 		if req.ID == 0 {
-			err = errors.NewBadRequestError("ID is required")
+			err = NewBadRequestError("ID is required")
 
 			return
 		}
@@ -565,7 +563,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_PatchError() {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Head() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Head(app, "/foo", func(c *ContextNoRequest) (ret struct{}, err error) {
 		c.SetContentType(mime.ApplicationJSON)
 		c.Status(200)
@@ -581,7 +579,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Head() {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Options() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Options(app, "/foo/", func(c *ContextNoRequest) (ret struct{}, err error) {
 
 		return
@@ -595,7 +593,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Options() {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Trace() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Trace(app, "/foo/", func(c *ContextNoRequest) (ret struct{}, err error) {
 
 		return
@@ -609,7 +607,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Trace() {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Connect() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Connect(app, "/foo/", func(c *ContextNoRequest) (ret struct{}, err error) {
 
 		return
@@ -655,7 +653,7 @@ type responseRoute struct {
 }
 
 func (suite *HandlerTestSuite) TestRegisterRoute() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	assert.Panicsf(suite.T(), func() {
 		_ = registerRoute[requestRoute, responseRoute](
@@ -676,7 +674,7 @@ func (suite *HandlerTestSuite) TestRegisterRoute() {
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	Post(app, "/test/:id/:is_admin", func(c *ContextWithRequest[testRequest]) (testResponse, error) {
 		req, err := c.Requests()
@@ -697,7 +695,7 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 
 		method := c.Method()
 		if method != http.MethodPost {
-			return testResponse{}, errors.NewBadRequestError("Method is not POST")
+			return testResponse{}, NewBadRequestError("Method is not POST")
 		}
 
 		return testResponse{
@@ -772,7 +770,7 @@ type requestBodyApplicationPDF struct {
 type responseBodyApplicationPDF = []byte
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_ApplicationPDF() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[requestBodyApplicationPDF]) (responseBodyApplicationPDF, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -918,12 +916,30 @@ startxref
             type: string
         httpGenericError:
             properties:
-                id:
+                '@context':
                     type: string
-                message:
+                '@type':
+                    type: string
+                description:
                     type: string
                 status:
                     type: integer
+                title:
+                    type: string
+                violations:
+                    items:
+                        properties:
+                            code:
+                                type: string
+                            message:
+                                type: string
+                            more:
+                                additionalProperties: {}
+                                type: object
+                            propertyPath:
+                                type: string
+                        type: object
+                    type: array
             type: object
         uint8:
             format: binary
@@ -971,13 +987,14 @@ paths:
                         multipart/form-data:
                             schema:
                                 $ref: '#/components/schemas/httpGenericError'
-                    description: Internal Server Error`
+                    description: Internal Server Error
+`
 
 	assert.YAMLEqf(suite.T(), expected, string(spec), "openapi generated spec")
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[[]byte]) (string, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -1006,12 +1023,30 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
     schemas:
         httpGenericError:
             properties:
-                id:
+                '@context':
                     type: string
-                message:
+                '@type':
+                    type: string
+                description:
                     type: string
                 status:
                     type: integer
+                title:
+                    type: string
+                violations:
+                    items:
+                        properties:
+                            code:
+                                type: string
+                            message:
+                                type: string
+                            more:
+                                additionalProperties: {}
+                                type: object
+                            propertyPath:
+                                type: string
+                        type: object
+                    type: array
             type: object
         string:
             type: string
@@ -1066,7 +1101,7 @@ paths:
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_Body_String() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Post(app, "/foo", func(c *ContextWithRequest[string]) (string, error) {
 		req, err := c.Requests()
 		if err != nil {
@@ -1095,12 +1130,30 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_String() {
     schemas:
         httpGenericError:
             properties:
-                id:
+                '@context':
                     type: string
-                message:
+                '@type':
+                    type: string
+                description:
                     type: string
                 status:
                     type: integer
+                title:
+                    type: string
+                violations:
+                    items:
+                        properties:
+                            code:
+                                type: string
+                            message:
+                                type: string
+                            more:
+                                additionalProperties: {}
+                                type: object
+                            propertyPath:
+                                type: string
+                        type: object
+                    type: array
             type: object
         string:
             type: string
@@ -1179,12 +1232,12 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_StringJSONSwagger() {
 	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)
 
-	expected := `{"components":{"schemas":{"httpGenericError":{"properties":{"id":{"type":"string"},"message":{"type":"string"},"status":{"type":"integer"}},"type":"object"},"string":{"type":"string"}}},"info":{"description":"OpenAPI","title":"OpenAPI","version":"0.0.1"},"openapi":"3.0.3","paths":{"/foo":{"post":{"requestBody":{"content":{"text/plain":{"schema":{"$ref":"#/components/schemas/string"}}}},"responses":{"201":{"content":{"text/plain":{"schema":{"$ref":"#/components/schemas/string"}}},"description":"OK"},"400":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"application/xml":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"multipart/form-data":{"schema":{"$ref":"#/components/schemas/httpGenericError"}}},"description":"Bad Request"},"500":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"application/xml":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"multipart/form-data":{"schema":{"$ref":"#/components/schemas/httpGenericError"}}},"description":"Internal Server Error"}}}}}}`
+	expected := `{"components":{"schemas":{"httpGenericError":{"properties":{"@context":{"type":"string"},"@type":{"type":"string"},"description":{"type":"string"},"status":{"type":"integer"},"title":{"type":"string"},"violations":{"items":{"properties":{"code":{"type":"string"},"message":{"type":"string"},"more":{"additionalProperties":{},"type":"object"},"propertyPath":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"string":{"type":"string"}}},"info":{"description":"OpenAPI","title":"OpenAPI","version":"0.0.1"},"openapi":"3.0.3","paths":{"/foo":{"post":{"requestBody":{"content":{"text/plain":{"schema":{"$ref":"#/components/schemas/string"}}}},"responses":{"201":{"content":{"text/plain":{"schema":{"$ref":"#/components/schemas/string"}}},"description":"OK"},"400":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"application/xml":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"multipart/form-data":{"schema":{"$ref":"#/components/schemas/httpGenericError"}}},"description":"Bad Request"},"500":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"application/xml":{"schema":{"$ref":"#/components/schemas/httpGenericError"}},"multipart/form-data":{"schema":{"$ref":"#/components/schemas/httpGenericError"}}},"description":"Internal Server Error"}}}}}}`
 	assert.JSONEq(suite.T(), expected, string(spec), "openapi generated spec")
 }
 
 func (suite *HandlerTestSuite) TestContextWithRequest_SimpleReturnList() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 	Get(app, "/foo", func(c *ContextNoRequest) (ret List[string], err error) {
 		return
 	})

@@ -2,6 +2,7 @@ package lite
 
 import (
 	"context"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -65,7 +66,7 @@ func (suite *CtxTestSuite) TestContextNoRequest_Requests() {
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_Body_Image_Byte() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
@@ -136,13 +137,28 @@ type pathParams struct {
 }
 
 type bodyTest struct {
-	A string `json:"A" yaml:"A" xml:"A"`
+	A string `json:"A" yaml:"A" xml:"A" validate:"required,min=3,max=10"`
 	B int    `json:"B" yaml:"B" xml:"B"`
 	C bool   `json:"C" yaml:"C" xml:"C"`
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests() {
-	app := New()
+	app := New(SetValidator(validator.New()))
+
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
+
+	ctx.Request().Header.Set("Content-Type", "application/json")
+	ctx.Request().SetBodyString(`{"A":"aaa","B":1,"C":true}`)
+
+	c := newContext[request](ctx, app, "/foo")
+	req, err := c.Requests()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), bodyTest{A: "aaa", B: 1, C: true}, req.Body)
+}
+
+func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_RequestsValidationError() {
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
@@ -151,24 +167,23 @@ func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests() {
 	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
 
 	c := newContext[request](ctx, app, "/foo")
-	req, err := c.Requests()
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), bodyTest{A: "a", B: 1, C: true}, req.Body)
+	_, err := c.Requests()
+	assert.Error(suite.T(), err)
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_ApplicationXML_Requests() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/xml")
-	ctx.Request().SetBodyString(`<request><A>a</A><B>1</B><C>true</C></request>`)
+	ctx.Request().SetBodyString(`<request><A>aaa</A><B>1</B><C>true</C></request>`)
 
 	c := newContext[request](ctx, app, "/foo")
 	req, err := c.Requests()
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), bodyTest{A: "a", B: 1, C: true}, req.Body)
+	assert.Equal(suite.T(), bodyTest{A: "aaa", B: 1, C: true}, req.Body)
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests_Error() {
@@ -186,14 +201,14 @@ func (suite *CtxTestSuite) TestContextWithRequest_ApplicationJSON_Requests_Error
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_Path() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/42")
-	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+	ctx.Request().SetBodyString(`{"A":"aaa","B":1,"C":true}`)
 
 	c := newContext[request](ctx, app, "/foo/:id")
 	req, err := c.Requests()
@@ -202,7 +217,7 @@ func (suite *CtxTestSuite) TestContextWithRequest_Path() {
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_MultiPath() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
@@ -264,14 +279,14 @@ func (suite *CtxTestSuite) TestContextWithRequest_Missing_Path_Error() {
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_Query() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
 
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().SetRequestURI("/foo/42?q=true")
-	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+	ctx.Request().SetBodyString(`{"A":"aaa","B":1,"C":true}`)
 
 	c := newContext[request](ctx, app, "/foo/:id")
 	req, err := c.Requests()
@@ -295,7 +310,7 @@ func (suite *CtxTestSuite) TestContextWithRequest_Query_Error() {
 }
 
 func (suite *CtxTestSuite) TestContextWithRequest_Header() {
-	app := New()
+	app := New(SetValidator(validator.New()))
 
 	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.app.ReleaseCtx(ctx)
@@ -303,7 +318,7 @@ func (suite *CtxTestSuite) TestContextWithRequest_Header() {
 	ctx.Request().Header.Set("Content-Type", "application/json")
 	ctx.Request().Header.Set("X-Real-Ip", "true")
 	ctx.Request().SetRequestURI("/foo/42?q=true")
-	ctx.Request().SetBodyString(`{"A":"a","B":1,"C":true}`)
+	ctx.Request().SetBodyString(`{"A":"aaa","B":1,"C":true}`)
 
 	c := newContext[request](ctx, app, "/foo/:id")
 	req, err := c.Requests()

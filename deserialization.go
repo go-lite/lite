@@ -3,8 +3,6 @@ package lite
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
-	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -34,7 +32,13 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 		}
 
 		if tag == "" {
-			return fmt.Errorf("missing tag for field %s", field.Name)
+			return InternalServerError{
+				Context:     "/api/contexts/DeserializationError",
+				Type:        "DeserializationError",
+				Status:      StatusInternalServerError,
+				Title:       "Internal server error",
+				Description: "Missing tag for field " + field.Name,
+			}
 		}
 
 		tagMap := parseTag(tag)
@@ -54,7 +58,18 @@ func deserialize(ctx *fasthttp.RequestCtx, dstVal reflect.Value, params map[stri
 
 				paramsValue, ok := params[paramsKey]
 				if !ok {
-					return fmt.Errorf("missing params parameter: %s", paramsKey)
+					return InternalServerError{
+						Context:     "/api/contexts/DeserializationError",
+						Type:        "DeserializationError",
+						Title:       "Internal server error",
+						Description: "Missing params parameter: " + paramsKey,
+						Violations: []Violation{
+							{
+								PropertyPath: paramsKey,
+								Message:      "Missing params parameter: " + paramsKey,
+							},
+						},
+					}
 				}
 
 				valueStr = paramsValue
@@ -126,7 +141,18 @@ func deserializeBody(ctx *fasthttp.RequestCtx, fieldVal reflect.Value) error {
 	case strings.HasPrefix(contentType, "image/"):
 		return parseBinaryData(ctx, fieldVal.Addr().Interface())
 	default:
-		return fmt.Errorf("unsupported content type: %s", contentType)
+		return InternalServerError{
+			Context:     "/api/contexts/DeserializationError",
+			Type:        "DeserializationError",
+			Title:       "Internal server error",
+			Description: "Unsupported content type: " + contentType,
+			Violations: []Violation{
+				{
+					PropertyPath: "body",
+					Message:      "Unsupported content type: " + contentType,
+				},
+			},
+		}
 	}
 
 	return nil
@@ -146,7 +172,19 @@ func parseFormURLEncoded(ctx *fasthttp.RequestCtx, dst any) error {
 func parseMultipartForm(ctx *fasthttp.RequestCtx, dst any) error {
 	mr, err := ctx.MultipartForm()
 	if err != nil {
-		return err
+		return InternalServerError{
+			Context:     "/api/contexts/DeserializationError",
+			Type:        "DeserializationError",
+			Status:      StatusInternalServerError,
+			Title:       "Internal server error",
+			Description: "Failed to parse multipart form",
+			Violations: []Violation{
+				{
+					PropertyPath: "body",
+					Message:      err.Error(),
+				},
+			},
+		}
 	}
 
 	data := make(map[string]any)
@@ -182,7 +220,18 @@ func parseBinaryData(ctx *fasthttp.RequestCtx, dst any) error {
 		return nil
 	}
 
-	return errors.New("unsupported type for binary data")
+	return InternalServerError{
+		Context:     "/api/contexts/DeserializationError",
+		Type:        "DeserializationError",
+		Title:       "Internal server error",
+		Description: "Unsupported type for binary data",
+		Violations: []Violation{
+			{
+				PropertyPath: "body",
+				Message:      "Unsupported type for binary data",
+			},
+		},
+	}
 }
 
 func mapToStruct(data map[string]any, dst any) error {
@@ -242,7 +291,18 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 	case reflect.Bool:
 		boolValue, err := strconv.ParseBool(valueStr.(string))
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/DeserializationError",
+				Type:        "DeserializationError",
+				Title:       "Internal server error",
+				Description: "Failed to parse bool",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldVal.Type().Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		fieldVal.SetBool(boolValue)
@@ -251,24 +311,68 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		if fieldVal.Type().Elem().Kind() == reflect.Uint8 {
 			fieldVal.SetBytes([]byte(valueStr.(string)))
 		} else {
-			return fmt.Errorf("unsupported slice type %s", fieldVal.Type().Elem().Kind())
+			return InternalServerError{
+				Context:     "/api/contexts/DeserializationError",
+				Type:        "DeserializationError",
+				Title:       "Internal server error",
+				Description: "Unsupported slice type " + fieldVal.Type().Elem().Kind().String(),
+				Violations: []Violation{
+					{
+						PropertyPath: fieldVal.Type().Elem().Name(),
+						Message:      "Unsupported slice type " + fieldVal.Type().Elem().Kind().String(),
+					},
+				},
+			}
 		}
 	case reflect.Interface:
 		fieldVal.Set(reflect.ValueOf(valueStr))
 	case reflect.Map:
 		if fieldVal.Type().Key().Kind() == reflect.String {
 			if err := json.Unmarshal([]byte(valueStr.(string)), fieldVal.Addr().Interface()); err != nil {
-				return err
+				return InternalServerError{
+					Context:     "/api/contexts/DeserializationError",
+					Type:        "DeserializationError",
+					Title:       "Internal server error",
+					Description: "Failed to unmarshal map",
+					Violations: []Violation{
+						{
+							PropertyPath: fieldVal.Type().Key().Name(),
+							Message:      err.Error(),
+						},
+					},
+				}
 			}
 		} else {
-			return fmt.Errorf("unsupported map key type %s", fieldVal.Type().Key().Kind())
+			return InternalServerError{
+				Context:     "/api/contexts/DeserializationError",
+				Type:        "DeserializationError",
+				Title:       "Internal server error",
+				Description: "Unsupported map key type " + fieldVal.Type().Key().Kind().String(),
+				Violations: []Violation{
+					{
+						PropertyPath: fieldVal.Type().Key().Name(),
+						Message:      "Unsupported map key type " + fieldVal.Type().Key().Kind().String(),
+					},
+				},
+			}
 		}
 
 	case reflect.Invalid, reflect.Uintptr, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func,
 		reflect.UnsafePointer:
 		fallthrough
 	default:
-		return fmt.Errorf("unsupported kind %s", fieldVal.Kind())
+		return InternalServerError{
+			Context:     "/api/contexts/DeserializationError",
+			Type:        "DeserializationError",
+			Title:       "Internal server error",
+			Description: "Unsupported kind " + fieldVal.Kind().String(),
+			Violations: []Violation{
+				{
+					PropertyPath: fieldVal.Type().Name(),
+					Message:      "Unsupported kind " + fieldVal.Kind().String(),
+				},
+			},
+		}
 	}
 
 	return nil
@@ -277,7 +381,18 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 func setIntValue(fieldVal reflect.Value, valueStr string) error {
 	intValue, err := strconv.ParseInt(valueStr, 10, fieldVal.Type().Bits())
 	if err != nil {
-		return err
+		return InternalServerError{
+			Context:     "/api/contexts/DeserializationError",
+			Type:        "DeserializationError",
+			Title:       "Internal server error",
+			Description: "Failed to parse int",
+			Violations: []Violation{
+				{
+					PropertyPath: fieldVal.Type().Name(),
+					Message:      err.Error(),
+				},
+			},
+		}
 	}
 
 	fieldVal.SetInt(intValue)
@@ -288,7 +403,18 @@ func setIntValue(fieldVal reflect.Value, valueStr string) error {
 func setUintValue(fieldVal reflect.Value, valueStr string) error {
 	uintValue, err := strconv.ParseUint(valueStr, 10, fieldVal.Type().Bits())
 	if err != nil {
-		return err
+		return InternalServerError{
+			Context:     "/api/contexts/DeserializationError",
+			Type:        "DeserializationError",
+			Title:       "Internal server error",
+			Description: "Failed to parse uint",
+			Violations: []Violation{
+				{
+					PropertyPath: fieldVal.Type().Name(),
+					Message:      err.Error(),
+				},
+			},
+		}
 	}
 
 	fieldVal.SetUint(uintValue)
@@ -299,7 +425,18 @@ func setUintValue(fieldVal reflect.Value, valueStr string) error {
 func setFloatValue(fieldVal reflect.Value, valueStr string) error {
 	floatValue, err := strconv.ParseFloat(valueStr, fieldVal.Type().Bits())
 	if err != nil {
-		return err
+		return InternalServerError{
+			Context:     "/api/contexts/DeserializationError",
+			Type:        "DeserializationError",
+			Title:       "Internal server error",
+			Description: "Failed to parse float",
+			Violations: []Violation{
+				{
+					PropertyPath: fieldVal.Type().Name(),
+					Message:      err.Error(),
+				},
+			},
+		}
 	}
 
 	fieldVal.SetFloat(floatValue)

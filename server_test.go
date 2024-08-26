@@ -43,6 +43,7 @@ func TestNewApp(t *testing.T) {
 		SetUIHandler(defaultOpenAPIHandler),
 		SetDisableLocalSave(false),
 		SetTypeOfExtension(JSONExtension),
+		SetValidator(nil),
 		SetAddress(":8080"),
 	)
 
@@ -211,7 +212,7 @@ func TestApp_SaveOpenAPISpec_Error(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func mockJSONToYAML(d []byte) ([]byte, error) {
+func mockJSONToYAML(_ []byte) ([]byte, error) {
 	return nil, errors.New("error converting to YAML")
 }
 
@@ -400,7 +401,7 @@ func TestApp_saveOpenAPIToFile2(t *testing.T) {
 
 type writeCloserFail struct{}
 
-func (w writeCloserFail) Write(p []byte) (n int, err error) {
+func (w writeCloserFail) Write(_ []byte) (n int, err error) {
 	return 0, assert.AnError
 }
 
