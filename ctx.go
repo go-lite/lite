@@ -2,8 +2,8 @@ package lite
 
 import (
 	"context"
-	"errors"
 	"mime/multipart"
+	"net/http"
 	"reflect"
 
 	"github.com/go-lite/lite/mime"
@@ -99,7 +99,13 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 				return req, err
 			}
 		} else {
-			return req, errors.New("unsupported slice type")
+			return req, BadRequestError{
+				Context:     "/api/contexts/RequestBodyError",
+				Type:        "RequestBodyError",
+				Status:      http.StatusBadRequest,
+				Title:       "A request body is required",
+				Description: "Unsupported slice type",
+			}
 		}
 	case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
@@ -107,7 +113,20 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 		reflect.Map, reflect.Ptr, reflect.UnsafePointer:
 		fallthrough
 	default:
-		return req, errors.New("unsupported type")
+		return req, BadRequestError{
+			Context:     "/api/contexts/RequestBodyError",
+			Type:        "RequestBodyError",
+			Status:      http.StatusBadRequest,
+			Title:       "A request body is required",
+			Description: "Unsupported type",
+		}
+	}
+
+	if typeOfReq.Kind() == reflect.Struct {
+		err := c.app.validate(req)
+		if err != nil {
+			return req, err
+		}
 	}
 
 	return req, nil

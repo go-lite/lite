@@ -3,8 +3,6 @@ package lite
 import (
 	"strconv"
 
-	"github.com/go-lite/lite/errors"
-
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -61,8 +59,8 @@ func (r Route[ResponseBody, Request]) AddErrorResponse(statusCode int, contentTy
 	}
 
 	for _, c := range contentType {
-		httpError := errors.NewError(statusCode)
-		description := httpError.Description()
+		httpError := NewError(statusCode)
+		description := httpError.Descriptions()
 
 		response := openapi3.NewResponse().WithDescription(description)
 

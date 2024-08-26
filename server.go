@@ -10,8 +10,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-lite/lite/errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/invopop/yaml"
@@ -91,7 +92,8 @@ type App struct {
 
 	mu sync.Mutex
 
-	logger *slog.Logger
+	logger    *slog.Logger
+	validator *validator.Validate
 }
 
 func New(config ...Config) *App {
@@ -111,6 +113,16 @@ func New(config ...Config) *App {
 }
 
 type Config func(s *App)
+
+func SetValidator(v *validator.Validate) Config {
+	if v == nil {
+		v = validator.New()
+	}
+
+	return func(s *App) {
+		s.validator = v
+	}
+}
 
 func SetLogger(logger *slog.Logger) Config {
 	return func(s *App) {
@@ -206,12 +218,12 @@ func (s *App) saveOpenAPIToFile(path string, swaggerSpec []byte) error {
 
 	err := osMkdirAll(jsonFolder, 0o750)
 	if err != nil {
-		return errors.NewInternalServerError("error creating directory " + jsonFolder)
+		return NewInternalServerError("error creating directory " + jsonFolder)
 	}
 
 	f, err := osCreate(path)
 	if err != nil {
-		return errors.NewInternalServerError("error creating file " + path)
+		return NewInternalServerError("error creating file " + path)
 	}
 
 	file := wrapperWriteCloser(f)
@@ -220,7 +232,7 @@ func (s *App) saveOpenAPIToFile(path string, swaggerSpec []byte) error {
 
 	_, err = file.Write(swaggerSpec)
 	if err != nil {
-		return errors.NewInternalServerError("error writing file")
+		return NewInternalServerError("error writing file")
 	}
 
 	return nil
@@ -298,12 +310,12 @@ func SetTermsOfService(termsOfService string) Config {
 func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) {
 	responses := make(map[int]*openapi3.Response)
 
-	for _, errResponse := range errors.DefaultErrorResponses {
+	for _, errResponse := range DefaultErrorResponses {
 		responseSchema, ok := s.openAPISpec.Components.Schemas["httpGenericError"]
 		if !ok {
 			var err error
 
-			responseSchema, err = generatorNewSchemaRefForValue(new(errors.HTTPError), s.openAPISpec.Components.Schemas)
+			responseSchema, err = generatorNewSchemaRefForValue(new(HTTPError), s.openAPISpec.Components.Schemas)
 			if err != nil {
 				return nil, err
 			}
@@ -311,10 +323,10 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 			s.openAPISpec.Components.Schemas["httpGenericError"] = responseSchema
 		}
 
-		response := openapi3.NewResponse().WithDescription(errResponse.Description())
+		response := openapi3.NewResponse().WithDescription(errResponse.Descriptions())
 
 		var consume []string
-		consume = append(consume, errors.DefaultErrorContentTypeResponses...)
+		consume = append(consume, DefaultErrorContentTypeResponses...)
 
 		if responseSchema != nil {
 			content := openapi3.NewContentWithSchemaRef(

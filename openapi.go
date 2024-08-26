@@ -3,7 +3,6 @@ package lite
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"mime/multipart"
 	"reflect"
@@ -188,7 +187,18 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			switch fieldVal.Elem().Kind() {
 			case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map, reflect.Complex64, reflect.Complex128,
 				reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer, reflect.Ptr:
-				return errors.New("not implemented")
+				return InternalServerError{
+					Context:     "/api/contexts/OpenAPIError",
+					Type:        "OpenAPIError",
+					Title:       "Registry error",
+					Description: "Not implemented",
+					Violations: []Violation{
+						{
+							PropertyPath: field.Name,
+							Message:      "Not implemented for" + fieldVal.Elem().Kind().String(),
+						},
+					},
+				}
 			case reflect.Invalid:
 				fallthrough
 			case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
@@ -199,7 +209,18 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 			}
 		case reflect.Invalid, reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer, reflect.Complex64,
 			reflect.Complex128:
-			return errors.New("not implemented")
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Registry error",
+				Description: "Not implemented",
+				Violations: []Violation{
+					{
+						PropertyPath: field.Name,
+						Message:      "Not implemented for" + fieldVal.Kind().String(),
+					},
+				},
+			}
 		case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
 			reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64,
 			reflect.Array, reflect.Interface, reflect.Map, reflect.Slice, reflect.String, reflect.Struct:
@@ -314,7 +335,18 @@ func register(s *App, operation *openapi3.Operation, dstVal reflect.Value) error
 
 			continue
 		} else {
-			return fmt.Errorf("unknown parameter type %s", tag)
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Registry error",
+				Description: "Unknown parameter type " + tag,
+				Violations: []Violation{
+					{
+						PropertyPath: field.Name,
+						Message:      "Unknown parameter type " + tag,
+					},
+				},
+			}
 		}
 	}
 
@@ -338,7 +370,18 @@ func setResponseSchema(
 		}
 
 		if err != nil {
-			return
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Response error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		if tag != "unknown" {
@@ -351,7 +394,18 @@ func setResponseSchema(
 
 		newSchema, err = generatorNewSchemaRefForValue(reflect.New(fieldType).Elem().Interface(), s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Response error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		newSchemaContent := fmt.Sprintf("%v", newSchema.Value)
@@ -405,7 +459,18 @@ func setBodySchema(
 
 		bodySchema, err := generatorNewSchemaRefForValue(tp, s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Body error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		getRequiredValue(contentType, fieldType, bodySchema.Value)
@@ -416,7 +481,18 @@ func setBodySchema(
 
 		newBodySchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Body error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		newSchemaContent := fmt.Sprintf("%v", newBodySchema.Value)
@@ -480,7 +556,18 @@ func setHeaderScheme(
 
 		headerSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Header error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		headerSchema.Value.Nullable = !isRequired
@@ -491,7 +578,18 @@ func setHeaderScheme(
 
 		headerSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Header error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		headerSchema.Value.Nullable = !isRequired
@@ -588,7 +686,18 @@ func setParamSchema(
 
 		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Params error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		paramSchema.Value.Nullable = !isRequired
@@ -599,7 +708,18 @@ func setParamSchema(
 
 		paramSchema, err := generatorNewSchemaRefForValue(newInstance, s.openAPISpec.Components.Schemas)
 		if err != nil {
-			return err
+			return InternalServerError{
+				Context:     "/api/contexts/OpenAPIError",
+				Type:        "OpenAPIError",
+				Title:       "Params error",
+				Description: "Failed to generate schema",
+				Violations: []Violation{
+					{
+						PropertyPath: fieldType.Name(),
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 
 		paramSchema.Value.Nullable = !isRequired
