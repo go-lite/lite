@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"reflect"
 
@@ -30,6 +31,7 @@ func serializeResponse(ctx *fasthttp.RequestCtx, src any) error {
 	case reflect.Invalid, reflect.Chan, reflect.Func, reflect.Complex64, reflect.Complex128,
 		reflect.Uintptr, reflect.UnsafePointer:
 		err := fmt.Errorf("unsupported type: %s", srcVal.Kind())
+		slog.Error("error serializing response", slog.Any("error", err))
 
 		ctx.Error(err.Error(), StatusInternalServerError)
 
@@ -50,12 +52,14 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 	case ContentTypeJSON:
 		if err := json.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
 			ctx.Error(err.Error(), StatusInternalServerError)
+			slog.Error("error serializing response", slog.Any("error", err))
 
 			return err
 		}
 	case ContentTypeXML:
 		if err := xml.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
 			ctx.Error(err.Error(), StatusInternalServerError)
+			slog.Error("error serializing response", slog.Any("error", err))
 
 			return err
 		}
@@ -71,6 +75,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		} else {
 			err := errors.New("expected map[string]string for form data serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
+			slog.Error("error serializing response", slog.Any("error", err))
 
 			return err
 		}
@@ -87,6 +92,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		} else {
 			err := errors.New("expected []byte for binary file serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
+			slog.Error("error serializing response", slog.Any("error", err))
 
 			return err
 		}
@@ -97,6 +103,7 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		} else {
 			err := errors.New("expected string for text serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
+			slog.Error("error serializing response", slog.Any("error", err))
 
 			return err
 		}
@@ -109,12 +116,14 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 		} else {
 			err := errors.New("expected []byte for binary file serialization")
 			ctx.Error(err.Error(), StatusInternalServerError)
+			slog.Error("error serializing response", slog.Any("error", err))
 
 			return err
 		}
 	default:
 		err := fmt.Errorf("unsupported content type: %s", contentType)
 		ctx.Error(err.Error(), StatusInternalServerError)
+		slog.Error("error serializing response", slog.Any("error", err))
 
 		return err
 	}

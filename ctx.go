@@ -2,6 +2,7 @@ package lite
 
 import (
 	"context"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"reflect"
@@ -90,22 +91,30 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 	case reflect.String:
 		err := deserializeBody(reqContext, reflect.ValueOf(&req).Elem())
 		if err != nil {
+			slog.ErrorContext(c.Context(), "error deserializing body", slog.Any("error", err))
+
 			return req, err
 		}
 	case reflect.Array, reflect.Slice:
 		if typeOfReq.Elem().Kind() == reflect.Uint8 {
 			err := deserializeBody(reqContext, reflect.ValueOf(&req).Elem())
 			if err != nil {
+				slog.ErrorContext(c.Context(), "error deserializing body", slog.Any("error", err))
+
 				return req, err
 			}
 		} else {
-			return req, BadRequestError{
+			err := BadRequestError{
 				Context:     "/api/contexts/RequestBodyError",
 				Type:        "RequestBodyError",
 				Status:      http.StatusBadRequest,
 				Title:       "A request body is required",
 				Description: "Unsupported slice type",
 			}
+
+			slog.ErrorContext(c.Context(), "error deserializing body", slog.Any("error", err))
+
+			return req, err
 		}
 	case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
@@ -113,18 +122,23 @@ func (c *ContextWithRequest[Request]) Requests() (Request, error) {
 		reflect.Map, reflect.Ptr, reflect.UnsafePointer:
 		fallthrough
 	default:
-		return req, BadRequestError{
+		err := BadRequestError{
 			Context:     "/api/contexts/RequestBodyError",
 			Type:        "RequestBodyError",
 			Status:      http.StatusBadRequest,
 			Title:       "A request body is required",
 			Description: "Unsupported type",
 		}
+		slog.ErrorContext(c.Context(), "error deserializing body", slog.Any("error", err))
+
+		return req, err
 	}
 
 	if typeOfReq.Kind() == reflect.Struct {
 		err := c.app.validate(req)
 		if err != nil {
+			slog.ErrorContext(c.Context(), "error validating request", slog.Any("error", err))
+
 			return req, err
 		}
 	}

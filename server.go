@@ -317,6 +317,8 @@ func (s *App) createDefaultErrorResponses() (map[int]*openapi3.Response, error) 
 
 			responseSchema, err = generatorNewSchemaRefForValue(new(HTTPError), s.openAPISpec.Components.Schemas)
 			if err != nil {
+				slog.ErrorContext(context.Background(), "failed to generate schema", slog.Any("error", err))
+
 				return nil, err
 			}
 
@@ -401,6 +403,8 @@ func (s *App) Listen(address string) error {
 
 	err := s.setup()
 	if err != nil {
+		slog.ErrorContext(context.Background(), "failed to setup", slog.Any("error", err))
+
 		return err
 	}
 
@@ -410,6 +414,8 @@ func (s *App) Listen(address string) error {
 func (s *App) Run() error {
 	err := s.setup()
 	if err != nil {
+		slog.ErrorContext(context.Background(), "failed to setup", slog.Any("error", err))
+
 		return err
 	}
 
