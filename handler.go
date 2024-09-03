@@ -37,6 +37,7 @@ func fiberHandler[ResponseBody, Request any, Contexter Context[Request]](
 	app *App,
 ) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		logger.InfoContext(c.Context(), "request made", slog.Any("path", path))
 		c.Context().SetContentType("application/json")
 
 		ctx := newLiteContext[Request, Contexter](ContextNoRequest{ctx: c, path: path, app: app})

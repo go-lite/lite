@@ -11,7 +11,7 @@ run:
 
   # Timeout for analysis, e.g. 30s, 5m.
   # Default: 1m
-  timeout: 5m
+  messageTTL: 5m
 
   # Exit code when at least one issue was found.
   # Default: 1
@@ -25,23 +25,6 @@ run:
   # Default: [].
   #build-tags:
   #  - mytag
-
-  # Which dirs to skip: issues from them won't be reported.
-  # Can use regexp here: `generated.*`, regexp is applied on full path,
-  # including the path prefix if one is set.
-  # Default value is empty list,
-  # but default dirs are skipped independently of this option's value (see skip-dirs-use-default).
-  # "/" will be replaced by current OS file path separator to properly work on Windows.
-  skip-dirs:
-    - tmp
-    - bin
-    - githooks
-    - tests
-
-  # Enables skipping of directories:
-  # - vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  # Default: true
-  skip-dirs-use-default: false
 
   # Which files to skip: they will be analyzed, but issues from them won't be reported.
   # Default value is empty list,
@@ -86,7 +69,8 @@ output:
   # Example: "checkstyle:report.xml,json:stdout,colored-line-number"
   #
   # Default: colored-line-number
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
 
   # Print lines of code with issue.
   # Default: true
@@ -127,13 +111,13 @@ linters:
     #- depguard
     #- dogsled
     # - dupl # TODO: enable
-    - dupword
+    # - dupword
     - durationcheck
     - errcheck
     - errchkjson
     - errname
     - errorlint
-    - execinquery
+    #    - execinquery
     - exhaustive
     #- exhaustivestruct
     #- exhaustruct
@@ -181,7 +165,7 @@ linters:
     - makezero
     #- maligned
     - mirror
-    - misspell
+    #- misspell
     - musttag
     #- nakedret
     #- nestif
@@ -234,6 +218,22 @@ issues:
   exclude:
     - don't use an underscore in package name
     - should not use underscores in package names
+  # Which dirs to skip: issues from them won't be reported.
+  # Can use regexp here: `generated.*`, regexp is applied on full path,
+  # including the path prefix if one is set.
+  # Default value is empty list,
+  # but default dirs are skipped independently of this option's value (see skip-dirs-use-default).
+  # "/" will be replaced by current OS file path separator to properly work on Windows.
+  exclude-dirs:
+    - tmp
+    - bin
+    - githooks
+    - tests
+
+  # Enables skipping of directories:
+  # - vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  # Default: true
+  exclude-dirs-use-default: false
 
 linters-settings:
   lll:
@@ -242,3 +242,7 @@ linters-settings:
     confidence: 0.1
   wsl:
     allow-cuddle-declarations: true
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment

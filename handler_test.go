@@ -2,6 +2,7 @@ package lite
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/go-lite/lite/mime"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -763,6 +764,55 @@ func (suite *HandlerTestSuite) TestContextWithRequest_FullBody() {
 	assert.JSONEq(suite.T(), `{"id":123,"first_name":"John","last_name":"Doe", "gender":"male", "gender_slice":["male","female"], "name":""}`, utils.UnsafeString(body))
 }
 
+func (suite *HandlerTestSuite) TestContextWithRequest_MultiFile() {
+	app := New(SetValidator(validator.New()))
+	Post(app, "/foo", func(c *ContextWithRequest[testRequestMultiFileRequest]) (testResponse, error) {
+		req, err := c.Requests()
+		if err != nil {
+			return testResponse{}, err
+		}
+
+		if req.Body.Files == nil {
+			return testResponse{}, NewBadRequestError("Files are required")
+		}
+
+		return testResponse{}, nil
+	})
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	// Ajouter le fichier
+	fileWriter, err := w.CreateFormFile("files", "lite.png")
+	if err != nil {
+		suite.T().Fatalf("Failed to create form file: %s", err)
+	}
+
+	file, err := os.Open("./logo/lite.png")
+	if err != nil {
+		suite.T().Fatalf("Failed to open file: %s", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(fileWriter, file)
+	if err != nil {
+		suite.T().Fatalf("Failed to copy file: %s", err)
+	}
+
+	w.Close()
+
+	req := httptest.NewRequest("POST", "/foo", strings.NewReader(b.String()))
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	resp, err := app.app.Test(req)
+	assert.NoError(suite.T(), err, "Expected no error")
+	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
+
+	spec, err := app.saveOpenAPISpec()
+	assert.NoError(suite.T(), err)
+	fmt.Println(string(spec))
+}
+
 type requestBodyApplicationPDF struct {
 	Body []byte `lite:"req=body,application/pdf"`
 }
@@ -1012,9 +1062,9 @@ func (suite *HandlerTestSuite) TestContextWithRequest_Body_Slice_Uint8() {
 	resp, err := app.app.Test(req)
 	assert.NoError(suite.T(), err, "Expected no error")
 	assert.Equal(suite.T(), 201, resp.StatusCode, "Expected status code 201")
-	body, err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	assert.NoError(suite.T(), err, "Expected no error")
-	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(body))
+	assert.Equal(suite.T(), `Hello World`, utils.UnsafeString(b))
 
 	spec, err := app.saveOpenAPISpec()
 	assert.NoError(suite.T(), err)

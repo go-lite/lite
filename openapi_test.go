@@ -865,6 +865,14 @@ type testRequest struct {
 	Body   bodyRequest  `lite:"req=body,multipart/form-data"`
 }
 
+type bodyMultiFile struct {
+	Files []*multipart.FileHeader `form:"files"`
+}
+
+type testRequestMultiFileRequest struct {
+	Body bodyMultiFile `lite:"req=body,multipart/form-data"`
+}
+
 type testResponse struct {
 	ID          uint64   `json:"id"`
 	Name        string   `json:"name"`
