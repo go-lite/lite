@@ -2,6 +2,7 @@ package lite
 
 import (
 	"encoding/base64"
+	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/valyala/fasthttp"
@@ -58,13 +59,52 @@ func (suite *DeserializerTestSuite) TestDeserializeWithBodyMultipart() {
 	imageBase64 := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgEBABkAB4cAAAAASUVORK5CYII="
 	imageBytes, _ := base64.StdEncoding.DecodeString(imageBase64)
 
-	var body []byte
-	body = append(body, []byte("--b\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\njohn\r\n--b\r\nContent-Disposition: form-data; name=\"image\"; filename=\"fakeimage.png\"\r\nContent-Type: image/png\r\n\r\n")...)
-	body = append(body, imageBytes...)
-	body = append(body, []byte("\r\n--b--")...)
+	var b []byte
+	b = append(b, []byte("--b\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\njohn\r\n--b\r\nContent-Disposition: form-data; name=\"image\"; filename=\"fakeimage.png\"\r\nContent-Type: image/png\r\n\r\n")...)
+	b = append(b, imageBytes...)
+	b = append(b, []byte("\r\n--b--")...)
 
-	c.Request().SetBody(body)
-	c.Request().Header.SetContentLength(len(body))
+	c.Request().SetBody(b)
+	c.Request().Header.SetContentLength(len(b))
+
+	val := reflect.ValueOf(&test).Elem()
+
+	err := deserialize(c.RequestContext(), val, nil)
+	assert.NoError(suite.T(), err)
+}
+
+type multipartFormMultiFile struct {
+	Body ImageMultiFile `lite:"req=body,multipart/form-data"`
+}
+
+type ImageMultiFile struct {
+	Image []*multipart.FileHeader
+}
+
+func (suite *DeserializerTestSuite) TestDeserializeWithBodyMultipartMultiFile() {
+	var test = multipartFormMultiFile{
+		Body: ImageMultiFile{},
+	}
+
+	app := New(SetValidator(validator.New()))
+
+	ctx := app.app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.app.ReleaseCtx(ctx)
+
+	c := newContext[multipartFormMultiFile](ctx, app, "/foo")
+	c.Request().Header.SetContentType("multipart/form-data" + `;boundary="b"`)
+
+	// fake image PNG in base64
+	imageBase64 := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgEBABkAB4cAAAAASUVORK5CYII="
+	imageBytes, _ := base64.StdEncoding.DecodeString(imageBase64)
+
+	var b []byte
+	b = append(b, []byte("--b\r\nContent-Disposition: form-data; name=\"Image\"; filename=\"fakeimage.png\"\r\nContent-Type: image/png\r\n\r\n")...)
+	b = append(b, imageBytes...)
+	b = append(b, []byte("\r\n--b--")...)
+
+	c.Request().SetBody(b)
+	c.Request().Header.SetContentLength(len(b) + 1)
 
 	val := reflect.ValueOf(&test).Elem()
 
@@ -441,9 +481,9 @@ func (suite *DeserializerTestSuite) TestMapToStruct() {
 		Age  int    `form:"age"`
 	}
 
-	m := map[string]any{
-		"name": "john",
-		"age":  "1",
+	m := map[string][]any{
+		"name": {"john"},
+		"age":  {"1"},
 	}
 
 	val := reflect.ValueOf(&testStruct{}).Elem()
@@ -458,9 +498,9 @@ func (suite *DeserializerTestSuite) TestMapToStructError() {
 		Age  int    `form:"age"`
 	}
 
-	m := map[string]any{
-		"name": "john",
-		"age":  "test",
+	m := map[string][]any{
+		"name": {"john"},
+		"age":  {"test"},
 	}
 
 	val := reflect.ValueOf(&testStruct{}).Elem()
@@ -475,9 +515,9 @@ func (suite *DeserializerTestSuite) TestMapToStructWithEmptyTag() {
 		Age  int    `form:"age"`
 	}
 
-	m := map[string]any{
-		"name": "john",
-		"age":  "1",
+	m := map[string][]any{
+		"name": {"john"},
+		"age":  {"1"},
 	}
 
 	val := reflect.ValueOf(&testStruct{}).Elem()

@@ -160,10 +160,10 @@ func deserializeBody(ctx *fasthttp.RequestCtx, fieldVal reflect.Value) error {
 
 func parseFormURLEncoded(ctx *fasthttp.RequestCtx, dst any) error {
 	formData := ctx.PostArgs()
-	data := make(map[string]any)
+	data := make(map[string][]any)
 
 	formData.VisitAll(func(key, value []byte) {
-		data[string(key)] = string(value)
+		data[string(key)] = append(data[string(key)], string(value))
 	})
 
 	return mapToStruct(data, dst)
@@ -187,18 +187,20 @@ func parseMultipartForm(ctx *fasthttp.RequestCtx, dst any) error {
 		}
 	}
 
-	data := make(map[string]any)
+	data := make(map[string][]any)
 
 	for key, values := range mr.Value {
 		if len(values) > 0 {
-			data[key] = values[0]
+			for _, v := range values {
+				data[key] = append(data[key], v)
+			}
 		}
 	}
 
 	for key, files := range mr.File {
 		if len(files) > 0 {
-			if fileHeader := files[0]; fileHeader != nil {
-				data[key] = fileHeader
+			for _, fileHeader := range files {
+				data[key] = append(data[key], fileHeader)
 			}
 		}
 	}
@@ -234,20 +236,38 @@ func parseBinaryData(ctx *fasthttp.RequestCtx, dst any) error {
 	}
 }
 
-func mapToStruct(data map[string]any, dst any) error {
+func mapToStruct(data map[string][]any, dst any) (err error) {
 	dstVal := reflect.ValueOf(dst).Elem()
-	for i := 0; i < dstVal.NumField(); i++ {
-		field := dstVal.Type().Field(i)
-		fieldVal := dstVal.Field(i)
-		key := field.Tag.Get("form")
 
-		if key == "" {
-			key = field.Name
-		}
+	if dstVal.Kind() == reflect.Struct {
+		for i := 0; i < dstVal.NumField(); i++ {
+			field := dstVal.Type().Field(i)
+			fieldVal := dstVal.Field(i)
+			key := field.Tag.Get("form")
 
-		if value, exists := data[key]; exists {
-			if err := setFieldValue(fieldVal, value); err != nil {
-				return err
+			if key == "" {
+				key = field.Name
+			}
+
+			if value, exists := data[key]; exists {
+				var valueType reflect.Type
+				if len(value) > 0 {
+					valueType = reflect.TypeOf(value[0])
+				}
+
+				if field.Type.Kind() == reflect.Ptr || field.Type.Kind() == reflect.Pointer { //nolint:gocritic
+					if field.Type.Elem().Kind() != reflect.Slice && field.Type.Elem().Kind() != reflect.Array {
+						err = setFieldValue(fieldVal, value[0])
+					}
+				} else if field.Type.Kind() != reflect.Slice && field.Type.Kind() != reflect.Array {
+					err = setFieldValue(fieldVal, value[0])
+				} else {
+					err = setFieldValue(fieldVal, value, valueType)
+				}
+
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -255,7 +275,7 @@ func mapToStruct(data map[string]any, dst any) error {
 	return nil
 }
 
-func setFieldValue(fieldVal reflect.Value, valueStr any) error {
+func setFieldValue(fieldVal reflect.Value, valueStr any, dataValType ...reflect.Type) error {
 	switch fieldVal.Kind() {
 	case reflect.Ptr:
 		if fieldVal.IsNil() {
@@ -311,18 +331,30 @@ func setFieldValue(fieldVal reflect.Value, valueStr any) error {
 		if fieldVal.Type().Elem().Kind() == reflect.Uint8 {
 			fieldVal.SetBytes([]byte(valueStr.(string)))
 		} else {
-			return InternalServerError{
-				Context:     "/api/contexts/DeserializationError",
-				Type:        "DeserializationError",
-				Title:       "Internal server error",
-				Description: "Unsupported slice type " + fieldVal.Type().Elem().Kind().String(),
-				Violations: []Violation{
-					{
-						PropertyPath: fieldVal.Type().Elem().Name(),
-						Message:      "Unsupported slice type " + fieldVal.Type().Elem().Kind().String(),
+			// create a new slice of the same type as the data
+			if len(dataValType) == 0 {
+				return InternalServerError{
+					Context:     "/api/contexts/DeserializationError",
+					Type:        "DeserializationError",
+					Title:       "Internal server error",
+					Description: "Unsupported slice type " + fieldVal.Type().Elem().Kind().String(),
+					Violations: []Violation{
+						{
+							PropertyPath: fieldVal.Type().Elem().Name(),
+							Message:      "Unsupported slice type " + fieldVal.Type().Elem().Kind().String(),
+						},
 					},
-				},
+				}
 			}
+
+			sliceType := reflect.SliceOf(dataValType[0])
+			newSlice := reflect.MakeSlice(sliceType, 0, 0)
+
+			for _, v := range valueStr.([]any) {
+				newSlice = reflect.Append(newSlice, reflect.ValueOf(v))
+			}
+
+			fieldVal.Set(newSlice)
 		}
 	case reflect.Interface:
 		fieldVal.Set(reflect.ValueOf(valueStr))

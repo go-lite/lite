@@ -534,6 +534,10 @@ func updateFileHeaderFieldType(fieldType reflect.Type) reflect.Type {
 			field.Type = reflect.TypeOf([]byte{})
 		}
 
+		if field.Type == reflect.TypeOf([]*multipart.FileHeader{}) || field.Type == reflect.TypeOf([]multipart.FileHeader{}) {
+			field.Type = reflect.TypeOf([][]byte{})
+		}
+
 		fields = append(fields, field)
 	}
 

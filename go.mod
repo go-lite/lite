@@ -3,7 +3,7 @@ module github.com/go-lite/lite
 go 1.22
 
 require (
-	github.com/getkin/kin-openapi v0.126.0
+	github.com/getkin/kin-openapi v0.127.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
