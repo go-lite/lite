@@ -35,7 +35,18 @@ func serializeResponse(ctx *fasthttp.RequestCtx, src any) error {
 
 		ctx.Error(err.Error(), StatusInternalServerError)
 
-		return err
+		return BadRequestError{
+			Context:     "/api/contexts/SerializationError",
+			Type:        "SerializationError",
+			Title:       "Bad Request error",
+			Description: err.Error(),
+			Violations: []Violation{
+				{
+					PropertyPath: "body response",
+					Message:      err.Error(),
+				},
+			},
+		}
 	case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
 		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64,
 		reflect.Array, reflect.Interface, reflect.Map, reflect.Slice, reflect.Struct, reflect.Ptr:
@@ -54,14 +65,36 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.Error(err.Error(), StatusInternalServerError)
 			slog.Error("error serializing response", slog.Any("error", err))
 
-			return err
+			return BadRequestError{
+				Context:     "/api/contexts/SerializationError",
+				Type:        "SerializationError",
+				Title:       "Bad Request error",
+				Description: "Failed to serialize response, encoding json failed with error: " + err.Error(),
+				Violations: []Violation{
+					{
+						PropertyPath: "body response",
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 	case ContentTypeXML:
 		if err := xml.NewEncoder(ctx).Encode(srcVal.Interface()); err != nil {
 			ctx.Error(err.Error(), StatusInternalServerError)
 			slog.Error("error serializing response", slog.Any("error", err))
 
-			return err
+			return BadRequestError{
+				Context:     "/api/contexts/SerializationError",
+				Type:        "SerializationError",
+				Title:       "Bad Request error",
+				Description: "Failed to serialize response, encoding xml failed with error: " + err.Error(),
+				Violations: []Violation{
+					{
+						PropertyPath: "body response",
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 	case ContentTypeXFormData, ContentTypeFormData:
 		if form, ok := srcVal.Interface().(map[string]string); ok {
@@ -77,7 +110,18 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.Error(err.Error(), StatusInternalServerError)
 			slog.Error("error serializing response", slog.Any("error", err))
 
-			return err
+			return BadRequestError{
+				Context:     "/api/contexts/SerializationError",
+				Type:        "SerializationError",
+				Title:       "Bad Request error",
+				Description: "Failed to serialize response, encoding form data failed with error: " + err.Error(),
+				Violations: []Violation{
+					{
+						PropertyPath: "body response",
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 	case ContentTypeOctetStream, ContentTypePDF, ContentTypeZIP, ContentTypePNG, ContentTypeJPEG, ContentTypeGIF,
 		ContentTypeWEBP, ContentTypeSVG, ContentTypeTIFF, ContentTypeICO, ContentTypeJNG, ContentTypeDOC, ContentTypeBMP,
@@ -94,7 +138,18 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.Error(err.Error(), StatusInternalServerError)
 			slog.Error("error serializing response", slog.Any("error", err))
 
-			return err
+			return BadRequestError{
+				Context:     "/api/contexts/SerializationError",
+				Type:        "SerializationError",
+				Title:       "Bad Request error",
+				Description: "Failed to serialize response, encoding binary file failed with error: " + err.Error(),
+				Violations: []Violation{
+					{
+						PropertyPath: "body response",
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 	case ContentTypeTXT, ContentTypeHTML, ContentTypeCSS, ContentTypeJS, ContentTypeATOM,
 		ContentTypeRSS, ContentTypeMML, ContentTypeJAD, ContentTypeWML, ContentTypeHTC:
@@ -105,7 +160,18 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.Error(err.Error(), StatusInternalServerError)
 			slog.Error("error serializing response", slog.Any("error", err))
 
-			return err
+			return BadRequestError{
+				Context:     "/api/contexts/SerializationError",
+				Type:        "SerializationError",
+				Title:       "Bad Request error",
+				Description: "Failed to serialize response, encoding text failed with error: " + err.Error(),
+				Violations: []Violation{
+					{
+						PropertyPath: "body response",
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 	case ContentTypeMIDI, ContentTypeMP3, ContentTypeOGG, ContentTypeM4A, ContentTypeRA,
 		ContentType3GP, ContentTypeTS, ContentTypeMP4, ContentTypeMPEG, ContentTypeMOV,
@@ -118,14 +184,36 @@ func serialize(ctx *fasthttp.RequestCtx, srcVal reflect.Value) error {
 			ctx.Error(err.Error(), StatusInternalServerError)
 			slog.Error("error serializing response", slog.Any("error", err))
 
-			return err
+			return BadRequestError{
+				Context:     "/api/contexts/SerializationError",
+				Type:        "SerializationError",
+				Title:       "Bad Request error",
+				Description: "Failed to serialize response, encoding binary file failed with error: " + err.Error(),
+				Violations: []Violation{
+					{
+						PropertyPath: "body response",
+						Message:      err.Error(),
+					},
+				},
+			}
 		}
 	default:
 		err := fmt.Errorf("unsupported content type: %s", contentType)
 		ctx.Error(err.Error(), StatusInternalServerError)
 		slog.Error("error serializing response", slog.Any("error", err))
 
-		return err
+		return BadRequestError{
+			Context:     "/api/contexts/SerializationError",
+			Type:        "SerializationError",
+			Title:       "Bad Request error",
+			Description: err.Error(),
+			Violations: []Violation{
+				{
+					PropertyPath: "body response",
+					Message:      err.Error(),
+				},
+			},
+		}
 	}
 
 	return nil

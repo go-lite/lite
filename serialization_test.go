@@ -51,7 +51,7 @@ func TestSerializeResponse(t *testing.T) {
 			src:          map[string]string{"key": "value"},
 			contentType:  "application/xml",
 			expectedBody: []byte(`<key>value</key>`),
-			expectedErr:  fmt.Errorf("xml: unsupported type: map[string]string"),
+			expectedErr:  fmt.Errorf("Failed to serialize response, encoding xml failed with error: xml: unsupported type: map[string]string"),
 		},
 		{
 			name:         "Form serialization",
@@ -65,8 +65,8 @@ func TestSerializeResponse(t *testing.T) {
 			src:             map[string]int{"key": 1},
 			contentType:     "application/x-www-form-urlencoded",
 			expectedBody:    nil,
-			expectedErr:     fmt.Errorf("expected map[string]string for form data serialization"),
-			expectedErrCode: fasthttp.StatusInternalServerError,
+			expectedErr:     fmt.Errorf("Failed to serialize response, encoding form data failed with error: expected map[string]string for form data serialization"),
+			expectedErrCode: StatusInternalServerError,
 		},
 		{
 			name:         "Binary data",
@@ -80,7 +80,7 @@ func TestSerializeResponse(t *testing.T) {
 			src:             1,
 			contentType:     "application/octet-stream",
 			expectedBody:    nil,
-			expectedErr:     fmt.Errorf("expected []byte for binary file serialization"),
+			expectedErr:     fmt.Errorf("Failed to serialize response, encoding binary file failed with error: expected []byte for binary file serialization"),
 			expectedErrCode: fasthttp.StatusInternalServerError,
 		},
 		{
@@ -102,7 +102,7 @@ func TestSerializeResponse(t *testing.T) {
 			src:             1,
 			contentType:     "image/png",
 			expectedBody:    nil,
-			expectedErr:     fmt.Errorf("expected []byte for binary file serialization"),
+			expectedErr:     fmt.Errorf("Failed to serialize response, encoding binary file failed with error: expected []byte for binary file serialization"),
 			expectedErrCode: fasthttp.StatusInternalServerError,
 		},
 	}
@@ -170,7 +170,7 @@ func TestSerialize(t *testing.T) {
 			src:          func() {},
 			contentType:  "application/json",
 			expectedBody: nil,
-			expectedErr:  fmt.Errorf("json: unsupported type: func()"),
+			expectedErr:  fmt.Errorf("Failed to serialize response, encoding json failed with error: json: unsupported type: func()"),
 		},
 		{
 			name:         "Atom feed serialization",
@@ -219,7 +219,7 @@ func TestSerialize(t *testing.T) {
 			src:             []byte("Hello, World!"),
 			contentType:     "text/plain",
 			expectedBody:    nil,
-			expectedErr:     fmt.Errorf("expected string for text serialization"),
+			expectedErr:     fmt.Errorf("Failed to serialize response, encoding text failed with error: expected string for text serialization"),
 			expectedErrCode: fasthttp.StatusInternalServerError,
 		},
 		{
@@ -255,7 +255,7 @@ func TestSerialize(t *testing.T) {
 			src:             "string instead of []byte",
 			contentType:     "audio/mpeg",
 			expectedBody:    nil,
-			expectedErr:     fmt.Errorf("expected []byte for binary file serialization"),
+			expectedErr:     fmt.Errorf("Failed to serialize response, encoding binary file failed with error: expected []byte for binary file serialization"),
 			expectedErrCode: fasthttp.StatusInternalServerError,
 		},
 	}
